@@ -25,11 +25,16 @@ struct ContentView: View {
         countdownDescription: { "Resend code in \($0.secondsRemaining) s" }
     )
 
-    @State private var otp = OtpState(length: .six)
-    @State private var options = SampleOptions()
+    @State private var otp: OtpState
+    @State private var options: SampleOptions
     @State private var isVerified = false
     @State private var secondsRemaining = Int(SampleOtpKt.SAMPLE_RESEND_SECONDS)
     @State private var countdownRun = 0
+
+    init(options: SampleOptions = SampleOptions()) {
+        _options = State(initialValue: options)
+        _otp = State(initialValue: OtpState(length: options.length))
+    }
 
     var body: some View {
         ScrollView {
@@ -110,6 +115,20 @@ struct ContentView: View {
     }
 }
 
-#Preview {
+#Preview("Default") {
     ContentView()
+}
+
+#Preview("Round cells, masked") {
+    ContentView(options: SampleOptions(maskIndex: 1, roundCells: true))
+}
+
+// Accessibility checks: large Dynamic Type wraps the cells, and RTL keeps the digits left to right.
+#Preview("Accessibility text size") {
+    ContentView().environment(\.dynamicTypeSize, .accessibility3)
+}
+
+#Preview("RTL, 8 digits") {
+    ContentView(options: SampleOptions(length: .eight))
+        .environment(\.layoutDirection, .rightToLeft)
 }

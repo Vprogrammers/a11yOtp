@@ -27,7 +27,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
@@ -53,10 +52,9 @@ private val resendAccessibility = OtpResendAccessibility("Resend code") { "Resen
  * Sample screen, the same flow as the iOS sample. Strings are English literals for the sample
  * only; real apps pass localized strings. A code of only zeros is rejected (see sample/shared).
  */
-@Preview
 @Composable
-fun SampleScreen() {
-    var options by remember { mutableStateOf(SampleOptions()) }
+fun SampleScreen(initialOptions: SampleOptions = SampleOptions()) {
+    var options by remember { mutableStateOf(initialOptions) }
     var state by remember { mutableStateOf(OtpState(options.length)) }
     var verified by remember { mutableStateOf(false) }
     var seconds by remember { mutableIntStateOf(SAMPLE_RESEND_SECONDS) }
