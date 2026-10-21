@@ -1,0 +1,33 @@
+package me.vprogrammers.a11yotp
+
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertSame
+
+class OtpFieldStyleCopyIosTest {
+    @Test
+    fun copiesChangeOnlyTheNamedValues() {
+        val base = OtpFieldDefaults.style()
+        val round =
+            base
+                .withGroupSize(3)
+                .withCornerRadius(1_000.0)
+                .withMinCellSize(width = 50.0, height = 50.0)
+
+        assertEquals(3, round.groupSize)
+        assertEquals(1_000.0, round.cornerRadius)
+        assertEquals(50.0, round.minCellWidth)
+        assertEquals(50.0, round.minCellHeight)
+        assertEquals(base.cellSpacing, round.cellSpacing)
+        assertEquals(base.focusedBorderWidth, round.focusedBorderWidth)
+        assertSame(base.colors, round.colors)
+    }
+
+    @Test
+    fun copiedCellSizesKeepTheMinimumTouchTarget() {
+        val small = OtpFieldDefaults.style().withMinCellSize(width = 10.0, height = 20.0)
+
+        assertEquals(44.0, small.minCellWidth)
+        assertEquals(44.0, small.minCellHeight)
+    }
+}

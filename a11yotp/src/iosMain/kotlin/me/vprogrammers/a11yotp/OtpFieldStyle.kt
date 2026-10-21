@@ -64,6 +64,41 @@ class OtpFieldStyle internal constructor(
 
     /** Contrast problems of [colors] for the current trait collection; empty when compliant. */
     val contrastWarnings: List<String> get() = colors.contrastWarnings
+
+    // Swift cannot use Kotlin default arguments, so these copies change one aspect of a style
+    // without restating every parameter of OtpFieldDefaults.style.
+
+    /** Copy with [groupSize]; see [OtpFieldStyle] for when separators are drawn. */
+    fun withGroupSize(groupSize: Int): OtpFieldStyle = copy(groupSize = groupSize)
+
+    /** Copy with [cornerRadius]; a value of at least half the cell size gives round cells. */
+    fun withCornerRadius(cornerRadius: Double): OtpFieldStyle = copy(cornerRadius = cornerRadius)
+
+    /** Copy with minimum cell [width] and [height] in points; values below 44 are raised to 44. */
+    fun withMinCellSize(
+        width: Double,
+        height: Double,
+    ): OtpFieldStyle = copy(minCellWidth = width, minCellHeight = height)
+
+    private fun copy(
+        cornerRadius: Double = this.cornerRadius,
+        minCellWidth: Double = this.minCellWidth,
+        minCellHeight: Double = this.minCellHeight,
+        groupSize: Int = this.groupSize,
+    ) = OtpFieldStyle(
+        font = font,
+        fontTextStyle = fontTextStyle,
+        errorTextStyle = errorTextStyle,
+        cornerRadius = cornerRadius,
+        minCellWidth = minCellWidth,
+        minCellHeight = minCellHeight,
+        cellSpacing = cellSpacing,
+        borderWidth = borderWidth,
+        focusedBorderWidth = focusedBorderWidth,
+        colors = colors,
+        groupSize = groupSize,
+        placeholder = placeholder,
+    )
 }
 
 /**
