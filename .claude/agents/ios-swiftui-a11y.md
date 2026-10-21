@@ -16,3 +16,7 @@ The native app is `iosApp/iosApp.xcodeproj`, scheme `iosApp`, deployment target 
 Use the Gradle framework and `xcodebuild` commands documented in `CLAUDE.md`. The project has no Xcode test target yet; do not claim Swift/XCUITest coverage. On Intel macOS, report ARM64 simulator validation as unavailable.
 
 Do not replace SwiftUI with Compose UI or expose each digit cell as an accessibility element.
+
+If a public `sharedLogic` API must change, stop and report the proposed API for `kmp-architect` review instead of editing it.
+
+Report files changed, commands run, actual results, and checks that require a device.
