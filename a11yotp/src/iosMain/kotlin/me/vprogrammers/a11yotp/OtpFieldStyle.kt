@@ -201,7 +201,7 @@ object OtpFieldDefaults {
         minCellHeight: Double = 56.0,
         cellSpacing: Double = 8.0,
         borderWidth: Double = 1.0,
-        focusedBorderWidth: Double = 3.0,
+        focusedBorderWidth: Double = 2.0,
         colors: OtpFieldColors = colors(),
         groupSize: Int = 0,
         placeholder: String? = null,

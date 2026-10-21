@@ -274,7 +274,7 @@ private fun OtpCell(
     var cellModifier =
         Modifier
             .offset { IntOffset(0, -lift.roundToPx()) }
-            .shadow(elevation = lift, shape = style.cellShape, clip = false)
+            .shadow(elevation = lift * FOCUS_SHADOW_FACTOR, shape = style.cellShape, clip = false)
             .defaultMinSize(minWidth = style.cellWidth, minHeight = style.cellHeight)
             .background(if (filled) borderColor else baseBackground, style.cellShape)
             .border(borderWidth, borderColor, style.cellShape)
@@ -309,3 +309,6 @@ private fun OtpCell(
 
 private val FilledRingWidth = 2.dp
 private val FocusLift = 4.dp
+
+// The shadow elevation is 3x the lift (12dp), so the raised cell stands out like a lifted card.
+private const val FOCUS_SHADOW_FACTOR = 3f
