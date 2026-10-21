@@ -37,7 +37,8 @@ Use `./gradlew :<module>:tasks --all` when a module task name must be confirmed.
 ## Current limitations
 
 - Compose UI test dependencies are not configured yet. Before writing Compose semantics tests, `test-engineer` adds the compatible Compose test dependency to `gradle/libs.versions.toml` and the `sharedUI` test dependency block, and chooses the supported test API for the current AGP/KMP stack; do not assume `runComposeUiTest` or `createComposeRule` is already available.
-- Compose semantics tests go either in `androidHostTest` with Robolectric, or in `androidDeviceTest` run by `:sharedUI:connectedAndroidDeviceTest` on an emulator or device. Justify the choice; do not put Compose UI tests in `androidHostTest` without Robolectric.
+- Place Compose UI and semantics integration tests in `androidDeviceTest` by default and run them with `:sharedUI:connectedAndroidDeviceTest` on an emulator or device.
+- Use `androidHostTest` for non-UI JVM tests. Introduce Robolectric Compose tests only when their speed provides clear value and their platform limitations do not affect the behavior being verified.
 - Masked presentation and 8-digit mode are roadmap behavior. Add their tests when those features are implemented; do not make the initial suite fail for absent roadmap features.
 - There is no Xcode test target.
 
