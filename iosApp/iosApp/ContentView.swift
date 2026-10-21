@@ -1,4 +1,4 @@
-import SharedLogic
+import Shared
 import SwiftUI
 
 /// Demo screen. Strings are hard-coded English for the sample only; the library requires host-provided strings.

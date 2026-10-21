@@ -1,9 +1,9 @@
 import os
-import SharedLogic
+import Shared
 import SwiftUI
 import UIKit
 
-/// Thin adapter between SwiftUI colors and the shared `OtpContrast` checks in SharedLogic.
+/// Thin adapter between SwiftUI colors and the shared `OtpContrast` checks exported through the Shared framework.
 /// Colors are resolved to gamma-encoded sRGB through `UIColor`, never through `Color.Resolved`
 /// (whose components are linear), and translucent colors are skipped.
 enum OtpContrastAdapter {

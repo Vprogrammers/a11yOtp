@@ -28,5 +28,8 @@ dependencyResolutionManagement {
 }
 
 include(":androidApp")
-include(":sharedLogic")
-include(":sharedUI")
+include(":a11yotp")
+
+// Consumer-like KMP shared module used by the sample apps.
+include(":sampleShared")
+project(":sampleShared").projectDir = file("sample/shared")

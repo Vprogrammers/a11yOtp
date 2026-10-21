@@ -1,4 +1,4 @@
-import SharedLogic
+import Shared
 import SwiftUI
 
 struct OtpButtonColors: Hashable {
