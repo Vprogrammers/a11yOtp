@@ -1,18 +1,13 @@
 # a11y-otp
 
-**An accessible one-time code field for Compose Multiplatform.**
-One real text field, drawn as boxes. VoiceOver, TalkBack, SMS autofill and paste work the way users expect, on Android and iOS, from one `commonMain` call.
+**An accessibility-first one-time code field for Android and iOS.**
+One real text field, drawn as boxes. Native on each platform: Jetpack Compose on Android, SwiftUI on iOS, with OTP state and input normalization shared in Kotlin Multiplatform.
 
-[![Maven Central](https://img.shields.io/maven-central/v/com.vprogrammers/a11y-otp?label=Maven%20Central)](https://central.sonatype.com/artifact/com.vprogrammers/a11y-otp)
-[![Kotlin](https://img.shields.io/badge/Kotlin-2.2+-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org)
-[![Compose Multiplatform](https://img.shields.io/badge/Compose%20Multiplatform-1.8+-4285F4)](https://www.jetbrains.com/compose-multiplatform/)
+[![Kotlin](https://img.shields.io/badge/Kotlin-Multiplatform-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org/docs/multiplatform.html)
 [![Platforms](https://img.shields.io/badge/platforms-Android%20%7C%20iOS-lightgrey)](#platforms)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
-<!-- Replace with your demo GIF: VoiceOver on iOS + TalkBack on Android, same code -->
-<p align="center">
-  <img src="docs/demo.gif" alt="OTP field filled by SMS autofill, read by VoiceOver on iOS and TalkBack on Android" width="640">
-</p>
+> **Status: pre-release.** The library is under active development and is not published yet. This README describes the design target. Behavior marked as a goal is verified on real devices before it is claimed as supported.
 
 ---
 
@@ -22,69 +17,69 @@ Most OTP components render **one text field per digit**. It looks right, but it 
 
 | | One field per digit | **a11y-otp** (one field) |
 |---|---|---|
-| Screen reader | "Text field, text field, text field…" six times | One field: *"Verification code, 3 of 6 digits entered"* |
+| Screen reader | "Text field, text field, text field…" six times | One field with a label, progress and the entered code |
 | SMS autofill | Often fills only the first box | Fills the whole code |
 | Paste | Breaks or lands in one box | Works, including `482-913` and `482 913` |
-| Backspace | Fragile focus jumping | Native behaviour |
-| iOS 26 autofill | Known issue with multi-field OTP | Not affected |
+| Backspace | Fragile focus jumping | Native behavior |
 
-The boxes in **a11y-otp** are decoration. Underneath is a single `BasicTextField`, so the platform treats it as one ordinary input.
+The boxes in **a11y-otp** are decoration. Underneath is a single platform text input, so TalkBack, VoiceOver, autofill and paste treat it as one ordinary field.
 
 ---
 
-## Features
+## Architecture
 
-- ✅ One `commonMain` composable for Android and iOS
-- ✅ VoiceOver and TalkBack: one element, live progress, announced errors
-- ✅ SMS autofill: `ContentType.SmsOtpCode` on Android, `.oneTimeCode` on iOS
-- ✅ Paste cleanup: spaces, dashes and non-ASCII digits are normalized
-- ✅ Scales with Dynamic Type and Android font scale
-- ✅ Respects Reduce Motion (no shake when it is on)
-- ✅ Errors are never shown by colour alone
-- ✅ Custom cell slot: change the look without forking
-- ✅ No Google Play services dependency, no SMS permission
+| Module | Contents |
+|---|---|
+| `sharedLogic` | Platform-neutral Kotlin: OTP state, normalization, validation, completion |
+| `sharedUI` | Android Jetpack Compose component and TalkBack integration |
+| `iosApp` | Native SwiftUI component, VoiceOver integration and iOS sample app |
+| `androidApp` | Android sample app |
+
+iOS UI is native SwiftUI. Compose is not used on iOS, so iOS apps do not take on the Compose runtime. Only `sharedLogic` is shared, as the `SharedLogic` framework.
+
+---
+
+## Goals
+
+- One logical input per platform; digit cells are hidden from assistive technology
+- TalkBack and VoiceOver: label, progress, entered digits (unless masked) and announced errors
+- Platform OTP autofill: `ContentType.SmsOtpCode` on Android, `.textContentType(.oneTimeCode)` on iOS
+- Paste cleanup: spaces, dashes and non-ASCII digits are normalized
+- Scales with Android font scale and Dynamic Type
+- Respects Reduce Motion / Remove animations
+- Errors are never shown by color alone
+- Code digits stay left-to-right in right-to-left layouts
+- No SMS permissions and no Google Play services dependency
 
 ---
 
 ## Platforms
 
-| Platform | Support |
-|---|---|
-| Android | ✅ minSdk 23 |
-| iOS | ✅ iOS 15+ (arm64, simulator arm64) |
-| Desktop / Web | Planned |
+| Platform | Minimum (current project settings) | UI |
+|---|---|---|
+| Android | minSdk 24 | Jetpack Compose |
+| iOS | 18.2 (Xcode deployment target), arm64 device and arm64 simulator | SwiftUI |
+
+Minimum versions are not final and may change before the first release.
 
 ---
 
 ## Installation
 
-Add the dependency to your shared module:
+Not published yet. The distribution format is not decided:
 
-```kotlin
-// shared/build.gradle.kts
-kotlin {
-    sourceSets {
-        commonMain.dependencies {
-            implementation("com.vprogrammers:a11y-otp:1.0.0")
-        }
-    }
-}
-```
+- **Android:** Maven, as one artifact or separate `sharedLogic` and `sharedUI` artifacts.
+- **iOS:** Swift Package Manager containing the SwiftUI source and a binary `SharedLogic` XCFramework, or another distribution structure selected before the first release.
 
-That's it. No CocoaPods, SPM or Tuist step for iOS. The library is linked into your shared framework.
-
-For an Android-only project:
-
-```kotlin
-// app/build.gradle.kts
-dependencies {
-    implementation("com.vprogrammers:a11y-otp:1.0.0")
-}
-```
+Coordinates and package URLs will be added with the first release.
 
 ---
 
-## Quick start
+## Planned usage
+
+The API below is the design target and may change before release.
+
+### Android (Compose)
 
 ```kotlin
 @Composable
@@ -99,129 +94,76 @@ fun VerifyScreen(viewModel: VerifyViewModel) {
 }
 ```
 
-Your Android `setContent { App() }` and iOS `ComposeUIViewController { App() }` stay exactly as they are.
+### iOS (SwiftUI)
 
----
+```swift
+struct VerifyView: View {
+    @State private var code = ""
+    @State private var error: String?
 
-## Usage
-
-### State
-
-```kotlin
-val otp = rememberOtpState(length = 6)
-
-otp.value          // "4829"
-otp.isComplete     // false
-otp.error          // null
-
-otp.setError("Wrong code. 2 attempts left.")
-otp.clear()
-```
-
-`OtpState` is hoisted: you own it, the field only updates it from user input.
-
-### Handling a wrong code
-
-```kotlin
-val otp = rememberOtpState(6)
-val scope = rememberCoroutineScope()
-
-OtpField(
-    state = otp,
-    onComplete = { code ->
-        scope.launch {
-            if (!api.verify(code)) {
-                otp.setError("Wrong code. Try again.")
-            }
-        }
-    },
-)
-```
-
-When `error` is set, the field:
-- shows error colours **and** an icon with the message below,
-- announces the message to VoiceOver and TalkBack,
-- plays a haptic,
-- shakes, unless Reduce Motion is on.
-
-Typing again clears the error automatically.
-
-### Custom cells
-
-```kotlin
-OtpField(
-    state = otp,
-    onComplete = ::verify,
-) { cell ->
-    Box(
-        modifier = Modifier
-            .size(48.dp)
-            .border(
-                width = if (cell.isActive) 2.dp else 1.dp,
-                color = if (cell.isError) Color.Red else Color.Gray,
-                shape = RoundedCornerShape(12.dp),
-            ),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(cell.char?.toString() ?: "", style = MaterialTheme.typography.headlineSmall)
+    var body: some View {
+        OtpField(
+            code: $code,
+            length: 6,
+            label: "Verification code",
+            error: error,
+            onComplete: { code in viewModel.verify(code) }
+        )
     }
 }
 ```
 
-Your cell is always hidden from screen readers. Accessibility is handled by the field, whatever you draw.
+### Handling a wrong code
 
-`OtpCellState`:
+The host app sets an error message after verification fails. The field then:
 
-| Property | Type | Meaning |
+- shows error colors **and** an icon with the message below,
+- announces the message to TalkBack and VoiceOver without moving focus,
+- shakes, unless Reduce Motion / Remove animations is on.
+
+Typing again clears the error.
+
+### Masked mode
+
+By default the entered digits are visible and readable by screen readers, so users can check what they typed. Masked mode (dots instead of digits) also hides the digits from assistive technology and announces only progress.
+
+### Custom cells
+
+Both platforms accept a cell slot to change the look of each box. Custom cells are always hidden from screen readers: accessibility is handled by the field, whatever you draw.
+
+---
+
+## Accessibility
+
+### What screen readers hear (target behavior)
+
+| Moment | Unmasked | Masked |
 |---|---|---|
-| `index` | `Int` | Position, 0-based |
-| `char` | `Char?` | Entered character, or `null` |
-| `isActive` | `Boolean` | Next cell to be filled |
-| `isError` | `Boolean` | Field is in error state |
+| Focus | *"Verification code, text field, 482, 3 of 6 digits entered"* | *"Verification code, text field, 3 of 6 digits entered"* |
+| Typing | The typed digit, using the platform's normal key echo | Progress only |
+| Error | *"Wrong code. Try again."*, announced without moving focus | Same |
 
-### Theming
+The exact wording and order depend on the platform screen reader.
 
-```kotlin
-OtpField(
-    state = otp,
-    onComplete = ::verify,
-    colors = OtpDefaults.colors(
-        border = Color(0xFF8A8A8A),
-        activeBorder = Color(0xFF3A4AA0),
-        errorBorder = Color(0xFFB3261E),
-        text = Color(0xFF1C1B1F),
-    ),
-)
-```
+### Requirements
 
-Default colours meet a contrast ratio of at least 4.5:1 in light and dark themes.
-
-### Localization
-
-```kotlin
-OtpField(
-    state = otp,
-    onComplete = ::verify,
-    label = "Verifikacioni kod",
-    strings = OtpDefaults.strings(
-        progress = { entered, total -> "$entered od $total cifara uneto" },
-    ),
-)
-```
-
-### All parameters
-
-| Parameter | Default | Description |
+| Requirement | Approach | WCAG 2.2 |
 |---|---|---|
-| `state` | — | `OtpState` from `rememberOtpState()` |
-| `onComplete` | — | Called once when the last cell is filled |
-| `modifier` | `Modifier` | Applied to the field |
-| `label` | `"Verification code"` | Accessible name, read by screen readers |
-| `colors` | `OtpDefaults.colors()` | Border, text and error colours |
-| `strings` | `OtpDefaults.strings()` | Progress text for screen readers |
-| `enabled` | `true` | Disables input and dims the field |
-| `autoFocus` | `false` | Focus and open the keyboard on first composition |
-| `cell` | `DefaultOtpCell` | Slot to draw each box |
+| One labelled input | Single text input, decorative cells hidden | 1.3.1, 4.1.2 |
+| Errors not by color alone | Color + icon + text | 1.4.1 |
+| Contrast | Default colors ≥ 4.5:1 for text, ≥ 3:1 for cell borders | 1.4.3, 1.4.11 |
+| Large text | No fixed heights; cells grow with font scale | 1.4.4 |
+| Motion | No shake when Reduce Motion / Remove animations is on | 2.3.3 |
+| Voice Control | Visible label matches accessible name | 2.5.3 |
+| Target size | Whole row is the tap target (≥ 48dp / 44pt) | 2.5.8 |
+| Error messages | Described in text and announced | 3.3.1 |
+| Accessible authentication | Paste and autofill are always allowed | 3.3.8 |
+
+These are goals. Support will be documented per platform after real-device checks with TalkBack, Switch Access, VoiceOver and Voice Control.
+
+### App Store Accessibility Nutrition Labels
+
+Labels are declared for your **whole app**, not per component. The goal is for this component not to block any label, but your other screens must also meet them. Only declare what your app actually meets.
 
 ---
 
@@ -229,125 +171,13 @@ OtpField(
 
 | | Android | iOS |
 |---|---|---|
-| Mechanism | `ContentType.SmsOtpCode` | `textContentType = .oneTimeCode` |
-| Where the code comes from | Autofill service, keyboard suggestion | Messages, Mail (iOS 17+) |
-| Extra setup | None | None |
-| SMS permission | Not used | Not available on iOS |
+| Mechanism | `ContentType.SmsOtpCode` | `.textContentType(.oneTimeCode)` |
+| Where the code comes from | Autofill service, keyboard suggestion | Messages, Mail |
+| SMS permission | Not used | Not available |
 
-> **Testing on iOS:** `.oneTimeCode` suggestions only appear on a real device, not in the simulator.
+> **Testing:** OTP autofill suggestions need a real device. They do not appear in the iOS simulator.
 
-> **Google Play:** this library never uses `READ_SMS` or `RECEIVE_SMS`. Those permissions are heavily restricted on Google Play and can get an app rejected.
-
----
-
-## Accessibility
-
-### What screen readers hear
-
-| Moment | VoiceOver / TalkBack |
-|---|---|
-| Focus | *"Verification code, text field, 0 of 6 digits entered"* |
-| Typing | *"3 of 6 digits entered"* |
-| Complete | *"6 of 6 digits entered"* |
-| Error | *"Wrong code. Try again."* (announced immediately) |
-
-### App Store Accessibility Nutrition Labels
-
-This component **does not block** any of these labels for your app:
-
-| Label | Status | How |
-|---|---|---|
-| VoiceOver | ✅ | One element, live progress value, announced errors |
-| Voice Control | ✅ | Visible label matches the accessible name |
-| Larger Text | ✅ | Cells grow with Dynamic Type, no fixed heights |
-| Dark Interface | ✅ | Light and dark default colours |
-| Differentiate Without Color Alone | ✅ | Error = colour + icon + text |
-| Sufficient Contrast | ✅ | Defaults ≥ 4.5:1 |
-| Reduced Motion | ✅ | Shake animation is disabled |
-
-> Labels are declared for your **whole app**, not per component. This library supports them, but your other screens must too. Only declare what your app actually meets.
-
-### Android
-
-| Check | Status |
-|---|---|
-| TalkBack | ✅ |
-| Switch Access | ✅ |
-| Font scale up to 2.0 | ✅ |
-| Touch target ≥ 48dp | ✅ |
-| Remove animations setting | ✅ |
-| Accessibility Scanner | No warnings |
-
-### WCAG 2.2
-
-| Criterion | |
-|---|---|
-| 1.3.1 Info and Relationships | One labelled input |
-| 1.4.1 Use of Color | Errors are not colour-only |
-| 1.4.3 Contrast (Minimum) | Default colours ≥ 4.5:1 |
-| 1.4.4 Resize Text | Scales with system font size |
-| 2.3.3 Animation from Interactions | Respects Reduce Motion |
-| 2.5.3 Label in Name | Visible label = accessible name |
-| 2.5.8 Target Size (Minimum) | Whole row is the tap target |
-| 3.3.1 Error Identification | Errors described in text and announced |
-| 3.3.8 Accessible Authentication | Paste and autofill always allowed |
-
----
-
-## Using it from SwiftUI
-
-If your iOS UI is SwiftUI and only your logic is shared, the library ships a `UIViewController` you can wrap.
-
-**1. Export the library from your shared framework:**
-
-```kotlin
-// shared/build.gradle.kts
-kotlin {
-    listOf(iosArm64(), iosSimulatorArm64()).forEach {
-        it.binaries.framework {
-            baseName = "Shared"
-            export("com.vprogrammers:a11y-otp:1.0.0")
-        }
-    }
-    sourceSets {
-        commonMain.dependencies {
-            api("com.vprogrammers:a11y-otp:1.0.0")
-        }
-    }
-}
-```
-
-**2. Wrap it once:**
-
-```swift
-import SwiftUI
-import Shared
-
-struct OtpView: UIViewControllerRepresentable {
-    var length: Int32 = 6
-    var label: String = "Verification code"
-    let onComplete: (String) -> Void
-
-    func makeUIViewController(context: Context) -> UIViewController {
-        OtpFieldViewControllerKt.OtpFieldViewController(
-            length: length,
-            label: label,
-            onComplete: onComplete
-        )
-    }
-
-    func updateUIViewController(_ vc: UIViewController, context: Context) {}
-}
-```
-
-**3. Use it:**
-
-```swift
-OtpView { code in viewModel.verify(code) }
-    .frame(height: 64)
-```
-
-> Embedding Compose in SwiftUI adds the Compose runtime to your app. If you don't already use Compose Multiplatform, a native SwiftUI component such as [CBPinEntryView](https://github.com/Fawxy/CBPinEntryView) is a better fit.
+> **Google Play:** this library never uses `READ_SMS` or `RECEIVE_SMS`. Those permissions are heavily restricted on Google Play.
 
 ---
 
@@ -355,10 +185,10 @@ OtpView { code in viewModel.verify(code) }
 
 By design, it stays a UI component:
 
-- ❌ No network calls or code verification
-- ❌ No resend timer
-- ❌ No SMS reading (no SMS Retriever, no permissions)
-- ❌ No rate limiting. Your server must enforce attempt limits.
+- No network calls or code verification
+- No resend timer
+- No SMS reading (no SMS Retriever, no permissions)
+- No rate limiting. Your server must enforce attempt limits.
 
 ---
 
@@ -366,32 +196,42 @@ By design, it stays a UI component:
 
 Before you ship, check the field with assistive technology on real devices:
 
-- [ ] VoiceOver (iOS): focus is one element, progress is read while typing
-- [ ] TalkBack (Android): same as above
+- [ ] TalkBack and VoiceOver: focus lands on one element, and the label and progress are read
+- [ ] Unmasked: entered digits can be reviewed; masked: digits are not read
 - [ ] Wrong code: the error is announced without moving focus
 - [ ] Largest text size: nothing is clipped
 - [ ] Reduce Motion / Remove animations: no shake
-- [ ] SMS autofill on a real device, both platforms
+- [ ] OTP autofill on a real device, both platforms
 - [ ] Paste `123-456` from the clipboard
+- [ ] Right-to-left locale: digits stay in order
 
 ---
 
-## Requirements
+## Development
 
-| | Minimum |
-|---|---|
-| Kotlin | 2.2 |
-| Compose Multiplatform | 1.8 |
-| Android | minSdk 23 |
-| iOS | 15.0 |
+Requirements: JDK 21, Android SDK, and Xcode for iOS.
+
+```bash
+./gradlew ktlintCheck                       # formatting
+./gradlew :sharedLogic:testAndroidHostTest  # shared logic tests on the JVM
+./gradlew test                              # all JVM tests
+./gradlew :androidApp:assembleDebug         # Android sample app
+```
+
+Open `iosApp/iosApp.xcodeproj` in Xcode to run the iOS sample. The build phase runs `:sharedLogic:embedAndSignAppleFrameworkForXcode`.
+
+> **Intel Macs** cannot run the ARM64 iOS simulator tests (`:sharedLogic:iosSimulatorArm64Test`). Run them on Apple Silicon. The deprecated `iosX64` target is intentionally not added.
 
 ---
 
 ## Roadmap
 
-- [ ] Secure mode (dots instead of digits)
+- [ ] Shared OTP state and normalization
+- [ ] Android Compose component
+- [ ] Native SwiftUI component
+- [ ] Masked mode
 - [ ] Alphanumeric codes
-- [ ] Desktop and Web targets
+- [ ] Android and iOS distribution
 - [ ] Optional SMS User Consent module for Android
 
 ---
@@ -407,10 +247,4 @@ Issues and pull requests are welcome. For accessibility bugs, please include:
 
 ## License
 
-```
-MIT License
-
-Copyright (c) 2026 VProgrammers
-```
-
-See [LICENSE](LICENSE) for the full text.
+MIT. See [LICENSE](LICENSE).
