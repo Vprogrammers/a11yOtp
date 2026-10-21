@@ -16,8 +16,9 @@ You may create or edit files only under:
 - `sharedLogic/src/iosTest`
 - `sharedUI/src/commonTest`
 - `sharedUI/src/androidHostTest`
+- `sharedUI/src/androidDeviceTest`
 
-You may also add test-only dependencies to `gradle/libs.versions.toml` and to the test dependency blocks (`commonTest`, `androidHostTest`) of module `build.gradle.kts` files. Do not change plugins, targets, versions of existing dependencies, or other Gradle configuration.
+You may also add test-only dependencies to `gradle/libs.versions.toml` and to the test dependency blocks (`commonTest`, `androidHostTest`, `androidDeviceTest`) of module `build.gradle.kts` files. Do not change plugins, targets, versions of existing dependencies, or other Gradle configuration.
 
 Do not edit production code, generated sources, or `iosApp`. If production code must change for testability, report the minimal required change for the implementation agent.
 
