@@ -40,12 +40,13 @@ Avoid one editable field per digit. It produces fragile focus, paste, autofill, 
 - Build semantics from the single logical input.
 - Merge or clear decorative descendant semantics deliberately.
 - Expose errors with `semantics { error(message) }` on the logical input and a polite live region (`liveRegion = LiveRegionMode.Polite`) on the visible error text. Do not use `View.announceForAccessibility`, which is deprecated from API 36.
+- Verify on a device that error semantics and the polite live region produce one useful announcement per transition into the error state. Do not add a separate forced announcement when the live region already announces the message.
 - Prefer semantics matchers in tests; use test tags only when semantics cannot identify the node cleanly.
 - Verify TalkBack, Switch Access, hardware keyboard navigation, software keyboard behavior, and autofill on a device or emulator when host tests are insufficient.
 
 ## Native SwiftUI
 
-- Combine decorative cells into one accessibility element or hide them and expose the backing input.
+- Hide decorative digit cells from the accessibility tree and expose the backing input as the single logical editable accessibility element.
 - Provide an intentional label, value/state, useful hint, and invalid-state feedback.
 - Announce errors with `AccessibilityNotification.Announcement(message).post()` only on the transition into the error state, without moving focus.
 - Use `.keyboardType(.numberPad)` for numeric input and provide an explicit completion/dismissal affordance because number pad has no Return key.
