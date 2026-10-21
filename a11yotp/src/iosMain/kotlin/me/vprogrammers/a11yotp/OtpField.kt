@@ -291,6 +291,7 @@ class OtpField(
     // The number pad has no Return key, so the keyboard gets a Done button.
     private fun doneBar(): OtpKeyboardAccessory =
         OtpKeyboardAccessory(handler, "donePressed").also {
+            it.anchorView = container
             it.setTitle(doneButtonTitle)
             doneBar = it
         }
