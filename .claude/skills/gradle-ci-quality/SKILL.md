@@ -9,8 +9,8 @@ Keep build changes compatible with the existing KMP project and avoid unrelated 
 
 ## Current state
 
-- No `.github/workflows` directory exists yet.
-- The first CI workflow should gate ktlint, shared logic tests, Android host/Compose tests, Android sample build, and Apple Silicon iOS framework/app validation.
+- A manually triggered `.github/workflows/ios-swiftlint.yml` workflow runs the pinned SwiftLint ruleset.
+- Broader CI does not exist yet. The first full validation workflow should gate ktlint, SwiftLint, shared logic tests, Android host/Compose tests, Android sample build, and Apple Silicon iOS framework/app validation.
 - `kotlin.native.ignoreDisabledTargets=true` suppresses warnings for native targets that cannot run on the current host; it does not add compatibility or make skipped tests pass.
 - Gradle runs on JDK 21.
 - `androidApp` Kotlin bytecode target is JVM 21, while its Java `sourceCompatibility` and `targetCompatibility` are 11.
@@ -37,7 +37,8 @@ Keep build changes compatible with the existing KMP project and avoid unrelated 
 4. `:sharedUI:connectedAndroidDeviceTest` on a managed emulator once Compose device tests exist;
 5. `:androidApp:assembleDebug`;
 6. `:sharedLogic:iosSimulatorArm64Test` and iOS app build on Apple Silicon;
-7. publication validation once publishing exists.
+7. SwiftLint through `./scripts/swiftlint.sh`;
+8. publication validation once publishing exists.
 
 Before the first iOS CI job, mark the `iosApp` scheme as Shared in Xcode and commit `iosApp/iosApp.xcodeproj/xcshareddata`. The scheme currently exists only in ignored `xcuserdata`.
 

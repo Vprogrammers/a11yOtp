@@ -26,6 +26,18 @@ opt_in_rules:
     - unused_parameter
     - vertical_whitespace_closing_braces
 
+accessibility_label_for_image:
+    severity: error
+
+accessibility_trait_for_button:
+    severity: error
+
+force_unwrapping:
+    severity: error
+
+implicitly_unwrapped_optional:
+    severity: error
+
 line_length:
     warning: 120
     error: 160

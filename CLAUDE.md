@@ -20,7 +20,7 @@ Read `.claude/skills/kmp-library-engineering/SKILL.md` for the authoritative mod
 - Xcode project and scheme: `iosApp/iosApp.xcodeproj`, scheme `iosApp`
 - Kotlin framework: `SharedLogic`, built by Xcode through `:sharedLogic:embedAndSignAppleFrameworkForXcode`
 - iOS deployment target: 18.2
-- No Xcode test target, publication configuration, or GitHub Actions workflow exists yet.
+- No Xcode test target or publication configuration exists yet. A manually triggered SwiftLint workflow exists; broader CI does not.
 - Gradle uses JDK 21. Android bytecode targets are currently mixed; see `gradle-ci-quality/SKILL.md`.
 
 ## Project skills
