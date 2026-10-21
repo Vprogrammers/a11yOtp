@@ -27,6 +27,7 @@ Keep build changes compatible with the existing KMP project and avoid unrelated 
 - Do not apply Android-only migration guidance blindly to KMP modules.
 - Do not change minimum SDKs, Apple targets, publishing coordinates, or public API compatibility without explaining impact.
 - Do not reintroduce deprecated `iosX64` to suppress Intel-host warnings.
+- Before the first publication, remove unused starter dependencies, especially Lifecycle Compose and alpha Material3 artifacts, unless the public component implementation demonstrably requires them.
 
 ## Intended CI gates
 
