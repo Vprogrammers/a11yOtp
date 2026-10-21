@@ -20,7 +20,7 @@ Read `.claude/skills/kmp-library-engineering/SKILL.md` for the authoritative mod
 - Xcode project and scheme: `iosApp/iosApp.xcodeproj`, scheme `iosApp`
 - Kotlin framework: `SharedLogic`, built by Xcode through `:sharedLogic:embedAndSignAppleFrameworkForXcode`
 - iOS deployment target: 18.2
-- No Xcode test target, publication configuration, or GitHub Actions workflow exists yet.
+- No Xcode test target or publication configuration exists yet. A manually triggered SwiftLint workflow exists; broader CI does not.
 - Gradle uses JDK 21. Android bytecode targets are currently mixed; see `gradle-ci-quality/SKILL.md`.
 
 ## Project skills
@@ -57,6 +57,7 @@ Run the narrowest applicable command first:
 ./gradlew :sharedUI:connectedAndroidDeviceTest   # needs emulator or device
 ./gradlew :androidApp:assembleDebug
 ./gradlew ktlintCheck
+./scripts/swiftlint.sh   # pinned SwiftLint; configured errors fail
 ```
 
 Confirm an uncertain module task with:
@@ -104,5 +105,6 @@ The current Intel macOS host cannot execute ARM64 simulator tests. Report that l
 - Work from `feat/<issue>-description`, `fix/<issue>-description`, or `chore/<issue>-description`.
 - Keep commits focused.
 - Claude never pushes or force-pushes; `git push` is denied in `.claude/settings.json`. When a push is requested, ask the user to run the exact command with `!`.
+- Run `./scripts/swiftlint.sh` after native Swift or SwiftUI changes.
 - Do not merge, publish, or create releases unless explicitly requested.
 - Reference the issue in the PR and use `Closes #<issue>` when appropriate.
