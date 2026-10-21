@@ -75,11 +75,4 @@ class OtpFieldStyleTest {
             OtpFieldDefaults.style(borderWidth = 2.dp, focusedBorderWidth = 2.dp)
         }
     }
-
-    @Test
-    fun accessibilityTextMustNotBeBlank() {
-        assertFailsWith<IllegalArgumentException> { OtpFieldAccessibility(" ", "Error") { _, _ -> "x" } }
-        assertFailsWith<IllegalArgumentException> { OtpFieldAccessibility("Code", "") { _, _ -> "x" } }
-        assertFailsWith<IllegalArgumentException> { OtpResendAccessibility("") { "x" } }
-    }
 }

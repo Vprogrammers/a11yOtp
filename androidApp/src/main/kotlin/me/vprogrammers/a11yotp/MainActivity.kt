@@ -97,7 +97,7 @@ fun SampleScreen() {
                 OtpFieldAccessibility(
                     label = "Verification code",
                     errorMessage = "Incorrect code. Try again.",
-                    progressDescription = { entered, total -> "$entered of $total digits entered" },
+                    progressDescription = { "${it.entered} of ${it.total} digits entered" },
                 ),
             style = OtpFieldDefaults.style(groupSize = 3),
         )
@@ -125,7 +125,7 @@ fun SampleScreen() {
             accessibility =
                 OtpResendAccessibility(
                     label = "Resend code",
-                    countdownDescription = { "Resend code in $it s" },
+                    countdownDescription = { "Resend code in ${it.secondsRemaining} s" },
                 ),
             style = buttonStyle,
         )

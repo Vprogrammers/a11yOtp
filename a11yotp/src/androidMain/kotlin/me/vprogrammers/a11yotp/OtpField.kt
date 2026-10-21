@@ -89,7 +89,7 @@ fun OtpField(
     var focused by remember { mutableStateOf(false) }
     // Always show the committed code with the cursor at the end.
     val fieldValue = TextFieldValue(state.code, TextRange(state.code.length))
-    val progress = accessibility.progressDescription(state.enteredDigitCount, total)
+    val progress = accessibility.progressDescription(OtpProgress(state.enteredDigitCount, total))
 
     val haptics = LocalHapticFeedback.current
     var wasError by remember { mutableStateOf(state.isError) }

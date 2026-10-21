@@ -115,16 +115,6 @@ class OtpButtonStyle internal constructor(
     }
 }
 
-/** Required, localized accessibility text for an [OtpVerifyButton]; [label] is also the visible text. */
-@Immutable
-class OtpVerifyAccessibility(
-    val label: String,
-) {
-    init {
-        require(label.isNotBlank()) { "label must not be blank" }
-    }
-}
-
 /**
  * Button that verifies a complete code. It is enabled only while [state] is complete and
  * [enabled] is true. The host owns verification: [onVerify] receives the code and should not

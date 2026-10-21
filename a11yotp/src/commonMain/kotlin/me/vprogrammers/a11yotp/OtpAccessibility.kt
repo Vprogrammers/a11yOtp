@@ -1,9 +1,37 @@
 package me.vprogrammers.a11yotp
 
-import androidx.compose.runtime.Immutable
+/**
+ * Progress of the entered code, passed to [OtpFieldAccessibility.progressDescription] so hosts
+ * can localize with plural rules. A value object rather than primitive lambda parameters so the
+ * callback stays idiomatic when called from Swift.
+ */
+class OtpProgress internal constructor(
+    val entered: Int,
+    val total: Int,
+) {
+    override fun equals(other: Any?): Boolean = other is OtpProgress && other.entered == entered && other.total == total
+
+    override fun hashCode(): Int = 31 * entered + total
+
+    override fun toString(): String = "OtpProgress(entered=$entered, total=$total)"
+}
 
 /**
- * Required, localized accessibility text for an [OtpField]. There are deliberately no
+ * Remaining resend time, passed to [OtpResendAccessibility.countdownDescription] so hosts can
+ * localize with plural rules.
+ */
+class OtpCountdown internal constructor(
+    val secondsRemaining: Int,
+) {
+    override fun equals(other: Any?): Boolean = other is OtpCountdown && other.secondsRemaining == secondsRemaining
+
+    override fun hashCode(): Int = secondsRemaining
+
+    override fun toString(): String = "OtpCountdown(secondsRemaining=$secondsRemaining)"
+}
+
+/**
+ * Required, localized accessibility text for an OTP field. There are deliberately no
  * defaults so the component cannot be shown without it.
  *
  * @property label accessible name of the field; should match any visible label.
@@ -11,11 +39,10 @@ import androidx.compose.runtime.Immutable
  * [OtpState.isError] is true.
  * @property progressDescription state description such as "3 of 6 digits entered".
  */
-@Immutable
 class OtpFieldAccessibility(
     val label: String,
     val errorMessage: String,
-    val progressDescription: (entered: Int, total: Int) -> String,
+    val progressDescription: (OtpProgress) -> String,
 ) {
     init {
         require(label.isNotBlank()) { "label must not be blank" }
@@ -23,18 +50,26 @@ class OtpFieldAccessibility(
     }
 }
 
+/** Required, localized accessibility text for an OTP verify button; [label] is also the visible text. */
+class OtpVerifyAccessibility(
+    val label: String,
+) {
+    init {
+        require(label.isNotBlank()) { "label must not be blank" }
+    }
+}
+
 /**
- * Required, localized accessibility text for an [OtpResendButton].
+ * Required, localized accessibility text for an OTP resend button.
  *
  * @property label accessible name and visible text when resending is available.
  * @property countdownDescription visible text (and therefore accessible name) while the
  * countdown runs. It should begin with the label, for example "Resend code in 25 s", so the
  * visible label stays contained in the accessible name (WCAG 2.5.3).
  */
-@Immutable
 class OtpResendAccessibility(
     val label: String,
-    val countdownDescription: (seconds: Int) -> String,
+    val countdownDescription: (OtpCountdown) -> String,
 ) {
     init {
         require(label.isNotBlank()) { "label must not be blank" }

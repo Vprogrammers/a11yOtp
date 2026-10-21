@@ -63,7 +63,7 @@ class OtpFieldTest {
             }
         }
     private val accessibility =
-        OtpFieldAccessibility("Code", "Wrong code") { entered, total -> "$entered of $total digits entered" }
+        OtpFieldAccessibility("Code", "Wrong code") { "${it.entered} of ${it.total} digits entered" }
 
     private fun setField(
         enabled: Boolean = true,
@@ -373,7 +373,7 @@ class OtpFieldTest {
             OtpResendButton(
                 secondsRemaining = seconds,
                 onResend = { resends++ },
-                accessibility = OtpResendAccessibility("Resend code") { "Resend code in $it s" },
+                accessibility = OtpResendAccessibility("Resend code") { "Resend code in ${it.secondsRemaining} s" },
             )
         }
         val countdown = rule.onNode(hasText("Resend code in 25 s"))
@@ -466,7 +466,7 @@ class OtpFieldTest {
             OtpResendButton(
                 secondsRemaining = 0,
                 onResend = {},
-                accessibility = OtpResendAccessibility("Resend code") { "Resend code in $it s" },
+                accessibility = OtpResendAccessibility("Resend code") { "Resend code in ${it.secondsRemaining} s" },
             )
         }
         rule.onNode(hasText("Verify")).assertHeightIsAtLeast(48.dp).assertWidthIsAtLeast(48.dp)
