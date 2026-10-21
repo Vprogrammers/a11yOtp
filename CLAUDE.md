@@ -82,7 +82,7 @@ The current Intel macOS host cannot execute ARM64 simulator tests. Report that l
 ## Working rules
 
 - Read the relevant module and skill before editing.
-- Delegate focused work to the matching subagent.
+- Delegate focused work to the matching subagent. Handle Gradle/CI and documentation changes in the main session using the matching skill.
 - Keep generated files under `build/` untouched.
 - Never read or commit `local.properties`, credentials, signing material, `.env`, keystores, or local Claude settings.
 - Do not change platform minimums, toolchain versions, publishing coordinates, distribution format, or public API compatibility without explaining impact.

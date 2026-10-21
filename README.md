@@ -66,10 +66,10 @@ Minimum versions are not final and may change before the first release.
 
 ## Installation
 
-Not published yet. Planned distribution:
+Not published yet. The distribution format is not decided:
 
-- **Android:** a Maven artifact containing `sharedUI` and `sharedLogic`.
-- **iOS:** a Swift package containing the SwiftUI component and the `SharedLogic` binary framework.
+- **Android:** Maven, as one artifact or separate `sharedLogic` and `sharedUI` artifacts.
+- **iOS:** Swift Package Manager and/or an XCFramework containing the SwiftUI component and the `SharedLogic` framework.
 
 Coordinates and package URLs will be added with the first release.
 
@@ -231,7 +231,7 @@ Open `iosApp/iosApp.xcodeproj` in Xcode to run the iOS sample. The build phase r
 - [ ] Native SwiftUI component
 - [ ] Masked mode
 - [ ] Alphanumeric codes
-- [ ] Maven and Swift Package Manager distribution
+- [ ] Android and iOS distribution
 - [ ] Optional SMS User Consent module for Android
 
 ---
