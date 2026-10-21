@@ -6,14 +6,9 @@ import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.CValue
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.ObjCAction
-import platform.CoreGraphics.CGRectMake
 import platform.Foundation.NSRange
-import platform.Foundation.NSSelectorFromString
 import platform.UIKit.UIAccessibilityAnnouncementNotification
 import platform.UIKit.UIAccessibilityPostNotification
-import platform.UIKit.UIBarButtonItem
-import platform.UIKit.UIBarButtonItemStyle
-import platform.UIKit.UIBarButtonSystemItem
 import platform.UIKit.UIKeyboardTypeNumberPad
 import platform.UIKit.UINotificationFeedbackGenerator
 import platform.UIKit.UINotificationFeedbackType
@@ -23,9 +18,7 @@ import platform.UIKit.UITextContentTypeOneTimeCode
 import platform.UIKit.UITextField
 import platform.UIKit.UITextFieldDelegateProtocol
 import platform.UIKit.UITextSpellCheckingType
-import platform.UIKit.UIToolbar
 import platform.UIKit.UIView
-import platform.UIKit.setAccessibilityLabel
 import platform.UIKit.setIsAccessibilityElement
 import platform.darwin.DISPATCH_TIME_NOW
 import platform.darwin.NSObject
@@ -137,7 +130,7 @@ class OtpField(
     private var isFocused = false
     private var isPinningCaret = false
     private val handler = Handler()
-    private var doneItem: UIBarButtonItem? = null
+    private var doneBar: OtpKeyboardAccessory? = null
     private var errorGeneration = 0
 
     private inner class Handler :
@@ -190,7 +183,7 @@ class OtpField(
         textField.tintColor = platform.UIKit.UIColor.clearColor
         textField.backgroundColor = platform.UIKit.UIColor.clearColor
         textField.setIsAccessibilityElement(true)
-        textField.inputAccessoryView = doneToolbar()
+        textField.inputAccessoryView = doneBar()
 
         val weakSelf = WeakReference(this)
         container.onTraitsChanged = { weakSelf.get()?.render() }
@@ -296,38 +289,17 @@ class OtpField(
     }
 
     // The number pad has no Return key, so the keyboard gets a Done button.
-    private fun doneToolbar(): UIToolbar {
-        val toolbar = UIToolbar(frame = CGRectMake(0.0, 0.0, TOOLBAR_WIDTH, TOOLBAR_HEIGHT))
-        val done =
-            UIBarButtonItem(
-                title = doneButtonTitle,
-                style = UIBarButtonItemStyle.UIBarButtonItemStyleDone,
-                target = handler,
-                action = NSSelectorFromString("donePressed"),
-            )
-        done.setAccessibilityLabel(doneButtonTitle)
-        doneItem = done
-        toolbar.items =
-            listOf(
-                UIBarButtonItem(
-                    barButtonSystemItem = UIBarButtonSystemItem.UIBarButtonSystemItemFlexibleSpace,
-                    target = null,
-                    action = null,
-                ),
-                done,
-            )
-        toolbar.sizeToFit()
-        return toolbar
-    }
+    private fun doneBar(): OtpKeyboardAccessory =
+        OtpKeyboardAccessory(handler, "donePressed").also {
+            it.setTitle(doneButtonTitle)
+            doneBar = it
+        }
 
     private fun applyDoneTitle() {
-        doneItem?.title = doneButtonTitle
-        doneItem?.setAccessibilityLabel(doneButtonTitle)
+        doneBar?.setTitle(doneButtonTitle)
     }
 
     private companion object {
         const val ANNOUNCEMENT_DELAY_NANOS = 300_000_000L
-        const val TOOLBAR_WIDTH = 320.0
-        const val TOOLBAR_HEIGHT = 44.0
     }
 }
