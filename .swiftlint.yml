@@ -1,0 +1,56 @@
+included:
+    - iosApp
+
+excluded:
+    - "**/.build"
+    - "**/build"
+    - "**/DerivedData"
+    - "**/SourcePackages"
+    - "**/Generated"
+
+opt_in_rules:
+    # Accessibility
+    - accessibility_label_for_image
+    - accessibility_trait_for_button
+
+    # Correctness and clarity
+    - empty_count
+    - empty_string
+    - explicit_init
+    - first_where
+    - force_unwrapping
+    - implicitly_unwrapped_optional
+    - redundant_nil_coalescing
+    - sorted_first_last
+    - toggle_bool
+    - unused_parameter
+    - vertical_whitespace_closing_braces
+
+accessibility_label_for_image:
+    severity: error
+
+accessibility_trait_for_button:
+    severity: error
+
+force_unwrapping:
+    severity: error
+
+implicitly_unwrapped_optional:
+    severity: error
+
+line_length:
+    warning: 120
+    error: 160
+    ignores_comments: true
+    ignores_urls: true
+
+type_name:
+    excluded:
+        # Generated application entry point.
+        - iOSApp
+
+identifier_name:
+    excluded:
+        - id
+
+reporter: xcode

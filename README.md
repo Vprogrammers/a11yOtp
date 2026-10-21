@@ -222,6 +222,34 @@ Open `iosApp/iosApp.xcodeproj` in Xcode to run the iOS sample. The build phase r
 
 > **Intel Macs** cannot run the ARM64 iOS simulator tests (`:sharedLogic:iosSimulatorArm64Test`). Run them on Apple Silicon. The deprecated `iosX64` target is intentionally not added.
 
+### SwiftLint
+
+Native Swift and SwiftUI sources are checked with the version pinned in `Mintfile`, so local and CI checks use the same ruleset.
+
+Install [Mint](https://github.com/yonaskolb/Mint) once:
+
+```bash
+brew install mint
+```
+
+Run lint from the repository root:
+
+```bash
+./scripts/swiftlint.sh
+```
+
+The script reads the required version from `Mintfile` and installs it through Mint when needed. If Mint is unavailable, it accepts an existing `swiftlint` executable only when its version matches the pin.
+
+Xcode integration is optional. To show violations while building locally, add a Run Script build phase containing:
+
+```bash
+export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+"$SRCROOT/../scripts/swiftlint.sh"
+```
+
+For an Xcode Run Script phase, set `ENABLE_USER_SCRIPT_SANDBOXING = NO`; otherwise Xcode can prevent the script from reading project files. This integration is optional. CI does not depend on an individual developer's Xcode configuration and never modifies Swift source files automatically.
+
+
 ---
 
 ## Roadmap
