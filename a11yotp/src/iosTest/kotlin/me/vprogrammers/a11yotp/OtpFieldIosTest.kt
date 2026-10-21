@@ -239,6 +239,16 @@ class OtpCellsPlannerTest {
     }
 
     @Test
+    fun separatorsAreDroppedWhenThatKeepsTheCodeOnOneRow() {
+        // With separators the row needs 6 * 48 + 4 * 8 + 28 = 348; without them 6 * 48 + 5 * 8 = 328.
+        val plan = planner(groupSize = 3).plan(340.0)
+
+        assertEquals(listOf(6), plan.rows.map { it.count })
+        assertFalse(plan.showsSeparators)
+        assertEquals(48.0, plan.cellWidth)
+    }
+
+    @Test
     fun narrowSpaceWrapsWholeGroupsFirst() {
         // One group is 3 * 48 + 2 * 8 = 160; both groups plus a separator gap need 160 * 2 + 28 = 348.
         val plan = planner(groupSize = 3).plan(200.0)

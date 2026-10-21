@@ -54,11 +54,12 @@ struct ContentView: View {
     /// which do not split evenly into groups of 3.
     private static let fieldStyle = fieldStyle(cornerRadius: 8, cellWidth: 48, cellHeight: 56)
 
-    /// Square cells with a radius capped at half their size are drawn as circles.
+    /// Square cells with a radius capped at half their size are drawn as circles. At 48 pt, six
+    /// circles and the separator fit one row on a 390 pt wide iPhone.
     private static let roundFieldStyle = fieldStyle(
         cornerRadius: .greatestFiniteMagnitude,
-        cellWidth: 56,
-        cellHeight: 56
+        cellWidth: 48,
+        cellHeight: 48
     )
 
     private static func fieldStyle(cornerRadius: Double, cellWidth: Double, cellHeight: Double) -> OtpFieldStyle {

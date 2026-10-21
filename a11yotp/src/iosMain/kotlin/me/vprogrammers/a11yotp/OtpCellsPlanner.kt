@@ -15,9 +15,11 @@ internal class OtpRowPlan(
 )
 
 /**
- * Wraps [count] cells and the separators between groups of [groupSize] into rows. Rows wrap by
- * group when a row does not fit, then by cell without separators, and cells shrink only as a last
- * resort. [groupSize] is clamped to 1..[count].
+ * Wraps [count] cells and the separators between groups of [groupSize] into rows. When one row with
+ * separators does not fit but one row without them does, the separators are dropped: keeping the
+ * code on one line matters more than the decorative grouping. Otherwise rows wrap by group, then by
+ * cell without separators, and cells shrink only as a last resort. [groupSize] is clamped to
+ * 1..[count].
  */
 internal class OtpCellsPlanner(
     private val count: Int,
@@ -54,6 +56,9 @@ internal class OtpCellsPlanner(
             return OtpRowPlan(listOf(OtpRow(0, count)), cellWidth, hasSeparators)
         }
         val cell = minOf(cellWidth, available).coerceAtLeast(1.0)
+        val all = OtpRow(0, count)
+        if (rowWidth(all, cell, hasSeparators) <= available) return OtpRowPlan(listOf(all), cell, hasSeparators)
+        if (rowWidth(all, cell, false) <= available) return OtpRowPlan(listOf(all), cell, false)
         val groups = (0 until count step groupSize).map { OtpRow(it, minOf(it + groupSize, count)) }
         if (groups.all { rowWidth(it, cell, true) <= available }) {
             val rows = mutableListOf<OtpRow>()
