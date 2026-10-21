@@ -51,6 +51,7 @@ Swift sees the library through the consumer's Objective-C-exported framework. Ex
 - Swift cannot use a Kotlin subclass of a UIKit class. iOS components are Kotlin classes that own a `view: UIView`.
 - Any reference from a UIKit object back to Kotlin must be weak; cycles across the boundary are not collected.
 - The host owns the OTP state and focus; components expose callbacks and `focus()`/`blur()`.
+- Kotlin/Native does not weak-link. Never reference an Objective-C class newer than the iOS deployment target (for example `UIGlassEffect`, iOS 26) directly: it becomes a strong `_OBJC_CLASS_$_` symbol and the app fails to launch on older iOS. Look the class up with `NSClassFromString` behind a version check, and confirm with `nm -u` on the framework. New methods on older classes are selector calls and only need the version check.
 
 ## Distribution status
 

@@ -1,13 +1,16 @@
-@file:OptIn(ExperimentalForeignApi::class)
+@file:OptIn(ExperimentalForeignApi::class, BetaInteropApi::class)
 
 package me.vprogrammers.a11yotp
 
+import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.CValue
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.useContents
 import platform.CoreGraphics.CGRectMake
 import platform.CoreGraphics.CGSize
 import platform.CoreGraphics.CGSizeMake
+import platform.Foundation.NSClassFromString
+import platform.Foundation.NSSelectorFromString
 import platform.UIKit.NSTextAlignmentCenter
 import platform.UIKit.NSTextAlignmentLeft
 import platform.UIKit.NSTextAlignmentRight
@@ -26,10 +29,13 @@ import platform.UIKit.UIUserInterfaceLayoutDirection
 import platform.UIKit.UIView
 import platform.UIKit.UIViewContentMode
 import platform.UIKit.UIViewNoIntrinsicMetric
+import platform.UIKit.UIVisualEffect
+import platform.UIKit.UIVisualEffectView
 import platform.UIKit.resolvedColorWithTraitCollection
 import platform.UIKit.setAccessibilityLabel
 import platform.UIKit.setAccessibilityValue
 import platform.UIKit.setIsAccessibilityElement
+import platform.darwin.NSObjectProtocol
 
 /** Everything the container needs to draw one frame. */
 internal class OtpFieldModel(
@@ -79,6 +85,9 @@ internal class OtpFieldContainer : UIView(frame = CGRectMake(0.0, 0.0, 0.0, 0.0)
     private val errorLabel = UILabel(frame = CGRectMake(0.0, 0.0, 0.0, 0.0))
     private var model: OtpFieldModel? = null
 
+    /** Liquid Glass backdrop behind the cells, created on first use. */
+    private var glassView: UIVisualEffectView? = null
+
     init {
         setIsAccessibilityElement(false)
         // Cells are positioned with absolute frames, so digits read left to right also in right-to-left
@@ -98,6 +107,17 @@ internal class OtpFieldContainer : UIView(frame = CGRectMake(0.0, 0.0, 0.0, 0.0)
 
     fun render(model: OtpFieldModel) {
         this.model = model
+        val wantsGlass = glassInset(model) > 0.0
+        if (wantsGlass && glassView == null) {
+            glassView =
+                UIVisualEffectView(effect = sharedGlassEffect).also {
+                    it.userInteractionEnabled = false
+                    it.setIsAccessibilityElement(false)
+                    it.clipsToBounds = true
+                    insertSubview(it, atIndex = 0)
+                }
+        }
+        glassView?.hidden = !wantsGlass
         val style = model.style
         val colors = style.colors
         val traits = traitCollection
@@ -264,17 +284,22 @@ internal class OtpFieldContainer : UIView(frame = CGRectMake(0.0, 0.0, 0.0, 0.0)
         return Triple(iconWidth, labelWidth, maxOf(labelHeight, iconHeight))
     }
 
+    /** Padding around the cells for the Liquid Glass backdrop, or 0 when there is none. */
+    private fun glassInset(model: OtpFieldModel): Double =
+        if (model.style.glass && sharedGlassEffect != null) GLASS_PADDING else 0.0
+
     override fun sizeThatFits(size: CValue<CGSize>): CValue<CGSize> {
         val model = model ?: return CGSizeMake(0.0, MIN_FALLBACK_HEIGHT)
         val proposed = size.useContents { width }
         val width = if (proposed.isFinite() && proposed > 0.0 && proposed < UNBOUNDED / 2) proposed else null
+        val inset = glassInset(model)
         val traits = traitCollection
         val planner = planner(model, traits)
-        val plan = planner.plan(width)
+        val plan = planner.plan(width?.let { it - 2 * inset })
         val cellHeight = cellHeight(model, traits)
         val rowsWidth =
-            plan.rows.maxOf { planner.rowWidth(it, plan.cellWidth, plan.showsSeparators) }
-        val rowsHeight = plan.rows.size * cellHeight + (plan.rows.size - 1) * model.style.cellSpacing
+            plan.rows.maxOf { planner.rowWidth(it, plan.cellWidth, plan.showsSeparators) } + 2 * inset
+        val rowsHeight = plan.rows.size * cellHeight + (plan.rows.size - 1) * model.style.cellSpacing + 2 * inset
         val errorHeight = errorSize(model, width ?: rowsWidth).third
         val total = rowsHeight + if (errorHeight > 0.0) ERROR_GAP + errorHeight else 0.0
         return CGSizeMake(width ?: rowsWidth, total)
@@ -292,8 +317,9 @@ internal class OtpFieldContainer : UIView(frame = CGRectMake(0.0, 0.0, 0.0, 0.0)
         val width = bounds.useContents { size.width }
         val traits = traitCollection
         val style = model.style
+        val inset = glassInset(model)
         val planner = planner(model, traits)
-        val plan = planner.plan(width)
+        val plan = planner.plan(width - 2 * inset)
         val cellHeight = cellHeight(model, traits)
         val separatorHeight = maxOf(style.borderWidth, MIN_SEPARATOR_HEIGHT)
         val separatorWidth = scaled(SEPARATOR_WIDTH, style.fontTextStyle, traits)
@@ -303,8 +329,8 @@ internal class OtpFieldContainer : UIView(frame = CGRectMake(0.0, 0.0, 0.0, 0.0)
         var maxX = 0.0
         plan.rows.forEachIndexed { rowIndex, row ->
             val rowWidth = planner.rowWidth(row, plan.cellWidth, plan.showsSeparators)
-            var x = (width - rowWidth) * fraction
-            val y = rowIndex * (cellHeight + style.cellSpacing)
+            var x = inset + (width - 2 * inset - rowWidth) * fraction
+            val y = inset + rowIndex * (cellHeight + style.cellSpacing)
             minX = minOf(minX, x)
             maxX = maxOf(maxX, x + rowWidth)
             for (cell in row.start until row.endExclusive) {
@@ -332,13 +358,21 @@ internal class OtpFieldContainer : UIView(frame = CGRectMake(0.0, 0.0, 0.0, 0.0)
         val rowsHeight = plan.rows.size * cellHeight + (plan.rows.size - 1) * style.cellSpacing
         // The text field has the frame of the visible cells, so the VoiceOver focus ring, Voice Control
         // overlay, and touch target match what users see.
-        if (minX <= maxX) textField.setFrame(CGRectMake(minX, 0.0, maxX - minX, rowsHeight))
+        if (minX <= maxX) textField.setFrame(CGRectMake(minX, inset, maxX - minX, rowsHeight))
+        glassView?.let { glass ->
+            if (minX <= maxX && inset > 0.0) {
+                val glassHeight = rowsHeight + 2 * inset
+                glass.setFrame(CGRectMake(minX - inset, 0.0, maxX - minX + 2 * inset, glassHeight))
+                // Concentric with the cells, so round cells get a capsule.
+                glass.layer.cornerRadius = minOf(style.cornerRadius + inset, glassHeight / 2.0)
+            }
+        }
 
         if (model.state.isError) {
             val (iconWidth, labelWidth, height) = errorSize(model, width)
             val rowWidth = iconWidth + ERROR_ICON_GAP + labelWidth
             val x = ((width - rowWidth) * fraction).coerceAtLeast(0.0)
-            val y = rowsHeight + ERROR_GAP
+            val y = rowsHeight + 2 * inset + ERROR_GAP
             val iconHeight = errorIcon.intrinsicContentSize().useContents { this.height }
             errorIcon.setFrame(CGRectMake(x, y + (height - iconHeight) / 2, iconWidth, iconHeight))
             errorLabel.setFrame(CGRectMake(x + iconWidth + ERROR_ICON_GAP, y, labelWidth, height))
@@ -354,7 +388,21 @@ internal class OtpFieldContainer : UIView(frame = CGRectMake(0.0, 0.0, 0.0, 0.0)
 private const val SEPARATOR_WIDTH = 12.0
 private const val MIN_SEPARATOR_HEIGHT = 2.0
 private const val CELL_VERTICAL_PADDING = 16.0
+
+/**
+ * One shared UIGlassEffect (effects are immutable), or null before iOS 26. The class is looked up by
+ * name: a direct reference compiles to a strong `_OBJC_CLASS_$_UIGlassEffect` symbol, which would
+ * stop apps from launching on earlier iOS versions even with glass turned off. `new` returns a +1
+ * reference that is never balanced; it is created once per process, so that is one small object.
+ */
+private val sharedGlassEffect: UIVisualEffect? by lazy {
+    if (!isLiquidGlassAvailable()) return@lazy null
+    val glassClass = NSClassFromString("UIGlassEffect") as? NSObjectProtocol ?: return@lazy null
+    glassClass.performSelector(NSSelectorFromString("new")) as? UIVisualEffect
+}
+
 private const val ERROR_GAP = 8.0
+private const val GLASS_PADDING = 10.0
 private const val ERROR_ICON_GAP = 6.0
 private const val MIN_FALLBACK_HEIGHT = 56.0
 private const val UNBOUNDED = 100_000.0

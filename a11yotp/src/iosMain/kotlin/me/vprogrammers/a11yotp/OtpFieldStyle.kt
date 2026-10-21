@@ -29,6 +29,9 @@ import platform.UIKit.tertiaryLabelColor
  * [errorTextStyle] is the text style of the visible error message. [cornerRadius] is capped at
  * half the cell size, so a large value (for example `.greatestFiniteMagnitude`) with equal
  * [minCellWidth] and [minCellHeight] gives round cells.
+ * [glass] opts in to an iOS 26 Liquid Glass backdrop behind the cell row; the cells stay solid,
+ * so the contrast of digits, borders, focus, and errors is unchanged. Earlier iOS versions draw no
+ * backdrop. Use [withGlass] to turn it on.
  * Create instances with [OtpFieldDefaults.style].
  */
 class OtpFieldStyle internal constructor(
@@ -44,6 +47,7 @@ class OtpFieldStyle internal constructor(
     val colors: OtpFieldColors,
     val groupSize: Int,
     placeholder: String?,
+    val glass: Boolean = false,
 ) {
     /** Minimum cell width in points at the default text size, never below 44. */
     val minCellWidth: Double = maxOf(minCellWidth, OtpFieldDefaults.MIN_TARGET_SIZE)
@@ -80,11 +84,15 @@ class OtpFieldStyle internal constructor(
         height: Double,
     ): OtpFieldStyle = copy(minCellWidth = width, minCellHeight = height)
 
+    /** Copy with the Liquid Glass backdrop on or off. */
+    fun withGlass(glass: Boolean): OtpFieldStyle = copy(glass = glass)
+
     private fun copy(
         cornerRadius: Double = this.cornerRadius,
         minCellWidth: Double = this.minCellWidth,
         minCellHeight: Double = this.minCellHeight,
         groupSize: Int = this.groupSize,
+        glass: Boolean = this.glass,
     ) = OtpFieldStyle(
         font = font,
         fontTextStyle = fontTextStyle,
@@ -98,6 +106,7 @@ class OtpFieldStyle internal constructor(
         colors = colors,
         groupSize = groupSize,
         placeholder = placeholder,
+        glass = glass,
     )
 }
 

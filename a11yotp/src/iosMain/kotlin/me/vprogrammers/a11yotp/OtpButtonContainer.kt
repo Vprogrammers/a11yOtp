@@ -227,7 +227,7 @@ internal class OtpButtonContainer : UIView(frame = CGRectMake(0.0, 0.0, 0.0, 0.0
 }
 
 /** Liquid Glass button configurations exist from iOS 26. */
-private fun isLiquidGlassAvailable(): Boolean =
+internal fun isLiquidGlassAvailable(): Boolean =
     NSProcessInfo.processInfo.operatingSystemVersion.useContents { majorVersion >= 26 }
 
 private const val DASH = 6.0

@@ -43,4 +43,15 @@ class OtpFieldStyleCopyIosTest {
         assertSame(base.colors, glass.colors)
         assertEquals(false, glass.withGlass(false).glass)
     }
+
+    @Test
+    fun fieldGlassIsOffByDefaultAndKeepsTheCellStyle() {
+        val base = OtpFieldDefaults.style().withGroupSize(3)
+        val glass = base.withGlass(true)
+
+        assertEquals(false, base.glass)
+        assertEquals(true, glass.glass)
+        assertEquals(3, glass.groupSize)
+        assertSame(base.colors, glass.colors)
+    }
 }

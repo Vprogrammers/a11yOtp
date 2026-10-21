@@ -11,6 +11,10 @@ struct ContentView: View {
         .withCornerRadius(cornerRadius: .greatestFiniteMagnitude)
         .withMinCellSize(width: 48, height: 48)
 
+    /// Liquid Glass backdrop behind the cells; the cells stay solid for contrast.
+    private static let glassFieldStyle = fieldStyle.withGlass(glass: true)
+    private static let glassRoundFieldStyle = roundFieldStyle.withGlass(glass: true)
+
     private static let buttonStyle = OtpButtonDefaults.shared.style()
     private static let glassButtonStyle = buttonStyle.withGlass(glass: true)
 
@@ -46,7 +50,7 @@ struct ContentView: View {
                 OtpFieldView(
                     state: $otp,
                     accessibility: Self.fieldAccessibility,
-                    style: options.roundCells ? Self.roundFieldStyle : Self.fieldStyle,
+                    style: fieldStyle,
                     mask: options.mask,
                     onComplete: verify
                 )
@@ -86,6 +90,15 @@ struct ContentView: View {
                 if Task.isCancelled { return }
                 secondsRemaining -= 1
             }
+        }
+    }
+
+    private var fieldStyle: OtpFieldStyle {
+        switch (options.roundCells, options.glassField) {
+        case (false, false): Self.fieldStyle
+        case (true, false): Self.roundFieldStyle
+        case (false, true): Self.glassFieldStyle
+        case (true, true): Self.glassRoundFieldStyle
         }
     }
 
