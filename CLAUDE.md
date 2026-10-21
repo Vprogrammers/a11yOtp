@@ -11,6 +11,17 @@ A11yOtp is an accessibility-first OTP input library for Android and iOS.
 - Do not introduce Compose Multiplatform UI on iOS.
 - Keep public APIs small and framework-independent where possible.
 
+## Project skills
+
+Read the smallest relevant skill before starting work:
+
+- `.claude/skills/otp-accessibility/SKILL.md`: screen-reader behavior, focus, announcements, privacy, autofill, paste, and visual accessibility.
+- `.claude/skills/otp-testing/SKILL.md`: shared, Compose, SwiftUI, accessibility, and regression tests.
+- `.claude/skills/kmp-library-engineering/SKILL.md`: module boundaries, public API design, Swift interop, dependencies, and KMP changes.
+- `.claude/skills/gradle-ci-quality/SKILL.md`: Gradle, ktlint, CI gates, caches, toolchain, artifacts, and publishing preparation.
+
+Do not load every skill by default. Use only those relevant to the task.
+
 ## Accessibility requirements
 
 Accessibility is a release requirement, not an optional enhancement.
