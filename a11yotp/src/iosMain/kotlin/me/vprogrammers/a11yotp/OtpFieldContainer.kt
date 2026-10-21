@@ -35,7 +35,8 @@ import platform.UIKit.resolvedColorWithTraitCollection
 import platform.UIKit.setAccessibilityLabel
 import platform.UIKit.setAccessibilityValue
 import platform.UIKit.setIsAccessibilityElement
-import platform.darwin.NSObjectProtocol
+import platform.darwin.NSObject
+import platform.objc.class_createInstance
 
 /** Everything the container needs to draw one frame. */
 internal class OtpFieldModel(
@@ -392,13 +393,15 @@ private const val CELL_VERTICAL_PADDING = 16.0
 /**
  * One shared UIGlassEffect (effects are immutable), or null before iOS 26. The class is looked up by
  * name: a direct reference compiles to a strong `_OBJC_CLASS_$_UIGlassEffect` symbol, which would
- * stop apps from launching on earlier iOS versions even with glass turned off. `new` returns a +1
- * reference that is never balanced; it is created once per process, so that is one small object.
+ * stop apps from launching on earlier iOS versions even with glass turned off. The instance is
+ * allocated with the Objective-C runtime and initialized with `init`; it is created once per
+ * process and never released.
  */
 internal val sharedGlassEffect: UIVisualEffect? by lazy {
     if (!isLiquidGlassAvailable()) return@lazy null
-    val glassClass = NSClassFromString("UIGlassEffect") as? NSObjectProtocol ?: return@lazy null
-    glassClass.performSelector(NSSelectorFromString("new")) as? UIVisualEffect
+    val glassClass = NSClassFromString("UIGlassEffect") ?: return@lazy null
+    val instance = class_createInstance(glassClass, 0u) as? NSObject ?: return@lazy null
+    instance.performSelector(NSSelectorFromString("init")) as? UIVisualEffect
 }
 
 private const val ERROR_GAP = 8.0
