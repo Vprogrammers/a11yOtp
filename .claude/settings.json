@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(./gradlew :sharedLogic:testAndroidHostTest)",
+      "Bash(./gradlew :sharedLogic:iosSimulatorArm64Test)",
+      "Bash(./gradlew :sharedLogic:linkDebugFrameworkIosSimulatorArm64)",
+      "Bash(./gradlew :sharedLogic:allTests)",
+      "Bash(./gradlew :sharedLogic:tasks --all)",
+      "Bash(./gradlew :sharedUI:testAndroidHostTest)",
+      "Bash(./gradlew :sharedUI:allTests)",
+      "Bash(./gradlew :sharedUI:connectedAndroidDeviceTest)",
+      "Bash(./gradlew :sharedUI:tasks --all)",
+      "Bash(./gradlew :androidApp:assembleDebug)",
+      "Bash(./gradlew :androidApp:tasks --all)",
+      "Bash(./gradlew ktlintCheck)",
+      "Bash(./gradlew ktlintFormat)",
+      "Bash(./gradlew test)",
+      "Bash(xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp *)",
+      "Bash(git status)",
+      "Bash(git status *)",
+      "Bash(git diff)",
+      "Bash(git diff *)"
+    ],
+    "deny": [
+      "Read(./**/local.properties)",
+      "Read(./**/.env)",
+      "Read(./**/.env.*)",
+      "Read(./**/*.keystore)",
+      "Read(./**/*.jks)",
+      "Read(./**/*.p12)",
+      "Read(./**/*.p8)",
+      "Read(./**/*.mobileprovision)",
+      "Read(./.claude/settings.local.json)",
+      "Bash(*local.properties*)",
+      "Bash(*.env*)",
+      "Bash(*.keystore*)",
+      "Bash(*.jks*)",
+      "Bash(*.p12*)",
+      "Bash(*.p8*)",
+      "Bash(*.mobileprovision*)",
+      "Bash(*settings.local.json*)",
+      "Bash(git push)",
+      "Bash(git push *)",
+      "Bash(git reset --hard)",
+      "Bash(git reset --hard *)",
+      "Bash(rm -rf *)"
+    ]
+  }
+}
