@@ -5,15 +5,21 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeContentPadding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -26,6 +32,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
@@ -54,6 +61,7 @@ private const val RESEND_SECONDS = 30
 fun SampleScreen() {
     var state by remember { mutableStateOf(OtpState(OtpLength.SIX)) }
     var verified by remember { mutableStateOf(false) }
+    var roundCells by remember { mutableStateOf(false) }
     var seconds by remember { mutableIntStateOf(RESEND_SECONDS) }
 
     LaunchedEffect(seconds) {
@@ -99,7 +107,15 @@ fun SampleScreen() {
                     errorMessage = "Incorrect code. Try again.",
                     progressDescription = { "${it.entered} of ${it.total} digits entered" },
                 ),
-            style = OtpFieldDefaults.style(groupSize = 3),
+            // Default cells are square (48dp), so CircleShape draws circles.
+            style =
+                remember(roundCells) {
+                    if (roundCells) {
+                        OtpFieldDefaults.style(groupSize = 3, cellShape = CircleShape)
+                    } else {
+                        OtpFieldDefaults.style(groupSize = 3)
+                    }
+                },
         )
         OtpVerifyButton(
             state = state,
@@ -129,5 +145,32 @@ fun SampleScreen() {
                 ),
             style = buttonStyle,
         )
+        SampleCheckbox(label = "Round cells", checked = roundCells, onCheckedChange = { roundCells = it })
+    }
+}
+
+/** Foundation-only checkbox: one 48dp touch target, checked state shown by a check mark, not color. */
+@Composable
+private fun SampleCheckbox(
+    label: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    Row(
+        modifier =
+            Modifier
+                .defaultMinSize(minHeight = 48.dp)
+                .toggleable(value = checked, role = Role.Checkbox, onValueChange = onCheckedChange)
+                .padding(horizontal = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Box(
+            modifier = Modifier.size(24.dp).border(2.dp, Color(0xFF1B1B1F), RoundedCornerShape(4.dp)),
+            contentAlignment = Alignment.Center,
+        ) {
+            if (checked) BasicText(text = "\u2713", style = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Bold))
+        }
+        BasicText(text = label, style = TextStyle(fontSize = 16.sp))
     }
 }

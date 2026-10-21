@@ -26,7 +26,9 @@ import platform.UIKit.tertiaryLabelColor
  * drawn only when the code length splits into equal groups, so 3 groups a 6-digit code but
  * leaves 4- and 8-digit codes ungrouped. [placeholder]
  * is drawn in empty cells and is hidden from VoiceOver; null or empty means none.
- * [errorTextStyle] is the text style of the visible error message.
+ * [errorTextStyle] is the text style of the visible error message. [cornerRadius] is capped at
+ * half the cell size, so a large value (for example `.greatestFiniteMagnitude`) with equal
+ * [minCellWidth] and [minCellHeight] gives round cells.
  * Create instances with [OtpFieldDefaults.style].
  */
 class OtpFieldStyle internal constructor(

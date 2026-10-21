@@ -4,7 +4,7 @@ import SwiftUI
 /// Demo screen. Strings are hard-coded English for the sample only; the library requires host-provided strings.
 ///
 /// Fake verification: only "000000" (or its 4 and 8 digit forms) fails. The options below the main flow
-/// exercise code length, masking, and the disabled state.
+/// exercise code length, masking, round cells, and the disabled state.
 struct ContentView: View {
     private static let resendSeconds = 30
 
@@ -44,6 +44,7 @@ struct ContentView: View {
     @State private var lengthOption = LengthOption.six
     @State private var maskOption = MaskOption.none
     @State private var isDisabled = false
+    @State private var roundCells = false
     @State private var lastVerifiedCode: String?
     @State private var isVerified = false
     @State private var secondsRemaining = ContentView.resendSeconds
@@ -51,20 +52,31 @@ struct ContentView: View {
 
     /// Groups of 3 give "123 - 456" for 6 digits. The library draws no separator for 4 and 8 digits,
     /// which do not split evenly into groups of 3.
-    private static let fieldStyle = OtpFieldDefaults.shared.style(
-        font: UIFont.monospacedSystemFont(ofSize: 28, weight: .semibold),
-        fontTextStyle: UIFont.TextStyle.title1.rawValue,
-        errorTextStyle: UIFont.TextStyle.callout.rawValue,
-        cornerRadius: 8,
-        minCellWidth: 48,
-        minCellHeight: 56,
-        cellSpacing: 8,
-        borderWidth: 1,
-        focusedBorderWidth: 3,
-        colors: OtpFieldDefaults.shared.colors(),
-        groupSize: 3,
-        placeholder: nil
+    private static let fieldStyle = fieldStyle(cornerRadius: 8, cellWidth: 48, cellHeight: 56)
+
+    /// Square cells with a radius capped at half their size are drawn as circles.
+    private static let roundFieldStyle = fieldStyle(
+        cornerRadius: .greatestFiniteMagnitude,
+        cellWidth: 56,
+        cellHeight: 56
     )
+
+    private static func fieldStyle(cornerRadius: Double, cellWidth: Double, cellHeight: Double) -> OtpFieldStyle {
+        OtpFieldDefaults.shared.style(
+            font: UIFont.monospacedSystemFont(ofSize: 28, weight: .semibold),
+            fontTextStyle: UIFont.TextStyle.title1.rawValue,
+            errorTextStyle: UIFont.TextStyle.callout.rawValue,
+            cornerRadius: cornerRadius,
+            minCellWidth: cellWidth,
+            minCellHeight: cellHeight,
+            cellSpacing: 8,
+            borderWidth: 1,
+            focusedBorderWidth: 3,
+            colors: OtpFieldDefaults.shared.colors(),
+            groupSize: 3,
+            placeholder: nil
+        )
+    }
 
     /// Dark green in light mode (about 9:1 on white), light green in dark mode (about 12:1 on black).
     /// Both clear 4.5:1 in standard and Increase Contrast appearances.
@@ -111,7 +123,7 @@ struct ContentView: View {
                             "\(progress.entered) of \(progress.total) digits entered"
                         }
                     ),
-                    style: Self.fieldStyle,
+                    style: roundCells ? Self.roundFieldStyle : Self.fieldStyle,
                     mask: maskOption.mask,
                     alignment: .center,
                     onComplete: verify
@@ -174,6 +186,7 @@ struct ContentView: View {
                 ForEach(MaskOption.allCases) { Text($0.rawValue).tag($0) }
             }
             .pickerStyle(.segmented)
+            Toggle("Round cells", isOn: $roundCells)
             Toggle("Disable field", isOn: $isDisabled)
         }
     }
