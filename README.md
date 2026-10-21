@@ -69,7 +69,7 @@ Minimum versions are not final and may change before the first release.
 Not published yet. The distribution format is not decided:
 
 - **Android:** Maven, as one artifact or separate `sharedLogic` and `sharedUI` artifacts.
-- **iOS:** Swift Package Manager and/or an XCFramework containing the SwiftUI component and the `SharedLogic` framework.
+- **iOS:** Swift Package Manager containing the SwiftUI source and a binary `SharedLogic` XCFramework, or another distribution structure selected before the first release.
 
 Coordinates and package URLs will be added with the first release.
 
