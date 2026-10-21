@@ -47,6 +47,7 @@ struct OtpFieldView: UIViewRepresentable {
     private func configure(_ field: OtpField, context: Context) {
         context.coordinator.setState = { newState in state = newState }
         context.coordinator.onComplete = onComplete
+        field.doneButtonTitle = doneButtonTitle
         field.accessibility = accessibility
         field.style = style
         field.mask = mask

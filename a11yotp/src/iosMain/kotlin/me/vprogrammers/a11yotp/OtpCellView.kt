@@ -82,6 +82,9 @@ internal class OtpCellView : UIView(frame = CGRectMake(0.0, 0.0, 0.0, 0.0)) {
     }
 }
 
-private const val MIN_SCALE = 0.5
+// Cells scale with Dynamic Type and only shrink below the minimum width as a last resort, so glyphs
+// keep their size normally. 0.75 is the smallest shrink that still stops a glyph from clipping in a
+// narrowed cell; the 0.5 used before would undercut large text.
+private const val MIN_SCALE = 0.75
 private const val RING_GAP = 3.0
 private const val INNER_PADDING = 2.0

@@ -143,11 +143,14 @@ class OtpFieldInputIosTest {
         field.handleReplacement("1234")
         val changes = mutableListOf<String>()
         field.onStateChange = { changes += it.code }
+        val completed = mutableListOf<String>()
+        field.onComplete = { completed += it }
 
         field.handleReplacement("5678")
 
         assertEquals("5678", field.state.code)
         assertEquals(listOf("5678"), changes)
+        assertEquals(listOf("5678"), completed)
     }
 
     @Test

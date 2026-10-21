@@ -64,6 +64,14 @@ struct ContentView: View {
         placeholder: nil
     )
 
+    /// Dark green in light mode (about 9:1 on white), light green in dark mode (about 12:1 on black).
+    /// Both clear 4.5:1 in standard and Increase Contrast appearances.
+    private static let successColor = UIColor { traits in
+        traits.userInterfaceStyle == .dark
+            ? UIColor(red: 0.55, green: 0.85, blue: 0.55, alpha: 1)
+            : UIColor(red: 0.11, green: 0.37, blue: 0.13, alpha: 1)
+    }
+
     private static let buttonStyle = OtpButtonDefaults.shared.style(
         font: UIFont.systemFont(ofSize: 18, weight: .bold),
         fontTextStyle: UIFont.TextStyle.headline.rawValue,
@@ -74,8 +82,10 @@ struct ContentView: View {
         borderWidth: 1,
         colors: OtpButtonDefaults.shared.colors(
             content: .white,
+            // The dark container keeps white text above 9:1; the border turns light in dark mode so the
+            // button edge keeps 3:1 against the background.
             container: UIColor(red: 0.11, green: 0.37, blue: 0.13, alpha: 1),
-            border: UIColor(red: 0.11, green: 0.37, blue: 0.13, alpha: 1),
+            border: successColor,
             disabledContent: .secondaryLabel,
             disabledContainer: .systemGray6,
             disabledBorder: .systemGray
@@ -117,7 +127,7 @@ struct ContentView: View {
                 if isVerified {
                     Label("Code verified", systemImage: "checkmark.circle.fill")
                         .font(.headline)
-                        .foregroundStyle(Color(red: 0.11, green: 0.37, blue: 0.13))
+                        .foregroundStyle(Color(Self.successColor))
                 }
 
                 OtpResendButtonView(
@@ -174,7 +184,10 @@ struct ContentView: View {
             otp = otp.withInput(text: code).state.withError()
         } else {
             isVerified = true
-            UIAccessibility.post(notification: .announcement, argument: "Code verified")
+            // Delayed so it is not cut off by the speech for the last digit typed.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                UIAccessibility.post(notification: .announcement, argument: "Code verified")
+            }
         }
     }
 

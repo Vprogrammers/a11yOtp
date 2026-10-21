@@ -22,9 +22,8 @@ fun OtpResendButton(
     style: OtpButtonStyle = OtpButtonDefaults.style(),
 ) {
     val enabled = secondsRemaining <= 0
-    val countdown = accessibility.countdownDescription(OtpCountdown(secondsRemaining))
     OtpButtonSurface(
-        text = if (enabled) accessibility.label else countdown,
+        text = if (enabled) accessibility.label else accessibility.countdownDescription(OtpCountdown(secondsRemaining)),
         enabled = enabled,
         onClick = onResend,
         alignment = alignment,

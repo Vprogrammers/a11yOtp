@@ -25,6 +25,7 @@ import platform.UIKit.UITextFieldDelegateProtocol
 import platform.UIKit.UITextSpellCheckingType
 import platform.UIKit.UIToolbar
 import platform.UIKit.UIView
+import platform.UIKit.setAccessibilityLabel
 import platform.UIKit.setIsAccessibilityElement
 import platform.darwin.DISPATCH_TIME_NOW
 import platform.darwin.NSObject
@@ -52,11 +53,14 @@ import kotlin.native.ref.WeakReference
  * focus, and vibrates once when [hapticFeedbackOnError] is true. [alignment] only positions the
  * cells and error text; digits inside the row always read left to right. No animation is used, so
  * Reduce Motion needs no special handling.
+ *
+ * No `accessibilityHint` is set by default, intentionally: progress and error state are already part
+ * of the accessibility value, and a hint would be read on every focus.
  */
 class OtpField(
     state: OtpState,
     accessibility: OtpFieldAccessibility,
-    val doneButtonTitle: String,
+    doneButtonTitle: String,
 ) {
     init {
         require(doneButtonTitle.isNotBlank()) { "doneButtonTitle must not be blank" }
@@ -73,7 +77,20 @@ class OtpField(
             val wasError = field.isError
             field = value
             render()
-            if (value.isError && !wasError) errorEntered()
+            if (value.isError && !wasError) {
+                errorEntered()
+            } else if (!value.isError) {
+                errorGeneration++
+            }
+        }
+
+    /** Title of the keyboard Done button. Localized by the host; may change at runtime. Must not be blank. */
+    var doneButtonTitle: String = doneButtonTitle
+        set(value) {
+            require(value.isNotBlank()) { "doneButtonTitle must not be blank" }
+            if (field == value) return
+            field = value
+            applyDoneTitle()
         }
 
     var accessibility: OtpFieldAccessibility = accessibility
@@ -120,6 +137,8 @@ class OtpField(
     private var isFocused = false
     private var isPinningCaret = false
     private val handler = Handler()
+    private var doneItem: UIBarButtonItem? = null
+    private var errorGeneration = 0
 
     private inner class Handler :
         NSObject(),
@@ -196,11 +215,14 @@ class OtpField(
      */
     internal fun handleReplacement(replacement: String) {
         val current = state
+        // Over a complete code, feed current code + new code, as common and Android do, so a
+        // changed complete code reports didComplete.
         val newText =
             when {
                 replacement.isEmpty() -> current.code.dropLast(1)
-                isCompleteCode(replacement, current) -> replacement
-                else -> current.code + replacement
+                !isCompleteCode(replacement, current) -> current.code + replacement
+                current.isComplete -> current.code + replacement
+                else -> replacement
             }
         val result = current.withInput(newText)
         if (result.state != current) {
@@ -254,12 +276,15 @@ class OtpField(
     }
 
     private fun errorEntered() {
+        val generation = ++errorGeneration
         val message = accessibility.errorMessage
         // Posted shortly after the state change so the announcement is not cut off by the speech
         // for the digit that just caused the error.
         val weakSelf = WeakReference(this)
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, ANNOUNCEMENT_DELAY_NANOS), dispatch_get_main_queue()) {
-            if (weakSelf.get()?.state?.isError == true) {
+            val self = weakSelf.get()
+            // Only the latest error transition posts, and only while still in error.
+            if (self != null && self.errorGeneration == generation && self.state.isError) {
                 UIAccessibilityPostNotification(UIAccessibilityAnnouncementNotification, message)
             }
         }
@@ -273,6 +298,15 @@ class OtpField(
     // The number pad has no Return key, so the keyboard gets a Done button.
     private fun doneToolbar(): UIToolbar {
         val toolbar = UIToolbar(frame = CGRectMake(0.0, 0.0, TOOLBAR_WIDTH, TOOLBAR_HEIGHT))
+        val done =
+            UIBarButtonItem(
+                title = doneButtonTitle,
+                style = UIBarButtonItemStyle.UIBarButtonItemStyleDone,
+                target = handler,
+                action = NSSelectorFromString("donePressed"),
+            )
+        done.setAccessibilityLabel(doneButtonTitle)
+        doneItem = done
         toolbar.items =
             listOf(
                 UIBarButtonItem(
@@ -280,15 +314,15 @@ class OtpField(
                     target = null,
                     action = null,
                 ),
-                UIBarButtonItem(
-                    title = doneButtonTitle,
-                    style = UIBarButtonItemStyle.UIBarButtonItemStyleDone,
-                    target = handler,
-                    action = NSSelectorFromString("donePressed"),
-                ),
+                done,
             )
         toolbar.sizeToFit()
         return toolbar
+    }
+
+    private fun applyDoneTitle() {
+        doneItem?.title = doneButtonTitle
+        doneItem?.setAccessibilityLabel(doneButtonTitle)
     }
 
     private companion object {
