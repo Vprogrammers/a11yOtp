@@ -42,9 +42,10 @@ import platform.darwin.NSObject
  * is taller than the bar and continues behind the top of the keyboard, so the keyboard panel looks
  * taller and the Done key reads as one more row of it; app content never shows behind the key.
  * Earlier iOS versions use the keyboard-style UIInputView background, which matches their flat
- * keyboard. The key is one number pad column wide at the trailing edge in the key color, with
- * label-colored text (at least 4.5:1) that scales with Dynamic Type, and a border under Increase
- * Contrast. It is at least 44 points in both directions, and the visible title is the accessible
+ * keyboard. The key sits above the 3, one number pad column wide, in the key color. Its title is
+ * blue like the classic keyboard Done button, but darker in light mode and lighter in dark mode
+ * than the system blue, which is below 4.5:1 on the key; it scales with Dynamic Type. Under
+ * Increase Contrast the key gets a border. It is at least 44 points in both directions, and the visible title is the accessible
  * name, so Voice Control "Tap Done" works.
  */
 internal class OtpKeyboardAccessory(
@@ -76,7 +77,7 @@ internal class OtpKeyboardAccessory(
             backgroundColor = UIColor.clearColor
             addSubview(it)
         }
-        button.tintColor = UIColor.labelColor
+        button.tintColor = doneTitleColor()
         button.backgroundColor = keyColor()
         button.titleLabel?.font = UIFont.preferredFontForTextStyle(UIFontTextStyleHeadline)
         button.titleLabel?.adjustsFontForContentSizeCategory = true
@@ -129,6 +130,19 @@ internal class OtpKeyboardAccessory(
         invalidateIntrinsicContentSize()
     }
 }
+
+/** Done title blue with at least 4.5:1 on [keyColor]; stronger under Increase Contrast. */
+private fun doneTitleColor(): UIColor =
+    UIColor.colorWithDynamicProvider { traits ->
+        val dark = traits?.userInterfaceStyle == UIUserInterfaceStyle.UIUserInterfaceStyleDark
+        val high = traits?.accessibilityContrast == UIAccessibilityContrastHigh
+        when {
+            dark && high -> UIColor(red = 0.86, green = 0.93, blue = 1.0, alpha = 1.0)
+            dark -> UIColor(red = 0.76, green = 0.86, blue = 1.0, alpha = 1.0)
+            high -> UIColor(red = 0.0, green = 0.2, blue = 0.6, alpha = 1.0)
+            else -> UIColor(red = 0.0, green = 0.32, blue = 0.8, alpha = 1.0)
+        }
+    }
 
 /** Number pad key color: white in light mode, gray in dark mode, so label-colored text keeps 4.5:1. */
 private fun keyColor(): UIColor =
