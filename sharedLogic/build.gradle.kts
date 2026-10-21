@@ -28,20 +28,12 @@ kotlin {
                 .toInt()
 
         compilerOptions {
-            jvmTarget = JvmTarget.JVM_11
+            jvmTarget = JvmTarget.JVM_21
         }
-        androidResources {
-            enable = true
-        }
-        withHostTest {
-            isIncludeAndroidResources = true
-        }
+        withHostTest {}
     }
 
     sourceSets {
-        commonMain.dependencies {
-            // put your Multiplatform dependencies here
-        }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
         }
