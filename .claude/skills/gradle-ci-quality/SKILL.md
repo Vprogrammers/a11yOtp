@@ -13,7 +13,7 @@ Keep build changes compatible with the existing KMP project and avoid unrelated 
 - Broader CI does not exist yet. The first full validation workflow should gate ktlint, SwiftLint, shared logic tests, Android host/Compose tests, Android sample build, and Apple Silicon iOS framework/app validation.
 - `kotlin.native.ignoreDisabledTargets=true` suppresses warnings for native targets that cannot run on the current host; it does not add compatibility or make skipped tests pass.
 - Gradle runs on JDK 21.
-- `androidApp` Kotlin bytecode target is JVM 21, while its Java `sourceCompatibility` and `targetCompatibility` are 11.
+- `androidApp` Kotlin and Java (`sourceCompatibility`/`targetCompatibility`) targets are both JVM 21.
 - `sharedLogic` and `sharedUI` Android targets use JVM 11.
 - Do not silently change these targets. Align them only in a dedicated build change after verifying AGP/Kotlin compatibility and consumer requirements.
 
