@@ -17,7 +17,9 @@ You may create or edit files only under:
 - `sharedUI/src/commonTest`
 - `sharedUI/src/androidHostTest`
 
-Do not edit production code, Gradle configuration, generated sources, or `iosApp`. If production code must change for testability, report the minimal required change for the implementation agent.
+You may also add test-only dependencies to `gradle/libs.versions.toml` and to the test dependency blocks (`commonTest`, `androidHostTest`) of module `build.gradle.kts` files. Do not change plugins, targets, versions of existing dependencies, or other Gradle configuration.
+
+Do not edit production code, generated sources, or `iosApp`. If production code must change for testability, report the minimal required change for the implementation agent.
 
 Use package `me.vprogrammers.a11yotp`. Run the targeted commands from `CLAUDE.md` before broad checks. On Intel macOS, do not treat disabled ARM64 iOS simulator tests as product failures and do not add `iosX64`.
 
