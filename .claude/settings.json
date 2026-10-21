@@ -16,7 +16,9 @@
       "Bash(./gradlew ktlintFormat)",
       "Bash(./gradlew test)",
       "Bash(xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp *)",
+      "Bash(git status)",
       "Bash(git status *)",
+      "Bash(git diff)",
       "Bash(git diff *)"
     ],
     "deny": [
@@ -39,6 +41,7 @@
       "Bash(*settings.local.json*)",
       "Bash(git push)",
       "Bash(git push *)",
+      "Bash(git reset --hard)",
       "Bash(git reset --hard *)",
       "Bash(rm -rf *)"
     ]
