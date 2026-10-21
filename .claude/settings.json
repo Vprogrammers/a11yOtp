@@ -9,6 +9,7 @@
       "Bash(./gradlew :sharedLogic:tasks --all)",
       "Bash(./gradlew :sharedUI:testAndroidHostTest)",
       "Bash(./gradlew :sharedUI:allTests)",
+      "Bash(./gradlew :sharedUI:connectedAndroidDeviceTest)",
       "Bash(./gradlew :sharedUI:tasks --all)",
       "Bash(./gradlew :androidApp:assembleDebug)",
       "Bash(./gradlew :androidApp:tasks --all)",
