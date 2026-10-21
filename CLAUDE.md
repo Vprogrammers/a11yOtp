@@ -28,7 +28,7 @@ Read `.claude/skills/kmp-library-engineering/SKILL.md` for the authoritative mod
 Read only the relevant skill:
 
 - `.claude/skills/otp-accessibility/SKILL.md`: screen readers, focus, announcements, privacy, autofill, paste, keyboards, RTL, and visual accessibility.
-- `.claude/skills/otp-testing/SKILL.md`: shared, Android host, Kotlin/Native, and future native iOS tests.
+- `.claude/skills/otp-testing/SKILL.md`: shared, Android host, Android device, Kotlin/Native, and future native iOS tests.
 - `.claude/skills/kmp-library-engineering/SKILL.md`: authoritative module boundaries, public APIs, Swift interop, dependencies, and distribution decisions.
 - `.claude/skills/gradle-ci-quality/SKILL.md`: Gradle, ktlint, CI gates, caches, JVM targets, artifacts, and publishing preparation.
 
@@ -102,6 +102,6 @@ The current Intel macOS host cannot execute ARM64 simulator tests. Report that l
 
 - Work from `feat/<issue>-description`, `fix/<issue>-description`, or `chore/<issue>-description`.
 - Keep commits focused.
-- Claude never pushes; `git push` is denied in `.claude/settings.json`. When a push is requested, ask the user to run `! git push`.
-- Do not force-push, merge, publish, or create releases unless explicitly requested.
+- Claude never pushes or force-pushes; `git push` is denied in `.claude/settings.json`. When a push is requested, ask the user to run the exact command with `!`.
+- Do not merge, publish, or create releases unless explicitly requested.
 - Reference the issue in the PR and use `Closes #<issue>` when appropriate.
