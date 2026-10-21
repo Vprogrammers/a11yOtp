@@ -46,10 +46,16 @@ import platform.darwin.NSObject
  * UIInputView background, which matches their flat keyboard. Sizes match the iOS 26 number pad
  * (measured on device): 48 point keys, about 7.5 point edge margins and 11 point column gaps.
  *
- * The key is in the key color with a blue title, darker in light mode and lighter in dark mode
- * than the system blue (which is about 4:1 on white), so it keeps at least 4.5:1. The title scales
- * with Dynamic Type, Increase Contrast adds a border, the key is at least 44 points in both
- * directions, and the visible title is the accessible name, so Voice Control "Tap Done" works.
+ * Done is plain blue text on the panel, darker in light mode and lighter in dark mode than the
+ * system blue, so it keeps at least 4.5:1 on the panel (5.3:1 light, 10:1 dark). Its touch target
+ * is the size of a key above the 3, at least 44 points in both directions. The title scales with
+ * Dynamic Type, Increase Contrast draws a border around the target, and the visible title is the
+ * accessible name, so Voice Control "Tap Done" works.
+ *
+ * The keyboard draws a thin light rim along its top edge, over anything behind it. A 2 point strip
+ * in the panel color is added to the keyboard host view, above the keyboard, to cover that rim so
+ * the panel and the keyboard join without a line. It is kept that thin so it never covers the
+ * one-time-code suggestion inside the keyboard.
  */
 internal class OtpKeyboardAccessory(
     target: NSObject,
@@ -71,6 +77,14 @@ internal class OtpKeyboardAccessory(
         } else {
             null
         }
+    private val rimCover: UIView? =
+        panel?.let {
+            UIView(frame = CGRectMake(0.0, 0.0, 0.0, 0.0)).also { cover ->
+                cover.userInteractionEnabled = false
+                cover.setIsAccessibilityElement(false)
+                cover.backgroundColor = keyboardColor()
+            }
+        }
     private val button = UIButton.buttonWithType(UIButtonTypeSystem)
 
     init {
@@ -80,7 +94,6 @@ internal class OtpKeyboardAccessory(
         clipsToBounds = false
         panel?.let(::addSubview)
         button.tintColor = doneTitleColor()
-        button.backgroundColor = keyColor()
         button.titleLabel?.font = UIFont.preferredFontForTextStyle(UIFontTextStyleHeadline)
         button.titleLabel?.adjustsFontForContentSizeCategory = true
         button.layer.cornerRadius = KEY_RADIUS
@@ -124,6 +137,22 @@ internal class OtpKeyboardAccessory(
         val titleWidth = titleSize().first + 2 * HORIZONTAL_PADDING
         val keyWidth = minOf(maxOf(column, titleWidth, MIN_SIZE), available)
         button.setFrame(CGRectMake(width - right - KEY_MARGIN - keyWidth, KEY_TOP, keyWidth, keyHeight()))
+        coverKeyboardRim()
+    }
+
+    override fun didMoveToSuperview() {
+        super.didMoveToSuperview()
+        rimCover?.removeFromSuperview()
+        coverKeyboardRim()
+    }
+
+    private fun coverKeyboardRim() {
+        val cover = rimCover ?: return
+        val host = superview ?: return
+        if (cover.superview != host) host.addSubview(cover)
+        host.bringSubviewToFront(cover)
+        val (x, bottom, width) = frame.useContents { Triple(origin.x, origin.y + size.height, size.width) }
+        cover.setFrame(CGRectMake(x, bottom - RIM_COVER / 2, width, RIM_COVER))
     }
 
     override fun traitCollectionDidChange(previousTraitCollection: UITraitCollection?) {
@@ -146,13 +175,7 @@ private fun keyboardColor(): UIColor =
         }
     }
 
-/** Number pad key color: white in light mode, gray in dark mode. */
-private fun keyColor(): UIColor =
-    UIColor.colorWithDynamicProvider { traits ->
-        UIColor(white = if (isDark(traits)) 0.36 else 1.0, alpha = 1.0)
-    }
-
-/** Done title blue with at least 4.5:1 on [keyColor]; stronger under Increase Contrast. */
+/** Done title blue with at least 4.5:1 on [keyboardColor]; stronger under Increase Contrast. */
 private fun doneTitleColor(): UIColor =
     UIColor.colorWithDynamicProvider { traits ->
         val high = traits?.accessibilityContrast == UIAccessibilityContrastHigh
@@ -178,3 +201,4 @@ private const val PANEL_RADIUS = 28.0
 // Less than the 23 points between the keyboard panel's top edge and its first key row.
 private const val PANEL_OVERLAP = 20.0
 private const val HIGH_CONTRAST_BORDER = 2.0
+private const val RIM_COVER = 2.0
