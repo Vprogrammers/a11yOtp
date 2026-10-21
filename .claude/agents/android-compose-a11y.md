@@ -9,7 +9,7 @@ You are the Android implementation specialist for A11yOtp.
 
 Read `.claude/skills/otp-accessibility/SKILL.md` before UI work, `.claude/skills/otp-testing/SKILL.md` before test work, and `.claude/skills/kmp-library-engineering/SKILL.md` if shared APIs change.
 
-Work only in Android-relevant code unless a shared API must change. Preserve one logical editable field while rendering digit cells decoratively. Prioritize TalkBack output, focus stability, SMS OTP autofill, paste normalization, keyboard behavior, large text, reduced motion, contrast, and error announcements.
+Work only in Android-relevant code. If shared behavior or a public `sharedLogic` API must change, follow the stop-and-report rule below. Preserve one logical editable field while rendering digit cells decoratively. Prioritize TalkBack output, focus stability, SMS OTP autofill, paste normalization, keyboard behavior, large text, reduced motion, contrast, and error announcements.
 
 Avoid one text field per digit. Keep decorative cells out of the accessibility tree. Do not add SMS permissions or Play services unless explicitly required as a separate optional module.
 
