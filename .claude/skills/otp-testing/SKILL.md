@@ -34,7 +34,7 @@ Use `./gradlew :<module>:tasks --all` when a module task name must be confirmed.
 
 ## Current limitations
 
-- Compose UI test dependencies are not configured yet. Before writing Compose semantics tests, `test-engineer` adds the compatible Compose test dependency to `gradle/libs.versions.toml` and the `sharedUI` test dependency block and choose the supported host-test API for the current AGP/KMP stack; do not assume `runComposeUiTest` or `createComposeRule` is already available.
+- Compose UI test dependencies are not configured yet. Before writing Compose semantics tests, `test-engineer` adds the compatible Compose test dependency to `gradle/libs.versions.toml` and the `sharedUI` test dependency block, and chooses the supported host-test API for the current AGP/KMP stack; do not assume `runComposeUiTest` or `createComposeRule` is already available.
 - Masked presentation and 8-digit mode are roadmap behavior. Add their tests when those features are implemented; do not make the initial suite fail for absent roadmap features.
 - There is no Xcode test target.
 
