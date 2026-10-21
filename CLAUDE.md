@@ -9,26 +9,28 @@ Read `.claude/skills/kmp-library-engineering/SKILL.md` for the authoritative mod
 ## Project facts
 
 - Kotlin package root: `me.vprogrammers.a11yotp`
-- Shared production code: `sharedLogic/src/commonMain/kotlin/me/vprogrammers/a11yotp`
-- Android Compose production code: `sharedUI/src/commonMain/kotlin/me/vprogrammers/a11yotp`
-- Shared tests: `sharedLogic/src/commonTest`
-- Android UI common tests: `sharedUI/src/commonTest`
-- Android host tests: `sharedLogic/src/androidHostTest` and future `sharedUI/src/androidHostTest`
-- Android device tests: future `sharedUI/src/androidDeviceTest`, run with `:sharedUI:connectedAndroidDeviceTest` on an emulator or device
-- Kotlin/Native tests: `sharedLogic/src/iosTest`
-- Native SwiftUI app: `iosApp/iosApp`
+- Library module: `a11yotp` (consumers add it only through Gradle in their KMP shared module)
+- Shared production code: `a11yotp/src/commonMain/kotlin/me/vprogrammers/a11yotp`
+- Android Compose production code: `a11yotp/src/androidMain/kotlin/me/vprogrammers/a11yotp`
+- iOS UIKit production code (Kotlin/Native): `a11yotp/src/iosMain/kotlin/me/vprogrammers/a11yotp`
+- Shared tests: `a11yotp/src/commonTest`
+- Android host tests: `a11yotp/src/androidHostTest`
+- Android device tests: `a11yotp/src/androidDeviceTest`, run with `:a11yotp:connectedAndroidDeviceTest` on an emulator or device
+- Kotlin/Native tests: `a11yotp/src/iosTest`
+- Consumer-like sample shared module: `sample/shared` (`:sampleShared`), exports `a11yotp` in the `Shared` framework
+- SwiftUI sample app: `iosApp/iosApp` (embeds the Kotlin UIKit components; no library code)
 - Xcode project and scheme: `iosApp/iosApp.xcodeproj`, scheme `iosApp`
-- Kotlin framework: `SharedLogic`, built by Xcode through `:sharedLogic:embedAndSignAppleFrameworkForXcode`
+- Kotlin framework: `Shared`, built by Xcode through `:sampleShared:embedAndSignAppleFrameworkForXcode`
 - iOS deployment target: 18.2
 - No Xcode test target or publication configuration exists yet. A manually triggered SwiftLint workflow exists; broader CI does not.
-- Gradle uses JDK 21. Android bytecode targets are currently mixed; see `gradle-ci-quality/SKILL.md`.
+- Gradle uses JDK 21. Library modules target JVM 11 and `androidApp` targets JVM 21; see `gradle-ci-quality/SKILL.md`.
 
 ## Project skills
 
 Read only the relevant skill:
 
 - `.claude/skills/otp-accessibility/SKILL.md`: screen readers, focus, announcements, privacy, autofill, paste, keyboards, RTL, and visual accessibility.
-- `.claude/skills/otp-testing/SKILL.md`: shared, Android host, Android device, Kotlin/Native, and future native iOS tests.
+- `.claude/skills/otp-testing/SKILL.md`: shared, Android host, Android device, and Kotlin/Native tests.
 - `.claude/skills/kmp-library-engineering/SKILL.md`: authoritative module boundaries, public APIs, Swift interop, dependencies, and distribution decisions.
 - `.claude/skills/gradle-ci-quality/SKILL.md`: Gradle, ktlint, CI gates, caches, JVM targets, artifacts, and publishing preparation.
 
@@ -48,13 +50,13 @@ Read only the relevant skill:
 Run the narrowest applicable command first:
 
 ```bash
-./gradlew :sharedLogic:testAndroidHostTest
-./gradlew :sharedUI:testAndroidHostTest
-./gradlew :sharedLogic:iosSimulatorArm64Test
-./gradlew :sharedLogic:linkDebugFrameworkIosSimulatorArm64
-./gradlew :sharedLogic:allTests
-./gradlew :sharedUI:allTests
-./gradlew :sharedUI:connectedAndroidDeviceTest   # needs emulator or device
+./gradlew :a11yotp:testAndroidHostTest
+./gradlew :a11yotp:compileAndroidDeviceTest
+./gradlew :a11yotp:compileTestKotlinIosSimulatorArm64
+./gradlew :a11yotp:iosSimulatorArm64Test          # Apple Silicon only
+./gradlew :sampleShared:linkDebugFrameworkIosSimulatorArm64
+./gradlew :a11yotp:allTests
+./gradlew :a11yotp:connectedAndroidDeviceTest     # needs emulator or device
 ./gradlew :androidApp:assembleDebug
 ./gradlew ktlintCheck
 ./scripts/swiftlint.sh   # pinned SwiftLint; configured errors fail
@@ -79,7 +81,7 @@ xcodebuild \
   build
 ```
 
-Xcode invokes `:sharedLogic:embedAndSignAppleFrameworkForXcode` through its `Compile Kotlin Framework` phase. Do not invoke it manually without the Xcode environment variables it requires.
+Xcode invokes `:sampleShared:embedAndSignAppleFrameworkForXcode` through its `Compile Kotlin Framework` phase. Do not invoke it manually without the Xcode environment variables it requires.
 
 The current Intel macOS host cannot execute ARM64 simulator tests. Report that limitation and use Apple Silicon CI; do not add deprecated `iosX64`.
 
@@ -89,7 +91,7 @@ The current Intel macOS host cannot execute ARM64 simulator tests. Report that l
 - Delegate focused work to the matching subagent. Handle Gradle/CI and documentation changes in the main session using the matching skill.
 - Typical flow:
   1. `kmp-architect` when public APIs, module structure, or dependencies change;
-  2. `android-compose-a11y` and/or `ios-swiftui-a11y` to implement;
+  2. `android-compose-a11y` and/or `ios-swiftui-a11y` (iOS UIKit in Kotlin/Native) to implement;
   3. `test-engineer` to add and run tests;
   4. `accessibility-reviewer` when UI, semantics, or accessibility claims change;
   5. full checks before the PR.
@@ -105,6 +107,6 @@ The current Intel macOS host cannot execute ARM64 simulator tests. Report that l
 - Work from `feat/<issue>-description`, `fix/<issue>-description`, or `chore/<issue>-description`.
 - Keep commits focused.
 - Claude never pushes or force-pushes; `git push` is denied in `.claude/settings.json`. When a push is requested, ask the user to run the exact command with `!`.
-- Run `./scripts/swiftlint.sh` after native Swift or SwiftUI changes.
+- Run `./scripts/swiftlint.sh` after Swift changes in `iosApp`.
 - Do not merge, publish, or create releases unless explicitly requested.
 - Reference the issue in the PR and use `Closes #<issue>` when appropriate.

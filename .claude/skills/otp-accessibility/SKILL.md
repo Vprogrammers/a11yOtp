@@ -1,6 +1,6 @@
 ---
 name: otp-accessibility
-description: Design, implement, or review accessibility behavior for the A11yOtp Android Compose and native SwiftUI OTP components. Use for screen-reader semantics, focus, announcements, privacy, autofill, paste, keyboard input, RTL, large text, reduced motion, contrast, target size, and accessibility regression work.
+description: Design, implement, or review accessibility behavior for the A11yOtp Android Compose and iOS UIKit (Kotlin/Native) OTP components. Use for screen-reader semantics, focus, announcements, privacy, autofill, paste, keyboard input, RTL, large text, reduced motion, contrast, target size, and accessibility regression work.
 ---
 
 # OTP accessibility
@@ -28,7 +28,7 @@ Verify:
 - software numeric keyboard and hardware keyboard input;
 - Android keyboard type: `KeyboardType.Number` when unmasked and `KeyboardType.NumberPassword` only when masked, because password input types suppress TalkBack key echo unless the user enables "Speak passwords";
 - Android OTP autofill behavior; on API 24–25, where the Autofill Framework is unavailable, degrade gracefully to typing, paste, and keyboard-provided suggestions. Do not add SMS permissions or Play Services as an implicit fallback;
-- SwiftUI one-time-code autofill with `.textContentType(.oneTimeCode)`;
+- iOS one-time-code autofill with `textContentType = UITextContentTypeOneTimeCode`;
 - Voice Control visible labels match the accessible name;
 - restoration without duplicate callbacks or announcements;
 - configurable 4, 6, and, once implemented, 8 digit codes.
@@ -45,14 +45,17 @@ Avoid one editable field per digit. It produces fragile focus, paste, autofill, 
 - Prefer semantics matchers in tests; use test tags only when semantics cannot identify the node cleanly.
 - Verify TalkBack, Switch Access, hardware keyboard navigation, software keyboard behavior, and autofill on a device or emulator when host tests are insufficient.
 
-## Native SwiftUI
+## iOS UIKit (Kotlin/Native)
 
-- Hide decorative digit cells from the accessibility tree and expose the backing input as the single logical editable accessibility element.
-- Give the backing input the same frame as the visible cell row so the VoiceOver focus outline, Voice Control overlay, and touch target match the visible field. Do not shrink it to a 1-point frame.
-- Provide an intentional label, value/state, useful hint, and invalid-state feedback.
-- Announce errors with `AccessibilityNotification.Announcement(message).post()` only on the transition into the error state, without moving focus.
-- Use `.keyboardType(.numberPad)` for numeric input and provide an explicit completion/dismissal affordance because number pad has no Return key.
-- Verify VoiceOver, Voice Control, hardware keyboard, Dynamic Type, and one-time-code autofill on a simulator or device.
+The iOS components are UIKit views written in Kotlin in `a11yotp/src/iosMain`. Hosts embed them in SwiftUI through `UIViewRepresentable`.
+
+- Use one real `UITextField` as the single logical editable accessibility element. Set `isAccessibilityElement = false` on the container and the decorative digit cells.
+- Give the text field the same frame as the visible cell row so the VoiceOver focus outline, Voice Control overlay, and touch target match the visible field. Do not shrink it to a 1-point frame or hide it; hidden views cannot become first responder.
+- Provide an intentional `accessibilityLabel`, `accessibilityValue` (progress or masked progress), useful hint, and invalid-state feedback.
+- Announce errors with `UIAccessibilityPostNotification(UIAccessibilityAnnouncementNotification, message)` only on the transition into the error state, without moving focus.
+- Use `keyboardType = UIKeyboardTypeNumberPad` and an `inputAccessoryView` Done button, because number pad has no Return key.
+- Use dynamic `UIColor`s so dark mode and Increase Contrast work, `UIFontMetrics` for Dynamic Type, and `UIAccessibilityIsReduceMotionEnabled()` for motion.
+- Verify VoiceOver, Voice Control, hardware keyboard, Dynamic Type, and one-time-code autofill on a device; an Intel Mac cannot run the ARM64 simulator.
 
 ## Visual accessibility
 
