@@ -11,6 +11,9 @@ struct ContentView: View {
         .withCornerRadius(cornerRadius: .greatestFiniteMagnitude)
         .withMinCellSize(width: 48, height: 48)
 
+    private static let buttonStyle = OtpButtonDefaults.shared.style()
+    private static let glassButtonStyle = buttonStyle.withGlass(glass: true)
+
     private static let fieldAccessibility = OtpFieldAccessibility(
         label: "Verification code",
         errorMessage: "Incorrect code. Try again.",
@@ -43,8 +46,13 @@ struct ContentView: View {
                     onComplete: verify
                 )
                 .disabled(isVerified || options.isDisabled)
-                OtpVerifyButtonView(state: otp, accessibility: Self.verifyAccessibility, onVerify: verify)
-                    .disabled(otp.isError || isVerified)
+                OtpVerifyButtonView(
+                    state: otp,
+                    accessibility: Self.verifyAccessibility,
+                    style: buttonStyle,
+                    onVerify: verify
+                )
+                .disabled(otp.isError || isVerified)
                 if isVerified {
                     // The icon and text carry the result, so the default text color is enough.
                     Label("Code verified", systemImage: "checkmark.circle.fill").font(.headline)
@@ -52,6 +60,7 @@ struct ContentView: View {
                 OtpResendButtonView(
                     secondsRemaining: secondsRemaining,
                     accessibility: Self.resendAccessibility,
+                    style: buttonStyle,
                     onResend: resend
                 )
                 SampleOptionsView(options: $options)
@@ -73,6 +82,10 @@ struct ContentView: View {
                 secondsRemaining -= 1
             }
         }
+    }
+
+    private var buttonStyle: OtpButtonStyle {
+        options.glassButtons ? Self.glassButtonStyle : Self.buttonStyle
     }
 
     /// Called on completion and by the Verify button.

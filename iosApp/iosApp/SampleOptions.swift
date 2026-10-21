@@ -14,6 +14,7 @@ struct SampleOptions {
     var maskIndex = 0
     var roundCells = false
     var isDisabled = false
+    var glassButtons = false
 
     var mask: OtpMask { Self.masks[maskIndex].mask }
 }
@@ -37,6 +38,8 @@ struct SampleOptionsView: View {
             .pickerStyle(.segmented)
             Toggle("Round cells", isOn: $options.roundCells)
             Toggle("Disable field", isOn: $options.isDisabled)
+            // On iOS versions before 26 the buttons keep the solid style.
+            Toggle("Liquid Glass buttons (iOS 26)", isOn: $options.glassButtons)
         }
     }
 }

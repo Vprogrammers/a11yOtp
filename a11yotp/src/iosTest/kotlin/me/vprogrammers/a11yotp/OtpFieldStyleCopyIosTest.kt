@@ -30,4 +30,17 @@ class OtpFieldStyleCopyIosTest {
         assertEquals(44.0, small.minCellWidth)
         assertEquals(44.0, small.minCellHeight)
     }
+
+    @Test
+    fun glassIsOffByDefaultAndCopiesKeepTheRestOfTheButtonStyle() {
+        val base = OtpButtonDefaults.style()
+        val glass = base.withGlass(true)
+
+        assertEquals(false, base.glass)
+        assertEquals(true, glass.glass)
+        assertEquals(base.minHeight, glass.minHeight)
+        assertEquals(base.cornerRadius, glass.cornerRadius)
+        assertSame(base.colors, glass.colors)
+        assertEquals(false, glass.withGlass(false).glass)
+    }
 }

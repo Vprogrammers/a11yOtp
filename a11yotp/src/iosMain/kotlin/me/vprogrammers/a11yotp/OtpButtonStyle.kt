@@ -54,6 +54,11 @@ class OtpButtonColors internal constructor(
  * [minHeight] is in points at the default text size, scales with Dynamic Type, and is raised to
  * 44. A disabled button always draws a dashed border of at least 1 point, so its state is not
  * shown by color alone.
+ *
+ * [glass] opts in to the iOS 26 Liquid Glass button background (a capsule) while the button is
+ * enabled. Earlier iOS versions, and disabled buttons, keep the solid style. Glass is translucent,
+ * so the [colors] contrast check cannot cover it; the system makes the glass opaque when Reduce
+ * Transparency or Increase Contrast is on. Use [withGlass] to turn it on.
  */
 class OtpButtonStyle internal constructor(
     val font: UIFont,
@@ -64,6 +69,7 @@ class OtpButtonStyle internal constructor(
     val verticalPadding: Double,
     val borderWidth: Double,
     val colors: OtpButtonColors,
+    val glass: Boolean = false,
 ) {
     val minHeight: Double = maxOf(minHeight, OtpFieldDefaults.MIN_TARGET_SIZE)
 
@@ -75,6 +81,20 @@ class OtpButtonStyle internal constructor(
 
     /** Contrast problems of [colors] for the current trait collection. */
     val contrastWarnings: List<String> get() = colors.contrastWarnings
+
+    /** Copy with [glass] on or off; Swift cannot use Kotlin default arguments. */
+    fun withGlass(glass: Boolean): OtpButtonStyle =
+        OtpButtonStyle(
+            font,
+            fontTextStyle,
+            cornerRadius,
+            minHeight,
+            horizontalPadding,
+            verticalPadding,
+            borderWidth,
+            colors,
+            glass,
+        )
 }
 
 /**

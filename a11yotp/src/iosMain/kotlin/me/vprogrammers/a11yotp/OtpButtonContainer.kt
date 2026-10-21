@@ -9,11 +9,14 @@ import platform.CoreGraphics.CGRectMake
 import platform.CoreGraphics.CGSize
 import platform.CoreGraphics.CGSizeMake
 import platform.Foundation.NSNumber
+import platform.Foundation.NSProcessInfo
 import platform.QuartzCore.CAShapeLayer
 import platform.UIKit.NSLineBreakByWordWrapping
 import platform.UIKit.NSTextAlignmentCenter
 import platform.UIKit.UIBezierPath
 import platform.UIKit.UIButton
+import platform.UIKit.UIButtonConfiguration
+import platform.UIKit.UIButtonConfigurationCornerStyleCapsule
 import platform.UIKit.UIFontMetrics
 import platform.UIKit.UILabel
 import platform.UIKit.UITraitCollection
@@ -69,7 +72,16 @@ internal class OtpButtonControl : UIButton(frame = CGRectMake(0.0, 0.0, 0.0, 0.0
         val style = model.style
         val colors = style.colors
         val enabled = model.isEnabled
+        val glass = enabled && style.glass && isLiquidGlassAvailable()
         setEnabled(enabled)
+        configuration =
+            if (glass) {
+                UIButtonConfiguration.glassButtonConfiguration().apply {
+                    cornerStyle = UIButtonConfigurationCornerStyleCapsule
+                }
+            } else {
+                null
+            }
         setAccessibilityLabel(model.text)
         titleView.text = model.text
         titleView.font =
@@ -79,13 +91,18 @@ internal class OtpButtonControl : UIButton(frame = CGRectMake(0.0, 0.0, 0.0, 0.0
             )
         titleView.textColor =
             (if (enabled) colors.content else colors.disabledContent).resolvedColorWithTraitCollection(traits)
+        // With glass the configuration draws the background; the solid fill and border are off.
         layer.backgroundColor =
-            (if (enabled) colors.container else colors.disabledContainer)
-                .resolvedColorWithTraitCollection(
-                    traits,
-                ).CGColor
-        layer.cornerRadius = style.cornerRadius
+            if (glass) {
+                null
+            } else {
+                (if (enabled) colors.container else colors.disabledContainer)
+                    .resolvedColorWithTraitCollection(traits)
+                    .CGColor
+            }
+        layer.cornerRadius = if (glass) 0.0 else style.cornerRadius
         cornerRadius = style.cornerRadius
+        borderLayer.hidden = glass
         borderWidth = otpButtonBorderWidth(style, enabled)
         insetX = style.horizontalPadding
         insetY = style.verticalPadding
@@ -114,6 +131,8 @@ internal class OtpButtonControl : UIButton(frame = CGRectMake(0.0, 0.0, 0.0, 0.0
 
     override fun layoutSubviews() {
         super.layoutSubviews()
+        // A button configuration adds its own background view; keep the title above it.
+        bringSubviewToFront(titleView)
         val (width, height) = bounds.useContents { size.width to size.height }
         titleView.setFrame(
             CGRectMake(
@@ -206,6 +225,10 @@ internal class OtpButtonContainer : UIView(frame = CGRectMake(0.0, 0.0, 0.0, 0.0
         onTraitsChanged?.invoke()
     }
 }
+
+/** Liquid Glass button configurations exist from iOS 26. */
+private fun isLiquidGlassAvailable(): Boolean =
+    NSProcessInfo.processInfo.operatingSystemVersion.useContents { majorVersion >= 26 }
 
 private const val DASH = 6.0
 private const val GAP = 4.0
