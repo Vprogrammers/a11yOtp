@@ -16,13 +16,13 @@
       "Bash(./gradlew ktlintCheck)",
       "Bash(./gradlew ktlintFormat)",
       "Bash(./gradlew test)",
-      "Bash(swiftlint lint --strict)",
-      "Bash(swiftlint lint --strict *)",
       "Bash(xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp *)",
       "Bash(git status)",
       "Bash(git status *)",
       "Bash(git diff)",
-      "Bash(git diff *)"
+      "Bash(git diff *)",
+      "Bash(./scripts/swiftlint.sh)",
+      "Bash(./scripts/swiftlint.sh *)"
     ],
     "deny": [
       "Read(./**/local.properties)",

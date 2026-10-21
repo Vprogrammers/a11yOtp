@@ -57,7 +57,7 @@ Run the narrowest applicable command first:
 ./gradlew :sharedUI:connectedAndroidDeviceTest   # needs emulator or device
 ./gradlew :androidApp:assembleDebug
 ./gradlew ktlintCheck
-swiftlint lint --strict   # Swift sources under iosApp; warnings fail too
+./scripts/swiftlint.sh   # pinned SwiftLint; configured errors fail
 ```
 
 Confirm an uncertain module task with:
@@ -105,5 +105,6 @@ The current Intel macOS host cannot execute ARM64 simulator tests. Report that l
 - Work from `feat/<issue>-description`, `fix/<issue>-description`, or `chore/<issue>-description`.
 - Keep commits focused.
 - Claude never pushes or force-pushes; `git push` is denied in `.claude/settings.json`. When a push is requested, ask the user to run the exact command with `!`.
+- Run `./scripts/swiftlint.sh` after native Swift or SwiftUI changes.
 - Do not merge, publish, or create releases unless explicitly requested.
 - Reference the issue in the PR and use `Closes #<issue>` when appropriate.

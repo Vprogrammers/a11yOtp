@@ -248,3 +248,32 @@ Issues and pull requests are welcome. For accessibility bugs, please include:
 ## License
 
 MIT. See [LICENSE](LICENSE).
+
+## Development
+
+### SwiftLint
+
+Native Swift and SwiftUI sources are checked with SwiftLint 0.65.1. The version is pinned in `Mintfile` so local and CI checks use the same ruleset.
+
+Install [Mint](https://github.com/yonaskolb/Mint) once:
+
+```bash
+brew install mint
+```
+
+Run lint from the repository root:
+
+```bash
+./scripts/swiftlint.sh
+```
+
+The script installs the pinned SwiftLint version through Mint when needed. If Mint is unavailable, it accepts an existing `swiftlint` executable only when its version is exactly 0.65.1.
+
+Xcode integration is optional. To show violations while building locally, add a Run Script build phase containing:
+
+```bash
+export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+"$SRCROOT/../scripts/swiftlint.sh"
+```
+
+CI does not depend on an individual developer's Xcode configuration and never modifies Swift source files automatically.
