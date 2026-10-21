@@ -13,6 +13,7 @@ Use package `me.vprogrammers.a11yotp`.
 
 - Shared tests: `sharedLogic/src/commonTest/kotlin/me/vprogrammers/a11yotp`
 - Android shared-logic host tests: `sharedLogic/src/androidHostTest/kotlin/me/vprogrammers/a11yotp`
+- Android UI common tests: `sharedUI/src/commonTest/kotlin/me/vprogrammers/a11yotp`
 - Android Compose host tests: `sharedUI/src/androidHostTest/kotlin/me/vprogrammers/a11yotp`
 - Kotlin/Native tests: `sharedLogic/src/iosTest/kotlin/me/vprogrammers/a11yotp`
 
@@ -33,7 +34,7 @@ Use `./gradlew :<module>:tasks --all` when a module task name must be confirmed.
 
 ## Current limitations
 
-- Compose UI test dependencies are not configured yet. Before writing Compose semantics tests, add the compatible Compose test dependency and choose the supported host-test API for the current AGP/KMP stack; do not assume `runComposeUiTest` or `createComposeRule` is already available.
+- Compose UI test dependencies are not configured yet. Before writing Compose semantics tests, `test-engineer` adds the compatible Compose test dependency to `gradle/libs.versions.toml` and the `sharedUI` test dependency block and choose the supported host-test API for the current AGP/KMP stack; do not assume `runComposeUiTest` or `createComposeRule` is already available.
 - Masked presentation and 8-digit mode are roadmap behavior. Add their tests when those features are implemented; do not make the initial suite fail for absent roadmap features.
 - There is no Xcode test target.
 
@@ -50,7 +51,7 @@ Use `./gradlew :<module>:tasks --all` when a module task name must be confirmed.
 
 For implemented behavior, cover empty state, supported lengths, typing, partial/full/overlong paste, deletion, replacement, unsupported characters, configured normalization, completion exactly once per transition, error clearing, and restoration. Use table-driven tests where cases share behavior.
 
-For Android Compose, find the logical input through semantics and assert decorative cells are not independently exposed. Test label, progress/error state, paste, keyboard input, normalization, completion, and restoration.
+For Android Compose, find the logical input through semantics and assert decorative cells are not independently exposed. Test label, progress/error state, paste, keyboard input, normalization, completion, and restoration. Assert the keyboard type is `Number` when unmasked and `NumberPassword` only when masked.
 
 Use screenshots only for visual regressions such as font scale, themes, RTL, focus, and errors—not interaction behavior.
 

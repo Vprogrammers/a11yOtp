@@ -26,7 +26,7 @@ Verify:
 - normalization and rejection of unsupported characters;
 - visual digit order remains left-to-right inside the OTP field even when the surrounding locale is RTL;
 - software numeric keyboard and hardware keyboard input;
-- Android keyboard type appropriate for numeric OTP input;
+- Android keyboard type: `KeyboardType.Number` when unmasked and `KeyboardType.NumberPassword` only when masked, because password input types suppress TalkBack key echo unless the user enables "Speak passwords";
 - Android OTP autofill behavior, including API 24–25 fallback because the Autofill Framework starts at API 26;
 - SwiftUI one-time-code autofill with `.textContentType(.oneTimeCode)`;
 - Voice Control visible labels match the accessible name;
@@ -39,6 +39,7 @@ Avoid one editable field per digit. It produces fragile focus, paste, autofill, 
 
 - Build semantics from the single logical input.
 - Merge or clear decorative descendant semantics deliberately.
+- Expose errors with `semantics { error(message) }` on the logical input and a polite live region (`liveRegion = LiveRegionMode.Polite`) on the visible error text. Do not use `View.announceForAccessibility`, which is deprecated from API 36.
 - Prefer semantics matchers in tests; use test tags only when semantics cannot identify the node cleanly.
 - Verify TalkBack, Switch Access, hardware keyboard navigation, software keyboard behavior, and autofill on a device or emulator when host tests are insufficient.
 
@@ -46,6 +47,7 @@ Avoid one editable field per digit. It produces fragile focus, paste, autofill, 
 
 - Combine decorative cells into one accessibility element or hide them and expose the backing input.
 - Provide an intentional label, value/state, useful hint, and invalid-state feedback.
+- Announce errors with `AccessibilityNotification.Announcement(message).post()` only on the transition into the error state, without moving focus.
 - Use `.keyboardType(.numberPad)` for numeric input and provide an explicit completion/dismissal affordance because number pad has no Return key.
 - Verify VoiceOver, Voice Control, hardware keyboard, Dynamic Type, and one-time-code autofill on a simulator or device.
 
