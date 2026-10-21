@@ -57,6 +57,7 @@ Run the narrowest applicable command first:
 ./gradlew :sharedUI:connectedAndroidDeviceTest   # needs emulator or device
 ./gradlew :androidApp:assembleDebug
 ./gradlew ktlintCheck
+swiftlint lint --strict   # Swift sources under iosApp; warnings fail too
 ```
 
 Confirm an uncertain module task with:
