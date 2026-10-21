@@ -92,6 +92,7 @@ The current Intel macOS host cannot execute ARM64 simulator tests. Report that l
   3. `test-engineer` to add and run tests;
   4. `accessibility-reviewer` when UI, semantics, or accessibility claims change;
   5. full checks before the PR.
+- Platform implementation agents may add focused tests for their own changes. `test-engineer` reviews coverage, adds missing regression and edge-case tests, and runs the applicable verification tasks.
 - Keep generated files under `build/` untouched.
 - Never read or commit `local.properties`, credentials, signing material, `.env`, keystores, or local Claude settings.
 - Do not change platform minimums, toolchain versions, publishing coordinates, distribution format, or public API compatibility without explaining impact.
