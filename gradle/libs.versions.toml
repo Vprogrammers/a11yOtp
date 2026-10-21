@@ -5,6 +5,10 @@ android-minSdk = "24"
 android-targetSdk = "37"
 androidx-activity = "1.13.0"
 composeMultiplatform = "1.12.2"
+# androidx Compose version that Compose Multiplatform 1.12.2 is built on (verified from resolved ui-test artifacts)
+androidxComposeUi = "1.12.1"
+# Pinned above the Compose test default: older Espresso crashes on API 37 (InputManager.getInstance removed)
+androidx-test-espresso = "3.7.0"
 kotlin = "2.4.21"
 ktlintPlugin = "14.2.0"
 ktlintVersion = "1.8.0"
@@ -16,6 +20,9 @@ compose-uiTooling = { module = "org.jetbrains.compose.ui:ui-tooling", version.re
 compose-runtime = { module = "org.jetbrains.compose.runtime:runtime", version.ref = "composeMultiplatform" }
 compose-foundation = { module = "org.jetbrains.compose.foundation:foundation", version.ref = "composeMultiplatform" }
 compose-ui = { module = "org.jetbrains.compose.ui:ui", version.ref = "composeMultiplatform" }
+compose-uiTest = { module = "androidx.compose.ui:ui-test-junit4", version.ref = "androidxComposeUi" }
+androidx-test-espresso-core = { module = "androidx.test.espresso:espresso-core", version.ref = "androidx-test-espresso" }
+compose-uiTestManifest = { module = "androidx.compose.ui:ui-test-manifest", version.ref = "androidxComposeUi" }
 compose-uiToolingPreview = { module = "org.jetbrains.compose.ui:ui-tooling-preview", version.ref = "composeMultiplatform" }
 
 [plugins]

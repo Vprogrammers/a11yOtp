@@ -31,10 +31,18 @@ class OtpState private constructor(
      * Digits beyond [length] are dropped, keeping the first ones. A change to [code]
      * clears the error.
      *
+     * When the code is complete and [text] is the current code followed by a different full
+     * code, as happens when a code is pasted or autofilled at the end of a full field, the
+     * new code replaces the old one and reports completion.
+     *
      * Always write `result.state.code` back to the field, also after a rejection, so the
      * visible text and the screen-reader value stay the same.
      */
     fun withInput(text: String): OtpInputResult {
+        if (isComplete && text.length > code.length && text.startsWith(code)) {
+            val replacement = cleared().withInput(text.substring(code.length))
+            if (replacement.state.isComplete && replacement.state.code != code) return replacement
+        }
         val digits = normalizeOtpDigits(text) ?: return OtpInputResult(this, didComplete = false)
         val newCode = digits.take(length.digitCount)
         if (newCode == code) return OtpInputResult(this, didComplete = false)

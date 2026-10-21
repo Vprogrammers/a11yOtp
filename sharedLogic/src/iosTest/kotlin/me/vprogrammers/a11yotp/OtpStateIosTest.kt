@@ -22,6 +22,6 @@ class OtpStateIosTest {
 
     @Test
     fun enumEntriesKeepDigitCounts() {
-        assertEquals(listOf(4, 6), OtpLength.entries.map { it.digitCount })
+        assertEquals(listOf(4, 6, 8), OtpLength.entries.map { it.digitCount })
     }
 }

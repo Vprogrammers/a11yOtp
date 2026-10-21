@@ -9,7 +9,7 @@ import kotlin.test.assertTrue
 class OtpStateTest {
     @Test
     fun emptyStateForEachSupportedLength() {
-        for ((length, digitCount) in listOf(OtpLength.FOUR to 4, OtpLength.SIX to 6)) {
+        for ((length, digitCount) in listOf(OtpLength.FOUR to 4, OtpLength.SIX to 6, OtpLength.EIGHT to 8)) {
             val state = OtpState(length)
 
             assertEquals(digitCount, state.length.digitCount)
@@ -82,6 +82,39 @@ class OtpStateTest {
 
         assertEquals("1234", result.state.code)
         assertTrue(result.didComplete)
+    }
+
+    @Test
+    fun eightDigitCodeCompletesOnEighthDigit() {
+        val partial = OtpState(OtpLength.EIGHT).withInput("1234 567")
+        assertFalse(partial.didComplete)
+
+        val complete = partial.state.withInput("1234-5678-9")
+        assertEquals("12345678", complete.state.code)
+        assertTrue(complete.didComplete)
+    }
+
+    @Test
+    fun fullCodeAppendedToCompleteCodeReplacesIt() {
+        val complete = OtpState(OtpLength.SIX).withInput("123456").state.withError()
+
+        val result = complete.withInput("123456482-913")
+
+        assertEquals("482913", result.state.code)
+        assertFalse(result.state.isError)
+        assertTrue(result.didComplete)
+    }
+
+    @Test
+    fun appendedInputThatIsNotANewFullCodeKeepsCompleteCode() {
+        val complete = OtpState(OtpLength.SIX).withInput("123456").state
+
+        for (text in listOf("1234567", "123456123456", "123456abcdef")) {
+            val result = complete.withInput(text)
+
+            assertSame(complete, result.state, "input: $text")
+            assertFalse(result.didComplete)
+        }
     }
 
     @Test
