@@ -6,7 +6,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /** Cell 48, spacing 8, separator 12: a gap between groups is 2 * 8 + 12 = 28. */
-class OtpCellsPlannerGridIosTest {
+class OtpCellsPlannerGridTest {
     private fun planner(
         count: Int,
         groupSize: Int,

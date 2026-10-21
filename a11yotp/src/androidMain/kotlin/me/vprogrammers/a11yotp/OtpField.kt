@@ -2,12 +2,8 @@ package me.vprogrammers.a11yotp
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -31,6 +27,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -48,8 +45,11 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import kotlin.math.floor
+import kotlin.math.roundToInt
 
 /**
  * One-time-code input that exposes a single logical text field to screen readers while
@@ -65,7 +65,7 @@ import androidx.compose.ui.unit.dp
  * true. [alignment] (default centered) only positions the cells and error text; the digits
  * inside the row always read left to right. The field spans the available width.
  */
-@OptIn(ExperimentalComposeUiApi::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun OtpField(
     state: OtpState,
@@ -160,7 +160,11 @@ fun OtpField(
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
+/**
+ * Lays out the decorative cells with the shared [OtpCellsPlanner], so Android and iOS wrap the same
+ * way: one row with separators, then one row without them, then whole groups per row, then cells
+ * per row, and cells shrink only as a last resort.
+ */
 @Composable
 private fun OtpCells(
     state: OtpState,
@@ -172,36 +176,67 @@ private fun OtpCells(
 ) {
     val total = state.length.digitCount
     val activeIndex = state.enteredDigitCount.coerceAtMost(total - 1)
-    val groupSize = evenGroupSize(style.groupSize, total)
-    val groups = (0 until total).chunked(groupSize ?: 1)
-    FlowRow(
+    val groupSize = evenGroupSize(style.groupSize, total) ?: 0
+    val separatorCount = if (groupSize > 0) total / groupSize - 1 else 0
+    Layout(
+        content = {
+            for (index in 0 until total) {
+                OtpCell(
+                    digit = state.code.getOrNull(index),
+                    isActive = focused && index == activeIndex,
+                    isError = state.isError,
+                    enabled = enabled,
+                    style = style,
+                    mask = mask,
+                )
+            }
+            repeat(separatorCount) {
+                BasicText(
+                    text = "–",
+                    style = style.textStyle.copy(color = if (enabled) style.colors.text else style.colors.disabledText),
+                )
+            }
+        },
         modifier = Modifier.fillMaxWidth().clearAndSetSemantics { },
-        horizontalArrangement = Arrangement.spacedBy(style.cellSpacing, horizontal),
-        verticalArrangement = Arrangement.spacedBy(style.cellSpacing),
-    ) {
-        groups.forEachIndexed { groupIndex, indices ->
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(style.cellSpacing),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                for (index in indices) {
-                    OtpCell(
-                        digit = state.code.getOrNull(index),
-                        isActive = focused && index == activeIndex,
-                        isError = state.isError,
-                        enabled = enabled,
-                        style = style,
-                        mask = mask,
-                    )
-                }
-                if (groupSize != null && groupIndex < groups.lastIndex) {
-                    BasicText(
-                        text = "–",
-                        style =
-                            style.textStyle.copy(
-                                color = if (enabled) style.colors.text else style.colors.disabledText,
-                            ),
-                    )
+    ) { measurables, constraints ->
+        val cells = measurables.take(total)
+        val separators = measurables.drop(total)
+        val spacing = style.cellSpacing.toPx().toDouble()
+        val separatorWidth = separators.maxOfOrNull { it.maxIntrinsicWidth(Constraints.Infinity) } ?: 0
+        val planner =
+            OtpCellsPlanner(
+                count = total,
+                groupSize = groupSize,
+                cellWidth = cells.maxOf { it.maxIntrinsicWidth(Constraints.Infinity) }.toDouble(),
+                spacing = spacing,
+                separatorWidth = separatorWidth.toDouble(),
+            )
+        val available = if (constraints.hasBoundedWidth) constraints.maxWidth.toDouble() else null
+        val plan = planner.plan(available)
+        val cellWidth = floor(plan.cellWidth).toInt().coerceAtLeast(1)
+        val cellHeight = cells.maxOf { it.maxIntrinsicHeight(cellWidth) }
+        val cellPlaceables = cells.map { it.measure(Constraints.fixed(cellWidth, cellHeight)) }
+        val separatorPlaceables = separators.map { it.measure(Constraints()) }
+        val rowWidths = plan.rows.map { planner.rowWidth(it, cellWidth.toDouble(), plan.showsSeparators) }
+        val width = available?.toInt() ?: rowWidths.maxOf { it }.roundToInt()
+        val rowStep = cellHeight + spacing.roundToInt()
+        val height = plan.rows.size * rowStep - spacing.roundToInt()
+        layout(width, height) {
+            plan.rows.forEachIndexed { rowIndex, row ->
+                var x = horizontal.align(rowWidths[rowIndex].roundToInt(), width, layoutDirection).toDouble()
+                val y = rowIndex * rowStep
+                for (cell in row.start until row.endExclusive) {
+                    cellPlaceables[cell].place(x.roundToInt(), y)
+                    x += cellWidth
+                    val endsGroup = groupSize > 0 && (cell + 1) % groupSize == 0
+                    if (plan.showsSeparators && endsGroup && cell != row.endExclusive - 1) {
+                        val separator = separatorPlaceables[(cell + 1) / groupSize - 1]
+                        separator.place(
+                            (x + spacing + (separatorWidth - separator.width) / 2.0).roundToInt(),
+                            y + (cellHeight - separator.height) / 2,
+                        )
+                    }
+                    x += planner.gapAfter(cell, plan.showsSeparators)
                 }
             }
         }
