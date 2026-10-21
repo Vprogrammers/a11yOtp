@@ -24,6 +24,7 @@ import platform.UIKit.UITextField
 import platform.UIKit.UITraitCollection
 import platform.UIKit.UIUserInterfaceLayoutDirection
 import platform.UIKit.UIView
+import platform.UIKit.UIViewContentMode
 import platform.UIKit.UIViewNoIntrinsicMetric
 import platform.UIKit.resolvedColorWithTraitCollection
 import platform.UIKit.setAccessibilityLabel
@@ -84,6 +85,7 @@ internal class OtpFieldContainer : UIView(frame = CGRectMake(0.0, 0.0, 0.0, 0.0)
         // layouts. The input itself is forced left to right for the same reason.
         textField.semanticContentAttribute = UISemanticContentAttributeForceLeftToRight
         errorIcon.setIsAccessibilityElement(false)
+        errorIcon.contentMode = UIViewContentMode.UIViewContentModeScaleAspectFit
         errorLabel.setIsAccessibilityElement(false)
         errorLabel.numberOfLines = 0
         errorLabel.adjustsFontForContentSizeCategory = true
@@ -254,10 +256,11 @@ internal class OtpFieldContainer : UIView(frame = CGRectMake(0.0, 0.0, 0.0, 0.0)
     ): Triple<Double, Double, Double> {
         // Returns icon width, label width, height.
         if (!model.state.isError) return Triple(0.0, 0.0, 0.0)
-        val iconWidth = errorIcon.intrinsicContentSize().useContents { width }
+        // `this.` is required: a bare `width` would resolve to the parameter, not CGSize.width.
+        val iconWidth = errorIcon.intrinsicContentSize().useContents { this.width }
         val labelWidth = (width - iconWidth - ERROR_ICON_GAP).coerceAtLeast(1.0)
-        val labelHeight = errorLabel.sizeThatFits(CGSizeMake(labelWidth, UNBOUNDED)).useContents { height }
-        val iconHeight = errorIcon.intrinsicContentSize().useContents { height }
+        val labelHeight = errorLabel.sizeThatFits(CGSizeMake(labelWidth, UNBOUNDED)).useContents { this.height }
+        val iconHeight = errorIcon.intrinsicContentSize().useContents { this.height }
         return Triple(iconWidth, labelWidth, maxOf(labelHeight, iconHeight))
     }
 
