@@ -40,28 +40,24 @@ import platform.darwin.NSObject
  *
  * On iOS 26 the keyboard is a rounded panel and its UIInputView background is transparent, so the
  * bar draws its own opaque panel in the keyboard color with the keyboard's rounded top corners.
- * The panel continues behind the top of the keyboard, so the keyboard looks taller and the Done
- * key reads as a key above the 3. Being opaque, it never lets app content show behind the key,
- * which keeps it perceivable for low-vision users. Earlier iOS versions use the keyboard-style
- * UIInputView background, which matches their flat keyboard. Sizes match the iOS 26 number pad
- * (measured on device): 48 point keys, about 7.5 point edge margins and 11 point column gaps.
+ * The system clips this bar to its bounds, so the panel is placed in the nearest ancestor that
+ * also contains the keyboard, behind it, and reaches down behind the keyboard's top edge and
+ * rounded corners. The keyboard then looks taller with no line where the two meet, and the panel
+ * moves with the keyboard's show and hide animation. Being opaque, it never lets app content show
+ * behind Done, which keeps it perceivable for low-vision users. Earlier iOS versions use the
+ * keyboard-style UIInputView background, which matches their flat keyboard.
  *
- * Done is plain blue text on the panel, darker in light mode and lighter in dark mode than the
- * system blue, so it keeps at least 4.5:1 on the panel (5.3:1 light, 10:1 dark). Its touch target
- * is the size of a key above the 3, at least 44 points in both directions. The title scales with
- * Dynamic Type, Increase Contrast draws a border around the target, and the visible title is the
- * accessible name, so Voice Control "Tap Done" works.
- *
- * The keyboard draws a thin light rim along its top edge, over anything behind it. A 2 point strip
- * in the panel color is added to the keyboard host view, above the keyboard, to cover that rim so
- * the panel and the keyboard join without a line. It is kept that thin so it never covers the
- * one-time-code suggestion inside the keyboard.
+ * Done is plain blue text above the 3, darker in light mode and lighter in dark mode than the
+ * system blue, so it keeps at least 4.5:1 on the panel (5.3:1 light, 10:1 dark). The bar is only
+ * as tall as the 44 point touch target (more with large Dynamic Type), and the target is one
+ * number pad column wide. Increase Contrast draws a border around the target, and the visible
+ * title is the accessible name, so Voice Control "Tap Done" works.
  */
 internal class OtpKeyboardAccessory(
     target: NSObject,
     action: String,
 ) : UIInputView(
-        frame = CGRectMake(0.0, 0.0, INITIAL_WIDTH, KEY_HEIGHT + KEY_TOP),
+        frame = CGRectMake(0.0, 0.0, INITIAL_WIDTH, MIN_SIZE),
         inputViewStyle = UIInputViewStyle.UIInputViewStyleKeyboard,
     ) {
     private val panel: UIView? =
@@ -77,22 +73,11 @@ internal class OtpKeyboardAccessory(
         } else {
             null
         }
-    private val rimCover: UIView? =
-        panel?.let {
-            UIView(frame = CGRectMake(0.0, 0.0, 0.0, 0.0)).also { cover ->
-                cover.userInteractionEnabled = false
-                cover.setIsAccessibilityElement(false)
-                cover.backgroundColor = keyboardColor()
-            }
-        }
     private val button = UIButton.buttonWithType(UIButtonTypeSystem)
 
     init {
         autoresizingMask = UIViewAutoresizingFlexibleWidth or UIViewAutoresizingFlexibleHeight
         allowsSelfSizing = true
-        // The panel extends below the bar, behind the top of the keyboard.
-        clipsToBounds = false
-        panel?.let(::addSubview)
         button.tintColor = doneTitleColor()
         button.titleLabel?.font = UIFont.preferredFontForTextStyle(UIFontTextStyleHeadline)
         button.titleLabel?.adjustsFontForContentSizeCategory = true
@@ -122,37 +107,54 @@ internal class OtpKeyboardAccessory(
             ?.intrinsicContentSize()
             ?.useContents { this.width to this.height } ?: (0.0 to 0.0)
 
-    private fun keyHeight(): Double = maxOf(KEY_HEIGHT, titleSize().second + 2 * VERTICAL_PADDING)
+    private fun barHeight(): Double = maxOf(MIN_SIZE, titleSize().second + 2 * VERTICAL_PADDING)
 
-    override fun intrinsicContentSize(): CValue<CGSize> = CGSizeMake(UIViewNoIntrinsicMetric, keyHeight() + KEY_TOP)
+    override fun intrinsicContentSize(): CValue<CGSize> = CGSizeMake(UIViewNoIntrinsicMetric, barHeight())
 
     override fun layoutSubviews() {
         super.layoutSubviews()
         val (width, height) = bounds.useContents { this.size.width to this.size.height }
         val (left, right) = safeAreaInsets.useContents { this.left to this.right }
-        panel?.setFrame(CGRectMake(0.0, 0.0, width, height + PANEL_OVERLAP))
+        updatePanelFrame()
         val available = width - left - right - 2 * KEY_MARGIN
         // One of the three number pad columns, aligned with the 3, 6, and 9 keys below.
         val column = (available - 2 * KEY_GAP) / 3.0
         val titleWidth = titleSize().first + 2 * HORIZONTAL_PADDING
         val keyWidth = minOf(maxOf(column, titleWidth, MIN_SIZE), available)
-        button.setFrame(CGRectMake(width - right - KEY_MARGIN - keyWidth, KEY_TOP, keyWidth, keyHeight()))
-        coverKeyboardRim()
+        button.setFrame(CGRectMake(width - right - KEY_MARGIN - keyWidth, 0.0, keyWidth, height))
     }
 
-    override fun didMoveToSuperview() {
-        super.didMoveToSuperview()
-        rimCover?.removeFromSuperview()
-        coverKeyboardRim()
+    override fun didMoveToWindow() {
+        super.didMoveToWindow()
+        attachPanel()
     }
 
-    private fun coverKeyboardRim() {
-        val cover = rimCover ?: return
-        val host = superview ?: return
-        if (cover.superview != host) host.addSubview(cover)
-        host.bringSubviewToFront(cover)
-        val (x, bottom, width) = frame.useContents { Triple(origin.x, origin.y + size.height, size.width) }
-        cover.setFrame(CGRectMake(x, bottom - RIM_COVER / 2, width, RIM_COVER))
+    /** Moves the panel behind the keyboard, into the nearest ancestor that also contains it. */
+    private fun attachPanel() {
+        val panel = panel ?: return
+        if (window == null) {
+            panel.removeFromSuperview()
+            return
+        }
+        val ownHeight = bounds.useContents { this.size.height }
+        var host = superview
+        while (host != null && host.bounds.useContents { this.size.height } < ownHeight + MIN_KEYBOARD_HEIGHT) {
+            host = host.superview
+        }
+        val target = host ?: this
+        if (panel.superview != target) {
+            panel.removeFromSuperview()
+            target.insertSubview(panel, atIndex = 0)
+        }
+        updatePanelFrame()
+    }
+
+    private fun updatePanelFrame() {
+        val panel = panel ?: return
+        val host = panel.superview ?: return
+        convertRect(bounds, toView = host).useContents {
+            panel.setFrame(CGRectMake(origin.x, origin.y, size.width, size.height + PANEL_OVERLAP))
+        }
     }
 
     override fun traitCollectionDidChange(previousTraitCollection: UITraitCollection?) {
@@ -191,14 +193,14 @@ private const val INITIAL_WIDTH = 320.0
 private const val MIN_SIZE = 44.0
 private const val VERTICAL_PADDING = 4.0
 private const val HORIZONTAL_PADDING = 16.0
-private const val KEY_HEIGHT = 48.0
 private const val KEY_RADIUS = 9.0
 private const val KEY_MARGIN = 7.5
 private const val KEY_GAP = 11.0
-private const val KEY_TOP = 10.0
 private const val PANEL_RADIUS = 28.0
 
-// Less than the 23 points between the keyboard panel's top edge and its first key row.
-private const val PANEL_OVERLAP = 20.0
+// How far the panel reaches behind the keyboard: past its rounded top corners.
+private const val PANEL_OVERLAP = 60.0
+
+// An ancestor at least this much taller than the bar also contains the keyboard.
+private const val MIN_KEYBOARD_HEIGHT = 150.0
 private const val HIGH_CONTRAST_BORDER = 2.0
-private const val RIM_COVER = 2.0
