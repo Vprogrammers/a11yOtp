@@ -32,10 +32,12 @@ Keep build changes compatible with the existing KMP project and avoid unrelated 
 
 1. `ktlintCheck`;
 2. `:sharedLogic:testAndroidHostTest`;
-3. `:sharedUI:testAndroidHostTest` once Compose test dependencies exist;
+3. `:sharedUI:testAndroidHostTest` (runs `commonTest` now; Compose semantics tests join once their dependency exists);
 4. `:androidApp:assembleDebug`;
 5. `:sharedLogic:iosSimulatorArm64Test` and iOS app build on Apple Silicon;
 6. publication validation once publishing exists.
+
+Before the first iOS CI job, mark the `iosApp` scheme as Shared in Xcode and commit `iosApp/iosApp.xcodeproj/xcshareddata`. The scheme currently exists only in ignored `xcuserdata`.
 
 Cache Gradle dependencies and supported build/configuration-cache state. Never skip verification with convenience flags.
 
