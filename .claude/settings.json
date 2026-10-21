@@ -5,7 +5,12 @@
       "Bash(./gradlew ktlintCheck)",
       "Bash(./gradlew ktlintFormat)",
       "Bash(./gradlew test)",
+      "Bash(./gradlew :sharedLogic:testAndroidHostTest)",
+      "Bash(./gradlew :sharedUI:testAndroidHostTest)",
+      "Bash(./gradlew :sharedLogic:iosSimulatorArm64Test)",
+      "Bash(./gradlew :sharedLogic:linkDebugFrameworkIosSimulatorArm64)",
       "Bash(./gradlew :androidApp:assembleDebug)",
+      "Bash(xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp *)",
       "Bash(git status *)",
       "Bash(git diff *)"
     ],
