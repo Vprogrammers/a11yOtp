@@ -12,7 +12,9 @@ Read `.claude/skills/kmp-library-engineering/SKILL.md` for the authoritative mod
 - Shared production code: `sharedLogic/src/commonMain/kotlin/me/vprogrammers/a11yotp`
 - Android Compose production code: `sharedUI/src/commonMain/kotlin/me/vprogrammers/a11yotp`
 - Shared tests: `sharedLogic/src/commonTest`
+- Android UI common tests: `sharedUI/src/commonTest`
 - Android host tests: `sharedLogic/src/androidHostTest` and future `sharedUI/src/androidHostTest`
+- Android device tests: future `sharedUI/src/androidDeviceTest`, run with `:sharedUI:connectedAndroidDeviceTest` on an emulator or device
 - Kotlin/Native tests: `sharedLogic/src/iosTest`
 - Native SwiftUI app: `iosApp/iosApp`
 - Xcode project and scheme: `iosApp/iosApp.xcodeproj`, scheme `iosApp`
@@ -52,6 +54,7 @@ Run the narrowest applicable command first:
 ./gradlew :sharedLogic:linkDebugFrameworkIosSimulatorArm64
 ./gradlew :sharedLogic:allTests
 ./gradlew :sharedUI:allTests
+./gradlew :sharedUI:connectedAndroidDeviceTest   # needs emulator or device
 ./gradlew :androidApp:assembleDebug
 ./gradlew ktlintCheck
 ```
@@ -83,6 +86,12 @@ The current Intel macOS host cannot execute ARM64 simulator tests. Report that l
 
 - Read the relevant module and skill before editing.
 - Delegate focused work to the matching subagent. Handle Gradle/CI and documentation changes in the main session using the matching skill.
+- Typical flow:
+  1. `kmp-architect` when public APIs, module structure, or dependencies change;
+  2. `android-compose-a11y` and/or `ios-swiftui-a11y` to implement;
+  3. `test-engineer` to add and run tests;
+  4. `accessibility-reviewer` when UI, semantics, or accessibility claims change;
+  5. full checks before the PR.
 - Keep generated files under `build/` untouched.
 - Never read or commit `local.properties`, credentials, signing material, `.env`, keystores, or local Claude settings.
 - Do not change platform minimums, toolchain versions, publishing coordinates, distribution format, or public API compatibility without explaining impact.
@@ -93,5 +102,6 @@ The current Intel macOS host cannot execute ARM64 simulator tests. Report that l
 
 - Work from `feat/<issue>-description`, `fix/<issue>-description`, or `chore/<issue>-description`.
 - Keep commits focused.
-- Do not push, force-push, merge, publish, or create releases unless explicitly requested.
+- Claude never pushes; `git push` is denied in `.claude/settings.json`. When a push is requested, ask the user to run `! git push`.
+- Do not force-push, merge, publish, or create releases unless explicitly requested.
 - Reference the issue in the PR and use `Closes #<issue>` when appropriate.
