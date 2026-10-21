@@ -75,4 +75,10 @@ class OtpFieldStyleTest {
             OtpFieldDefaults.style(borderWidth = 2.dp, focusedBorderWidth = 2.dp)
         }
     }
+
+    @Test
+    fun focusLiftIsOnByDefaultAndPartOfEquality() {
+        assertTrue(OtpFieldDefaults.style().liftFocusedCell)
+        assertTrue(OtpFieldDefaults.style() != OtpFieldDefaults.style(liftFocusedCell = false))
+    }
 }

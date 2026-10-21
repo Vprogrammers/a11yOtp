@@ -163,6 +163,7 @@ internal class OtpFieldContainer : UIView(frame = CGRectMake(0.0, 0.0, 0.0, 0.0)
                     cornerRadius = style.cornerRadius,
                     ring = if (filled && emphasised) background else null,
                     ringWidth = style.focusedBorderWidth,
+                    lifted = isActive && style.liftFocusedCell,
                 ),
                 traits,
             )
@@ -335,7 +336,7 @@ internal class OtpFieldContainer : UIView(frame = CGRectMake(0.0, 0.0, 0.0, 0.0)
             minX = minOf(minX, x)
             maxX = maxOf(maxX, x + rowWidth)
             for (cell in row.start until row.endExclusive) {
-                cells[cell].setFrame(CGRectMake(x, y, plan.cellWidth, cellHeight))
+                cells[cell].place(x, y, plan.cellWidth, cellHeight)
                 x += plan.cellWidth
                 val endsGroup = (cell + 1) % planner.groupSize == 0
                 if (plan.showsSeparators && cell != row.endExclusive - 1 && endsGroup) {

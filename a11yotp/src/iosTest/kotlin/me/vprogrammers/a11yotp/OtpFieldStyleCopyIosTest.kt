@@ -54,4 +54,13 @@ class OtpFieldStyleCopyIosTest {
         assertEquals(3, glass.groupSize)
         assertSame(base.colors, glass.colors)
     }
+
+    @Test
+    fun focusLiftIsOnByDefaultAndCanBeTurnedOff() {
+        val base = OtpFieldDefaults.style()
+
+        assertEquals(true, base.liftFocusedCell)
+        assertEquals(false, base.withFocusLift(false).liftFocusedCell)
+        assertEquals(base.minCellHeight, base.withFocusLift(false).minCellHeight)
+    }
 }

@@ -22,6 +22,8 @@ import androidx.compose.ui.unit.sp
  * "123 - 456") without changing the code. Separators are drawn only when the code length splits
  * into equal groups, so 3 groups a 6-digit code but leaves 4- and 8-digit codes ungrouped. [placeholder] is drawn in empty cells.
  * [errorTextStyle] styles the visible error message (sp, so it follows font scale).
+ * [liftFocusedCell] raises the focused cell slightly with a shadow, in addition to its thicker
+ * border; with "Remove animations" on, it moves without animation.
  * Create instances with [OtpFieldDefaults.style].
  */
 @Immutable
@@ -37,6 +39,7 @@ class OtpFieldStyle internal constructor(
     val groupSize: Int? = null,
     val placeholder: Char? = null,
     val errorTextStyle: TextStyle = TextStyle(fontSize = 14.sp),
+    val liftFocusedCell: Boolean = true,
 ) {
     /** Minimum cell width, never below 48dp. */
     val cellWidth: Dp = cellWidth.coerceAtLeast(OtpFieldDefaults.MinTargetSize)
@@ -63,7 +66,8 @@ class OtpFieldStyle internal constructor(
                     colors == other.colors &&
                     groupSize == other.groupSize &&
                     placeholder == other.placeholder &&
-                    errorTextStyle == other.errorTextStyle
+                    errorTextStyle == other.errorTextStyle &&
+                    liftFocusedCell == other.liftFocusedCell
             )
 
     override fun hashCode(): Int {
@@ -78,6 +82,7 @@ class OtpFieldStyle internal constructor(
         result = 31 * result + groupSize.hashCode()
         result = 31 * result + placeholder.hashCode()
         result = 31 * result + errorTextStyle.hashCode()
+        result = 31 * result + liftFocusedCell.hashCode()
         return result
     }
 }
@@ -201,6 +206,7 @@ object OtpFieldDefaults {
         groupSize: Int? = null,
         placeholder: Char? = null,
         errorTextStyle: TextStyle = TextStyle(fontSize = 14.sp),
+        liftFocusedCell: Boolean = true,
     ): OtpFieldStyle =
         OtpFieldStyle(
             textStyle = textStyle,
@@ -214,6 +220,7 @@ object OtpFieldDefaults {
             groupSize = groupSize,
             placeholder = placeholder,
             errorTextStyle = errorTextStyle,
+            liftFocusedCell = liftFocusedCell,
         )
 
     fun colors(

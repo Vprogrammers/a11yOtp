@@ -1,11 +1,13 @@
 package me.vprogrammers.a11yotp
 
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.BasicText
@@ -23,6 +25,7 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
@@ -46,6 +49,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import kotlin.math.floor
@@ -264,8 +268,13 @@ private fun OtpCell(
     val borderWidth = if (enabled && (isError || isActive)) style.focusedBorderWidth else style.borderWidth
     val baseBackground = if (enabled) colors.cellBackground else colors.disabledCellBackground
     val filled = digit != null && mask == OtpMask.FilledCell
+    // The thicker border shows focus; the lift and shadow are extra. Compose animations follow the
+    // system animator scale, so "Remove animations" makes the move instant.
+    val lift by animateDpAsState(if (isActive && style.liftFocusedCell) FocusLift else 0.dp, label = "otpCellLift")
     var cellModifier =
         Modifier
+            .offset { IntOffset(0, -lift.roundToPx()) }
+            .shadow(elevation = lift, shape = style.cellShape, clip = false)
             .defaultMinSize(minWidth = style.cellWidth, minHeight = style.cellHeight)
             .background(if (filled) borderColor else baseBackground, style.cellShape)
             .border(borderWidth, borderColor, style.cellShape)
@@ -299,3 +308,4 @@ private fun OtpCell(
 }
 
 private val FilledRingWidth = 2.dp
+private val FocusLift = 4.dp

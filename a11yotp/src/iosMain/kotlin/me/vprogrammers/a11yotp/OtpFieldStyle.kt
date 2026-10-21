@@ -31,7 +31,9 @@ import platform.UIKit.tertiaryLabelColor
  * [minCellWidth] and [minCellHeight] gives round cells.
  * [glass] opts in to an iOS 26 Liquid Glass backdrop behind the cell row; the cells stay solid,
  * so the contrast of digits, borders, focus, and errors is unchanged. Earlier iOS versions draw no
- * backdrop. Use [withGlass] to turn it on.
+ * backdrop. Use [withGlass] to turn it on. [liftFocusedCell] raises the focused cell slightly with a
+ * shadow, in addition to its thicker border; the movement is skipped under Reduce Motion. Use
+ * [withFocusLift] to turn it off.
  * Create instances with [OtpFieldDefaults.style].
  */
 class OtpFieldStyle internal constructor(
@@ -48,6 +50,7 @@ class OtpFieldStyle internal constructor(
     val groupSize: Int,
     placeholder: String?,
     val glass: Boolean = false,
+    val liftFocusedCell: Boolean = true,
 ) {
     /** Minimum cell width in points at the default text size, never below 44. */
     val minCellWidth: Double = maxOf(minCellWidth, OtpFieldDefaults.MIN_TARGET_SIZE)
@@ -87,12 +90,16 @@ class OtpFieldStyle internal constructor(
     /** Copy with the Liquid Glass backdrop on or off. */
     fun withGlass(glass: Boolean): OtpFieldStyle = copy(glass = glass)
 
+    /** Copy with the focused cell lift on or off. */
+    fun withFocusLift(enabled: Boolean): OtpFieldStyle = copy(liftFocusedCell = enabled)
+
     private fun copy(
         cornerRadius: Double = this.cornerRadius,
         minCellWidth: Double = this.minCellWidth,
         minCellHeight: Double = this.minCellHeight,
         groupSize: Int = this.groupSize,
         glass: Boolean = this.glass,
+        liftFocusedCell: Boolean = this.liftFocusedCell,
     ) = OtpFieldStyle(
         font = font,
         fontTextStyle = fontTextStyle,
@@ -107,6 +114,7 @@ class OtpFieldStyle internal constructor(
         groupSize = groupSize,
         placeholder = placeholder,
         glass = glass,
+        liftFocusedCell = liftFocusedCell,
     )
 }
 
