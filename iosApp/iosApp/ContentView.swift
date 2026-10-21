@@ -49,26 +49,22 @@ struct ContentView: View {
     @State private var secondsRemaining = ContentView.resendSeconds
     @State private var countdownRun = 0
 
-    /// 6-digit codes show a separator between two groups of 3; 4 and 8 digits have no even split, so no separator.
-    private static let groupedFieldStyle = fieldStyle(groupSize: 3)
-    private static let plainFieldStyle = fieldStyle(groupSize: 0)
-
-    private static func fieldStyle(groupSize: Int32) -> OtpFieldStyle {
-        OtpFieldDefaults.shared.style(
-            font: UIFont.monospacedSystemFont(ofSize: 28, weight: .semibold),
-            fontTextStyle: UIFont.TextStyle.title1.rawValue,
-            errorTextStyle: UIFont.TextStyle.callout.rawValue,
-            cornerRadius: 8,
-            minCellWidth: 48,
-            minCellHeight: 56,
-            cellSpacing: 8,
-            borderWidth: 1,
-            focusedBorderWidth: 3,
-            colors: OtpFieldDefaults.shared.colors(),
-            groupSize: groupSize,
-            placeholder: nil
-        )
-    }
+    /// Groups of 3 give "123 - 456" for 6 digits. The library draws no separator for 4 and 8 digits,
+    /// which do not split evenly into groups of 3.
+    private static let fieldStyle = OtpFieldDefaults.shared.style(
+        font: UIFont.monospacedSystemFont(ofSize: 28, weight: .semibold),
+        fontTextStyle: UIFont.TextStyle.title1.rawValue,
+        errorTextStyle: UIFont.TextStyle.callout.rawValue,
+        cornerRadius: 8,
+        minCellWidth: 48,
+        minCellHeight: 56,
+        cellSpacing: 8,
+        borderWidth: 1,
+        focusedBorderWidth: 3,
+        colors: OtpFieldDefaults.shared.colors(),
+        groupSize: 3,
+        placeholder: nil
+    )
 
     /// Dark green in light mode (about 9:1 on white), light green in dark mode (about 12:1 on black).
     /// Both clear 4.5:1 in standard and Increase Contrast appearances.
@@ -115,7 +111,7 @@ struct ContentView: View {
                             "\(progress.entered) of \(progress.total) digits entered"
                         }
                     ),
-                    style: lengthOption == .six ? Self.groupedFieldStyle : Self.plainFieldStyle,
+                    style: Self.fieldStyle,
                     mask: maskOption.mask,
                     alignment: .center,
                     onComplete: verify

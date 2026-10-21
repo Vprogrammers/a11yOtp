@@ -213,9 +213,10 @@ internal class OtpFieldContainer : UIView(frame = CGRectMake(0.0, 0.0, 0.0, 0.0)
         traits: UITraitCollection,
     ): OtpCellsPlanner {
         val style = model.style
+        val count = model.state.length.digitCount
         return OtpCellsPlanner(
-            count = model.state.length.digitCount,
-            groupSize = style.groupSize,
+            count = count,
+            groupSize = evenGroupSize(style.groupSize, count) ?: 0,
             cellWidth = scaled(style.minCellWidth, style.fontTextStyle, traits),
             spacing = style.cellSpacing,
             separatorWidth = scaled(SEPARATOR_WIDTH, style.fontTextStyle, traits),

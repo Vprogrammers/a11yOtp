@@ -22,7 +22,9 @@ import platform.UIKit.tertiaryLabelColor
  * [fontTextStyle]). [minCellWidth] and [minCellHeight] below 44 are raised to 44.
  * [focusedBorderWidth] must be larger than [borderWidth] so focus and error are never
  * communicated by color alone. [groupSize] draws a decorative separator between groups of
- * digits (3 gives "123 - 456") without changing the code; 0 means no grouping. [placeholder]
+ * digits (3 gives "123 - 456") without changing the code; 0 means no grouping. Separators are
+ * drawn only when the code length splits into equal groups, so 3 groups a 6-digit code but
+ * leaves 4- and 8-digit codes ungrouped. [placeholder]
  * is drawn in empty cells and is hidden from VoiceOver; null or empty means none.
  * [errorTextStyle] is the text style of the visible error message.
  * Create instances with [OtpFieldDefaults.style].

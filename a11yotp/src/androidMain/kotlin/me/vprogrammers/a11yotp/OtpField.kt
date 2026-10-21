@@ -172,7 +172,8 @@ private fun OtpCells(
 ) {
     val total = state.length.digitCount
     val activeIndex = state.enteredDigitCount.coerceAtMost(total - 1)
-    val groups = (0 until total).chunked(style.groupSize ?: 1)
+    val groupSize = evenGroupSize(style.groupSize, total)
+    val groups = (0 until total).chunked(groupSize ?: 1)
     FlowRow(
         modifier = Modifier.fillMaxWidth().clearAndSetSemantics { },
         horizontalArrangement = Arrangement.spacedBy(style.cellSpacing, horizontal),
@@ -193,7 +194,7 @@ private fun OtpCells(
                         mask = mask,
                     )
                 }
-                if (style.groupSize != null && groupIndex < groups.lastIndex) {
+                if (groupSize != null && groupIndex < groups.lastIndex) {
                     BasicText(
                         text = "–",
                         style =
