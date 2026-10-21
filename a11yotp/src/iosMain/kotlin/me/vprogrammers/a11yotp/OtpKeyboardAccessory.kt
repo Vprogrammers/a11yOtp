@@ -9,6 +9,10 @@ import platform.CoreGraphics.CGRectMake
 import platform.CoreGraphics.CGSize
 import platform.CoreGraphics.CGSizeMake
 import platform.Foundation.NSSelectorFromString
+import platform.QuartzCore.kCACornerCurveContinuous
+import platform.QuartzCore.kCALayerMaxXMinYCorner
+import platform.QuartzCore.kCALayerMinXMinYCorner
+import platform.UIKit.UIAccessibilityContrastHigh
 import platform.UIKit.UIButton
 import platform.UIKit.UIButtonTypeSystem
 import platform.UIKit.UIColor
@@ -19,41 +23,68 @@ import platform.UIKit.UIFontTextStyleHeadline
 import platform.UIKit.UIInputView
 import platform.UIKit.UIInputViewStyle
 import platform.UIKit.UITraitCollection
+import platform.UIKit.UIUserInterfaceStyle
 import platform.UIKit.UIViewAutoresizingFlexibleHeight
 import platform.UIKit.UIViewAutoresizingFlexibleWidth
 import platform.UIKit.UIViewNoIntrinsicMetric
+import platform.UIKit.UIVisualEffectView
+import platform.UIKit.colorWithDynamicProvider
 import platform.UIKit.labelColor
+import platform.UIKit.resolvedColorWithTraitCollection
 import platform.UIKit.setAccessibilityLabel
+import platform.UIKit.setIsAccessibilityElement
 import platform.darwin.NSObject
 
 /**
- * Done button on top of the number pad, because the number pad has no Return key.
+ * Done key that extends the number pad, because the number pad has no Return key.
  *
- * The bar is a UIInputView with the keyboard style, so the system draws the keyboard background
- * behind it (opaque under Reduce Transparency) and app content never shows behind the button. Like
- * the system passcode screen's Cancel button, Done is plain text at the trailing edge: a text
- * button needs no boundary, only text contrast, and label-colored text keeps at least 4.5:1 on the
- * keyboard background. The title scales with Dynamic Type, the touch target is at least 44 points
- * in both directions, and the visible title is the accessible name, so Voice Control "Tap Done"
- * works.
+ * On iOS 26 the bar draws a Liquid Glass panel with the keyboard's rounded top corners. The panel
+ * is taller than the bar and continues behind the top of the keyboard, so the keyboard panel looks
+ * taller and the Done key reads as one more row of it; app content never shows behind the key.
+ * Earlier iOS versions use the keyboard-style UIInputView background, which matches their flat
+ * keyboard. The key is one number pad column wide at the trailing edge in the key color, with
+ * label-colored text (at least 4.5:1) that scales with Dynamic Type, and a border under Increase
+ * Contrast. It is at least 44 points in both directions, and the visible title is the accessible
+ * name, so Voice Control "Tap Done" works.
  */
 internal class OtpKeyboardAccessory(
     target: NSObject,
     action: String,
 ) : UIInputView(
-        frame = CGRectMake(0.0, 0.0, INITIAL_WIDTH, MIN_SIZE),
+        frame = CGRectMake(0.0, 0.0, INITIAL_WIDTH, KEY_HEIGHT + KEY_TOP),
         inputViewStyle = UIInputViewStyle.UIInputViewStyleKeyboard,
     ) {
+    private val panel: UIVisualEffectView? =
+        sharedGlassEffect?.let { glass ->
+            UIVisualEffectView(effect = glass).also {
+                it.userInteractionEnabled = false
+                it.setIsAccessibilityElement(false)
+                it.clipsToBounds = true
+                it.layer.cornerRadius = PANEL_RADIUS
+                it.layer.cornerCurve = kCACornerCurveContinuous
+                it.layer.maskedCorners = kCALayerMinXMinYCorner or kCALayerMaxXMinYCorner
+            }
+        }
     private val button = UIButton.buttonWithType(UIButtonTypeSystem)
 
     init {
         autoresizingMask = UIViewAutoresizingFlexibleWidth or UIViewAutoresizingFlexibleHeight
         allowsSelfSizing = true
+        // The panel extends below the bar, behind the top of the keyboard.
+        clipsToBounds = false
+        panel?.let {
+            backgroundColor = UIColor.clearColor
+            addSubview(it)
+        }
         button.tintColor = UIColor.labelColor
+        button.backgroundColor = keyColor()
         button.titleLabel?.font = UIFont.preferredFontForTextStyle(UIFontTextStyleHeadline)
         button.titleLabel?.adjustsFontForContentSizeCategory = true
+        button.layer.cornerRadius = KEY_RADIUS
+        button.layer.cornerCurve = kCACornerCurveContinuous
         button.addTarget(target, NSSelectorFromString(action), UIControlEventTouchUpInside)
         addSubview(button)
+        applyBorder(traitCollection)
     }
 
     fun setTitle(title: String) {
@@ -63,31 +94,58 @@ internal class OtpKeyboardAccessory(
         setNeedsLayout()
     }
 
+    // Layer colors are not dynamic, so the border is resolved again when the traits change.
+    private fun applyBorder(traits: UITraitCollection) {
+        val high = traits.accessibilityContrast == UIAccessibilityContrastHigh
+        button.layer.borderWidth = if (high) HIGH_CONTRAST_BORDER else 0.0
+        button.layer.borderColor = UIColor.labelColor.resolvedColorWithTraitCollection(traits).CGColor
+    }
+
     private fun titleSize(): Pair<Double, Double> =
         button.titleLabel
             ?.intrinsicContentSize()
             ?.useContents { this.width to this.height } ?: (0.0 to 0.0)
 
-    private fun barHeight(): Double = maxOf(MIN_SIZE, titleSize().second + 2 * VERTICAL_PADDING)
+    private fun keyHeight(): Double = maxOf(KEY_HEIGHT, titleSize().second + 2 * VERTICAL_PADDING)
 
-    override fun intrinsicContentSize(): CValue<CGSize> = CGSizeMake(UIViewNoIntrinsicMetric, barHeight())
+    override fun intrinsicContentSize(): CValue<CGSize> = CGSizeMake(UIViewNoIntrinsicMetric, keyHeight() + KEY_TOP)
 
     override fun layoutSubviews() {
         super.layoutSubviews()
-        val width = bounds.useContents { this.size.width }
-        val right = safeAreaInsets.useContents { this.right }
-        val buttonWidth = minOf(maxOf(titleSize().first + 2 * HORIZONTAL_PADDING, MIN_SIZE), width - 2 * EDGE_MARGIN)
-        button.setFrame(CGRectMake(width - right - EDGE_MARGIN - buttonWidth, 0.0, buttonWidth, barHeight()))
+        val (width, height) = bounds.useContents { this.size.width to this.size.height }
+        val (left, right) = safeAreaInsets.useContents { this.left to this.right }
+        panel?.setFrame(CGRectMake(0.0, 0.0, width, height + PANEL_OVERLAP))
+        val available = width - left - right - 2 * KEY_MARGIN
+        // One of the three number pad columns, aligned with the keys below.
+        val column = (available - 2 * KEY_SPACING) / 3.0
+        val titleWidth = titleSize().first + 2 * HORIZONTAL_PADDING
+        val keyWidth = minOf(maxOf(column, titleWidth, MIN_SIZE), available)
+        button.setFrame(CGRectMake(width - right - KEY_MARGIN - keyWidth, KEY_TOP, keyWidth, keyHeight()))
     }
 
     override fun traitCollectionDidChange(previousTraitCollection: UITraitCollection?) {
         super.traitCollectionDidChange(previousTraitCollection)
+        applyBorder(traitCollection)
         invalidateIntrinsicContentSize()
     }
 }
+
+/** Number pad key color: white in light mode, gray in dark mode, so label-colored text keeps 4.5:1. */
+private fun keyColor(): UIColor =
+    UIColor.colorWithDynamicProvider { traits ->
+        val dark = traits?.userInterfaceStyle == UIUserInterfaceStyle.UIUserInterfaceStyleDark
+        UIColor(white = if (dark) 0.36 else 1.0, alpha = 1.0)
+    }
 
 private const val INITIAL_WIDTH = 320.0
 private const val MIN_SIZE = 44.0
 private const val VERTICAL_PADDING = 4.0
 private const val HORIZONTAL_PADDING = 16.0
-private const val EDGE_MARGIN = 4.0
+private const val KEY_HEIGHT = 48.0
+private const val KEY_RADIUS = 10.0
+private const val KEY_MARGIN = 6.0
+private const val KEY_SPACING = 6.0
+private const val KEY_TOP = 10.0
+private const val PANEL_RADIUS = 28.0
+private const val PANEL_OVERLAP = 40.0
+private const val HIGH_CONTRAST_BORDER = 2.0

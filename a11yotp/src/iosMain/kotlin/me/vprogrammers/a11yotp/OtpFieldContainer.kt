@@ -395,7 +395,7 @@ private const val CELL_VERTICAL_PADDING = 16.0
  * stop apps from launching on earlier iOS versions even with glass turned off. `new` returns a +1
  * reference that is never balanced; it is created once per process, so that is one small object.
  */
-private val sharedGlassEffect: UIVisualEffect? by lazy {
+internal val sharedGlassEffect: UIVisualEffect? by lazy {
     if (!isLiquidGlassAvailable()) return@lazy null
     val glassClass = NSClassFromString("UIGlassEffect") as? NSObjectProtocol ?: return@lazy null
     glassClass.performSelector(NSSelectorFromString("new")) as? UIVisualEffect
