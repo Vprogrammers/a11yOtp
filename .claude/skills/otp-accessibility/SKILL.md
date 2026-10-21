@@ -27,7 +27,7 @@ Verify:
 - visual digit order remains left-to-right inside the OTP field even when the surrounding locale is RTL;
 - software numeric keyboard and hardware keyboard input;
 - Android keyboard type: `KeyboardType.Number` when unmasked and `KeyboardType.NumberPassword` only when masked, because password input types suppress TalkBack key echo unless the user enables "Speak passwords";
-- Android OTP autofill behavior, including API 24–25 fallback because the Autofill Framework starts at API 26;
+- Android OTP autofill behavior; on API 24–25, where the Autofill Framework is unavailable, degrade gracefully to typing, paste, and keyboard-provided suggestions. Do not add SMS permissions or Play Services as an implicit fallback;
 - SwiftUI one-time-code autofill with `.textContentType(.oneTimeCode)`;
 - Voice Control visible labels match the accessible name;
 - restoration without duplicate callbacks or announcements;
