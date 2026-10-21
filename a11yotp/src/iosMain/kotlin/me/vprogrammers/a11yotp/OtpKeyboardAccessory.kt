@@ -10,6 +10,8 @@ import platform.CoreGraphics.CGSize
 import platform.CoreGraphics.CGSizeMake
 import platform.Foundation.NSSelectorFromString
 import platform.UIKit.UIButton
+import platform.UIKit.UIButtonConfiguration
+import platform.UIKit.UIButtonConfigurationCornerStyleCapsule
 import platform.UIKit.UIButtonTypeSystem
 import platform.UIKit.UIColor
 import platform.UIKit.UIControlEventTouchUpInside
@@ -28,27 +30,45 @@ import platform.UIKit.setAccessibilityLabel
 import platform.darwin.NSObject
 
 /**
- * Bar above the number pad with a Done button, because the number pad has no Return key.
+ * Done button above the number pad, because the number pad has no Return key.
  *
- * A plain view instead of a UIToolbar: on iOS 26 a toolbar has no background and its Done item
- * becomes a floating blue capsule over the app content. This bar stays attached to the keyboard
- * and looks the same on every iOS version. The title uses the label color, not the blue tint,
- * which is below 4.5:1 on this background, and it scales with Dynamic Type.
+ * On iOS 26 it follows the system keyboard design: no bar, just a neutral Liquid Glass capsule
+ * at the trailing edge, directly above the keyboard. A UIToolbar would also float its Done item
+ * there, but as a blue prominent capsule. Earlier iOS versions get a classic bar with a background
+ * and separator. The title uses the label color, not the blue tint (below 4.5:1 on these
+ * backgrounds), and scales with Dynamic Type.
  */
 internal class OtpKeyboardAccessory(
     target: NSObject,
     action: String,
 ) : UIView(frame = CGRectMake(0.0, 0.0, INITIAL_WIDTH, MIN_HEIGHT)) {
-    private val button = UIButton.buttonWithType(UIButtonTypeSystem)
+    private val glass = isLiquidGlassAvailable()
+    private val button =
+        if (glass) {
+            UIButton.buttonWithConfiguration(
+                UIButtonConfiguration.glassButtonConfiguration().apply {
+                    cornerStyle = UIButtonConfigurationCornerStyleCapsule
+                    baseForegroundColor = UIColor.labelColor
+                },
+                primaryAction = null,
+            )
+        } else {
+            UIButton.buttonWithType(UIButtonTypeSystem)
+        }
     private val separator = UIView(frame = CGRectMake(0.0, 0.0, 0.0, 0.0))
 
     init {
         autoresizingMask = UIViewAutoresizingFlexibleWidth or UIViewAutoresizingFlexibleHeight
-        backgroundColor = UIColor.secondarySystemBackgroundColor
-        separator.backgroundColor = UIColor.separatorColor
-        button.tintColor = UIColor.labelColor
-        button.titleLabel?.font = UIFont.preferredFontForTextStyle(UIFontTextStyleHeadline)
-        button.titleLabel?.adjustsFontForContentSizeCategory = true
+        if (glass) {
+            backgroundColor = UIColor.clearColor
+            separator.hidden = true
+        } else {
+            backgroundColor = UIColor.secondarySystemBackgroundColor
+            separator.backgroundColor = UIColor.separatorColor
+            button.tintColor = UIColor.labelColor
+            button.titleLabel?.font = UIFont.preferredFontForTextStyle(UIFontTextStyleHeadline)
+            button.titleLabel?.adjustsFontForContentSizeCategory = true
+        }
         button.addTarget(target, NSSelectorFromString(action), UIControlEventTouchUpInside)
         addSubview(separator)
         addSubview(button)
@@ -64,15 +84,20 @@ internal class OtpKeyboardAccessory(
     private fun buttonSize(): Pair<Double, Double> =
         button.intrinsicContentSize().useContents { this.width to this.height }
 
+    private fun buttonHeight(): Double = maxOf(MIN_HEIGHT, buttonSize().second + if (glass) 0.0 else 2 * PADDING)
+
+    // With glass, a gap below the capsule separates it from the keyboard like the system items.
     override fun intrinsicContentSize(): CValue<CGSize> =
-        CGSizeMake(UIViewNoIntrinsicMetric, maxOf(MIN_HEIGHT, buttonSize().second + 2 * PADDING))
+        CGSizeMake(UIViewNoIntrinsicMetric, buttonHeight() + if (glass) GLASS_GAP else 0.0)
 
     override fun layoutSubviews() {
         super.layoutSubviews()
-        val (width, height) = bounds.useContents { this.size.width to this.size.height }
+        val width = bounds.useContents { this.size.width }
         val right = safeAreaInsets.useContents { this.right }
-        val buttonWidth = maxOf(MIN_HEIGHT, buttonSize().first + 2 * HORIZONTAL_PADDING)
-        button.setFrame(CGRectMake(width - right - buttonWidth, 0.0, buttonWidth, height))
+        val padding = if (glass) GLASS_PADDING else HORIZONTAL_PADDING
+        val buttonWidth = maxOf(MIN_HEIGHT, buttonSize().first + 2 * padding)
+        val margin = if (glass) GLASS_MARGIN else 0.0
+        button.setFrame(CGRectMake(width - right - margin - buttonWidth, 0.0, buttonWidth, buttonHeight()))
         separator.setFrame(CGRectMake(0.0, 0.0, width, 1.0 / UIScreen.mainScreen.scale))
     }
 }
@@ -81,3 +106,6 @@ private const val INITIAL_WIDTH = 320.0
 private const val MIN_HEIGHT = 44.0
 private const val PADDING = 4.0
 private const val HORIZONTAL_PADDING = 16.0
+private const val GLASS_PADDING = 4.0
+private const val GLASS_MARGIN = 8.0
+private const val GLASS_GAP = 8.0
