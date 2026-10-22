@@ -21,7 +21,10 @@ struct ContentView: View {
     private static let fieldAccessibility = OtpFieldAccessibility(
         label: "Verification code",
         errorMessage: "Incorrect code. Try again.",
-        progressDescription: { "\($0.entered) of \($0.total) digits entered" }
+        progressDescription: { "\($0.entered) of \($0.total) digits entered" },
+        inputRejectedMessage: {
+            "The code has \($0.receivedDigitCount) digits, but \($0.expectedDigitCount) are expected."
+        }
     )
     private static let verifyAccessibility = OtpVerifyAccessibility(label: "Verify")
     private static let resendAccessibility = OtpResendAccessibility(
