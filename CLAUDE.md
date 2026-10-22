@@ -23,7 +23,8 @@ Read `.claude/skills/kmp-library-engineering/SKILL.md` for the authoritative mod
 - Xcode project and scheme: `iosApp/iosApp.xcodeproj`, scheme `iosApp`
 - Kotlin framework: `Shared`, built by Xcode through `:sampleShared:embedAndSignAppleFrameworkForXcode`
 - iOS deployment target: 18.2
-- No Xcode test target or publication configuration exists yet. A manually triggered SwiftLint workflow exists; broader CI does not.
+- Xcode UI test target: `iosAppUITests` (`iosApp/iosAppUITests`), in the shared `iosApp` scheme. Device signing reads `TEAM_ID` from the git-ignored `iosApp/Configuration/Local.xcconfig`; never commit a team ID.
+- No publication configuration exists yet. A manually triggered SwiftLint workflow exists; broader CI does not.
 - Gradle uses JDK 21. Library modules target JVM 11 and `androidApp` targets JVM 21; see `gradle-ci-quality/SKILL.md`.
 
 ## Project skills
@@ -62,6 +63,13 @@ Run the narrowest applicable command first:
 ./gradlew :androidApp:assembleDebug
 ./gradlew ktlintCheck
 ./scripts/swiftlint.sh   # pinned SwiftLint; configured errors fail
+```
+
+Run the iOS UI tests on a connected, unlocked iPhone (works from the Intel Mac):
+
+```bash
+xcodebuild test -project iosApp/iosApp.xcodeproj -scheme iosApp \
+  -destination 'id=<device id>' -allowProvisioningUpdates
 ```
 
 Confirm an uncertain module task with:

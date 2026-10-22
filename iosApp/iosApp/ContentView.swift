@@ -32,8 +32,17 @@ struct ContentView: View {
     @State private var otp: OtpState
     @State private var options: SampleOptions
     @State private var isVerified = false
-    @State private var secondsRemaining = Int(SampleOtpKt.SAMPLE_RESEND_SECONDS)
+    @State private var secondsRemaining = Self.resendSeconds
     @State private var countdownRun = 0
+
+    /// UI tests pass `-resendSeconds <n>` to shorten the countdown; it is 30 seconds otherwise.
+    private static var resendSeconds: Int {
+        let override = UserDefaults.standard.integer(forKey: "resendSeconds")
+        return override > 0 ? override : Int(SampleOtpKt.SAMPLE_RESEND_SECONDS)
+    }
+
+    /// UI tests pass `-manualVerify YES` so completion does not verify and the Verify button can be tested.
+    private static var manualVerify: Bool { UserDefaults.standard.bool(forKey: "manualVerify") }
 
     init(options: SampleOptions = SampleOptions()) {
         _options = State(initialValue: options)
@@ -53,7 +62,7 @@ struct ContentView: View {
                     style: fieldStyle,
                     mask: options.mask,
                     focusOnAppear: !options.isDisabled,
-                    onComplete: verify
+                    onComplete: { if !Self.manualVerify { verify($0) } }
                 )
                 .disabled(isVerified || options.isDisabled)
                 OtpVerifyButtonView(
@@ -124,7 +133,7 @@ struct ContentView: View {
     private func resend() {
         otp = otp.cleared()
         isVerified = false
-        secondsRemaining = Int(SampleOtpKt.SAMPLE_RESEND_SECONDS)
+        secondsRemaining = Self.resendSeconds
         countdownRun += 1
     }
 }

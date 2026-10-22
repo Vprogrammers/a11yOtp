@@ -336,6 +336,26 @@ Open `iosApp/iosApp.xcodeproj` in Xcode to run the iOS sample. The build phase r
 
 > **Intel Macs** cannot run the ARM64 iOS simulator tests (`:a11yotp:iosSimulatorArm64Test`). Run them on Apple Silicon. The deprecated `iosX64` target is intentionally not added.
 
+### iOS UI tests
+
+`iosAppUITests` drives the iOS sample with XCUITest. On a real iPhone it also runs from an Intel Mac. To sign for a device, create the git-ignored `iosApp/Configuration/Local.xcconfig` with your team:
+
+```text
+TEAM_ID=<your team id>
+```
+
+Don't set the team in Xcode's Signing settings; that writes it into `project.pbxproj`. Then, with the phone unlocked:
+
+```bash
+xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp -showdestinations   # find the device id
+xcodebuild test -project iosApp/iosApp.xcodeproj -scheme iosApp \
+  -destination 'id=<device id>' -allowProvisioningUpdates
+```
+
+If `xcodebuild` says the scheme is not configured for testing, delete the auto-generated user scheme in `iosApp/iosApp.xcodeproj/xcuserdata/*/xcschemes/iosApp.xcscheme`; the shared scheme has the tests.
+
+The tests cover typing, the single accessibility element and its value, the error state, one completion, the Verify and Resend buttons, focus on launch, and masked mode. Paste (the system paste prompt), one-time-code autofill from Messages, and what VoiceOver actually says are still manual checks on a device.
+
 ### SwiftLint
 
 Swift sources in the sample app are checked with the version pinned in `Mintfile`, so local and CI checks use the same ruleset.
