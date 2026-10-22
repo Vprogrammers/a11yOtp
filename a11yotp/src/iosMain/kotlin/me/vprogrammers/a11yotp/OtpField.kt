@@ -251,6 +251,8 @@ class OtpField(
         render()
         onInputRejected?.invoke(rejected)
         if (message == null) return
+        // The rejection supersedes a still-pending error announcement; later error transitions announce again.
+        errorGeneration++
         // The newest message wins, also in the error state; it is in the value too, so it can be re-read.
         val weakSelf = WeakReference(this)
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, ANNOUNCEMENT_DELAY_NANOS), dispatch_get_main_queue()) {
