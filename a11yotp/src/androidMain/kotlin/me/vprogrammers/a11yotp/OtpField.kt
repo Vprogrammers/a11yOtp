@@ -16,9 +16,11 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -70,6 +72,15 @@ import kotlin.math.roundToInt
  * copy or cut action). [hapticFeedbackOnError] vibrates once when [OtpState.isError] becomes
  * true. [alignment] (default centered) only positions the cells and error text; the digits
  * inside the row always read left to right. The field spans the available width.
+ *
+ * A single input that inserts several digits at once (paste, autofill, keyboard suggestion) is
+ * accepted only with exactly the field's digit count; see [OtpState.withInput]. Otherwise the state
+ * stays unchanged, [onInputRejected] is called once with the digit counts, and
+ * [OtpFieldAccessibility.inputRejectedMessage] appears below the field in the slot of the error
+ * message (which wins while [OtpState.isError]) in a polite live region. This is not an error
+ * state: there is no error border or haptic feedback, and focus does not move. The message is
+ * cleared by the next edit and when [state] changes. A rejection means the field length probably
+ * differs from the code length of the host's backend.
  */
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
@@ -84,6 +95,7 @@ fun OtpField(
     mask: OtpMask = OtpMask.None,
     hapticFeedbackOnError: Boolean = true,
     alignment: OtpAlignment = OtpAlignment.CENTER,
+    onInputRejected: (OtpInputRejection) -> Unit = {},
 ) {
     // Resolve against the surrounding direction before the cells are forced to LTR.
     val isRtl = LocalLayoutDirection.current == LayoutDirection.Rtl
@@ -91,7 +103,15 @@ fun OtpField(
     val textAlign = alignment.absoluteTextAlign(isRtl)
     val colors = style.resolvedColors()
     val total = state.length.digitCount
+    // Transient message for a rejected multi-digit input; a new instance per rejection so a repeated
+    // identical rejection still recomposes. Reset when the host's state changes.
+    var rejected by remember(state) { mutableStateOf<RejectedInput?>(null) }
+    val duplicateGuard = remember { RejectionGuard() }
+    SideEffect { duplicateGuard.base = null }
+    val currentOnInputRejected by rememberUpdatedState(onInputRejected)
     val visibleError = if (state.isError) accessibility.errorMessage else null
+    val visibleMessage =
+        visibleError ?: rejected?.let { accessibility.inputRejectedMessage(it.rejection) }
     val masked = mask != OtpMask.None
     var focused by remember { mutableStateOf(false) }
     val reported = remember { ReportedCompletion() }
@@ -114,6 +134,17 @@ fun OtpField(
             onValueChange = { new ->
                 val result = state.withInput(new.text)
                 onStateChange(result.state)
+                val rejection = result.rejection
+                if (rejection == null) {
+                    rejected = null
+                } else if (!(duplicateGuard.base === state && duplicateGuard.rejection == rejection)) {
+                    // The IME can deliver one rejected edit twice before the next composition; the guard
+                    // is reset after every composition, so a later identical paste is reported again.
+                    duplicateGuard.base = state
+                    duplicateGuard.rejection = rejection
+                    rejected = RejectedInput(rejection)
+                    currentOnInputRejected(rejection)
+                }
                 // The IME can deliver the same edit twice (for example commit and finish composing)
                 // before this composition sees the host's new state. Both calls then start from the
                 // same stale state and would each report the completion.
@@ -161,12 +192,12 @@ fun OtpField(
                 }
             },
         )
-        if (visibleError != null) {
+        if (visibleMessage != null) {
             BasicText(
-                text = visibleError,
+                text = visibleMessage,
                 style =
                     style.errorTextStyle.copy(
-                        color = colors.errorText,
+                        color = if (visibleError != null) colors.errorText else colors.text,
                         textAlign = textAlign,
                     ),
                 modifier =
@@ -177,6 +208,17 @@ fun OtpField(
             )
         }
     }
+}
+
+/** A rejection to display. No equality, so each rejection is a new value for Compose. */
+private class RejectedInput(
+    val rejection: OtpInputRejection,
+)
+
+/** The state and rejection last reported by [OtpField], to drop a duplicate delivery within one frame. */
+private class RejectionGuard {
+    var base: OtpState? = null
+    var rejection: OtpInputRejection? = null
 }
 
 /** The state instance a completion was last reported from, to drop duplicate edits on a stale state. */

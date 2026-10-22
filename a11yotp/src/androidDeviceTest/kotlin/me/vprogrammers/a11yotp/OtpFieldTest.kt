@@ -20,6 +20,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsNode
 import androidx.compose.ui.semantics.SemanticsProperties
@@ -66,7 +67,13 @@ class OtpFieldTest {
             }
         }
     private val accessibility =
-        OtpFieldAccessibility("Code", "Wrong code") { "${it.entered} of ${it.total} digits entered" }
+        OtpFieldAccessibility(
+            label = "Code",
+            errorMessage = "Wrong code",
+            progressDescription = { "${it.entered} of ${it.total} digits entered" },
+            inputRejectedMessage = { "Got ${it.receivedDigitCount} digits, expected ${it.expectedDigitCount}" },
+        )
+    private val rejections = mutableListOf<OtpInputRejection>()
 
     private fun setField(
         enabled: Boolean = true,
@@ -89,6 +96,7 @@ class OtpFieldTest {
                     mask = mask,
                     style = style,
                     alignment = alignment,
+                    onInputRejected = { rejections += it },
                     modifier = Modifier.width(400.dp).background(Color.White),
                 )
             }
@@ -184,6 +192,11 @@ class OtpFieldTest {
 
     private fun field() = rule.onNode(hasSetTextAction())
 
+    /** Types one digit at a time, the way a keyboard does. */
+    private fun typeDigits(text: String) = text.forEach { field().performTextInput(it.toString()) }
+
+    private fun OtpState.typed(text: String): OtpState = text.fold(this) { acc, c -> acc.withInput(acc.code + c).state }
+
     private fun allTexts() =
         rule
             .onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsProperties.Text))
@@ -192,7 +205,7 @@ class OtpFieldTest {
     @Test
     fun exposesSingleLogicalFieldWithLabelAndProgress() {
         setField(style = OtpFieldDefaults.style(placeholder = '_', groupSize = 3))
-        state = state.withInput("123").state
+        state = state.typed("123")
         rule.waitForIdle()
         val inputs = rule.onAllNodes(hasSetTextAction()).fetchSemanticsNodes()
         assertEquals(1, inputs.size)
@@ -205,7 +218,7 @@ class OtpFieldTest {
     @Test
     fun typingCompletesOnce() {
         setField()
-        field().performTextInput("12345")
+        typeDigits("12345")
         assertTrue(completions.isEmpty())
         field().performTextInput("6")
         rule.waitForIdle()
@@ -259,7 +272,7 @@ class OtpFieldTest {
     @Test
     fun rejectedInputIsWrittenBack() {
         setField()
-        field().performTextInput("12")
+        typeDigits("12")
         field().performTextInput("a")
         rule.waitForIdle()
         assertEquals("12", state.code)
@@ -314,7 +327,7 @@ class OtpFieldTest {
     @Test
     fun legacyMaskedFieldExposesNoDigitsAndIsPassword() {
         setField(mask = OtpMask.Character('*'))
-        field().performTextInput("123")
+        typeDigits("123")
         rule.waitForIdle()
         assertEquals("123", state.code)
         val config = field().fetchSemanticsNode().config
@@ -337,7 +350,7 @@ class OtpFieldTest {
     @Test
     fun filledCellMaskRendersAndExposesNoDigits() {
         setField(mask = OtpMask.FilledCell)
-        field().performTextInput("12")
+        typeDigits("12")
         rule.waitForIdle()
         assertTrue(field().fetchSemanticsNode().config.contains(SemanticsProperties.Password))
     }
@@ -421,7 +434,7 @@ class OtpFieldTest {
         }
         val button = rule.onNode(hasText("Verify"))
         button.assertIsNotEnabled()
-        state = state.withInput("123").state
+        state = state.typed("123")
         rule.waitForIdle()
         button.assertIsNotEnabled()
         state = state.withInput("123456").state
@@ -528,7 +541,7 @@ class OtpFieldTest {
 
     private fun assertMaskHidesDigits(mask: OtpMask) {
         setField(mask = mask)
-        field().performTextInput("7777")
+        typeDigits("7777")
         rule.waitForIdle()
         assertEquals("7777", state.code)
         val nodes = unmergedNodes()
@@ -548,7 +561,7 @@ class OtpFieldTest {
     @Test
     fun decorativeCellsSeparatorAndPlaceholderAreUnreachableInUnmergedTree() {
         setField(style = OtpFieldDefaults.style(placeholder = '_', groupSize = 3))
-        field().performTextInput("12")
+        typeDigits("12")
         rule.waitForIdle()
         val fieldId = field().fetchSemanticsNode().id
         // The merged tree is what accessibility services see; the unmerged tree still lists cells.
@@ -658,5 +671,126 @@ class OtpFieldTest {
         // Border band, then background-colored ring, then the fill.
         // Skip the focus outline gap before the first cell.
         assertTrue(runs.dropWhile { !it }.take(3) == listOf(true, false, true), runs.toString())
+    }
+
+    private fun rejectionMessage() = rule.onNode(hasText("Got", substring = true))
+
+    @Test
+    fun partialPasteIsRejectedAndReported() {
+        setField()
+        field().performTextReplacement("123")
+        rule.waitForIdle()
+        assertEquals(listOf(OtpInputRejection(6, 3)), rejections)
+        assertTrue(completions.isEmpty())
+        assertEquals("", state.code)
+        field().assertTextEquals("")
+        rejectionMessage().assertTextEquals("Got 3 digits, expected 6")
+        assertEquals(
+            LiveRegionMode.Polite,
+            rejectionMessage().fetchSemanticsNode().config.getOrNull(SemanticsProperties.LiveRegion),
+        )
+        // Not an error state: no error semantics, no haptic feedback.
+        assertNull(field().fetchSemanticsNode().config.getOrNull(SemanticsProperties.Error))
+        assertTrue(haptics.isEmpty())
+        // The text is the only extra node; the field stays one logical input.
+        assertEquals(1, rule.onAllNodes(hasSetTextAction()).fetchSemanticsNodes().size)
+    }
+
+    @Test
+    fun overlongPasteIsRejectedNotTruncated() {
+        setField()
+        field().performTextReplacement("12345678")
+        rule.waitForIdle()
+        assertEquals(listOf(OtpInputRejection(6, 8)), rejections)
+        assertTrue(completions.isEmpty())
+        assertEquals("", state.code)
+        rejectionMessage().assertExists()
+    }
+
+    @Test
+    fun pasteAfterTypedDigitsIsRejectedAndKeepsThem() {
+        setField()
+        typeDigits("12")
+        field().performTextInput("3456789")
+        rule.waitForIdle()
+        assertEquals(listOf(OtpInputRejection(6, 7)), rejections)
+        assertEquals("12", state.code)
+        field().assertTextEquals("12")
+        assertTrue(completions.isEmpty())
+    }
+
+    @Test
+    fun exactLengthPasteIsAcceptedWithoutRejection() {
+        setField()
+        field().performTextReplacement("482 913")
+        rule.waitForIdle()
+        assertEquals("482913", state.code)
+        assertTrue(rejections.isEmpty())
+        rejectionMessage().assertDoesNotExist()
+    }
+
+    @Test
+    fun rejectionMessageIsClearedByTheNextEdit() {
+        setField()
+        field().performTextReplacement("123")
+        rule.waitForIdle()
+        rejectionMessage().assertExists()
+        typeDigits("1")
+        rule.waitForIdle()
+        assertEquals("1", state.code)
+        rejectionMessage().assertDoesNotExist()
+    }
+
+    @Test
+    fun rejectionMessageIsClearedWhenHostStateChanges() {
+        setField()
+        field().performTextReplacement("123")
+        rule.waitForIdle()
+        rejectionMessage().assertExists()
+        state = state.typed("4")
+        rule.waitForIdle()
+        rejectionMessage().assertDoesNotExist()
+    }
+
+    @Test
+    fun errorMessageWinsOverRejectionMessage() {
+        setField()
+        field().performTextReplacement("123")
+        rule.waitForIdle()
+        state = state.withError()
+        rule.waitForIdle()
+        rule.onNode(hasText("Wrong code")).assertExists()
+        rejectionMessage().assertDoesNotExist()
+        assertEquals("Wrong code", field().fetchSemanticsNode().config.getOrNull(SemanticsProperties.Error))
+        // A rejection while in error keeps the error and still notifies the host.
+        field().performTextInput("1234567")
+        rule.waitForIdle()
+        assertEquals(2, rejections.size)
+        rule.onNode(hasText("Wrong code")).assertExists()
+        rejectionMessage().assertDoesNotExist()
+        assertTrue(state.isError)
+    }
+
+    @Test
+    fun repeatedRejectionsAreEachReported() {
+        setField()
+        field().performTextReplacement("123")
+        rule.waitForIdle()
+        field().performTextReplacement("123")
+        rule.waitForIdle()
+        assertEquals(listOf(OtpInputRejection(6, 3), OtpInputRejection(6, 3)), rejections)
+    }
+
+    @Test
+    fun duplicateRejectedEditBeforeRecompositionIsReportedOnce() {
+        setField()
+        val setText = field().fetchSemanticsNode().config[SemanticsActions.SetText].action!!
+        rule.runOnUiThread {
+            setText(AnnotatedString("123"))
+            setText(AnnotatedString("123"))
+        }
+        rule.waitForIdle()
+        assertEquals(listOf(OtpInputRejection(6, 3)), rejections)
+        rejectionMessage().assertExists()
     }
 }
