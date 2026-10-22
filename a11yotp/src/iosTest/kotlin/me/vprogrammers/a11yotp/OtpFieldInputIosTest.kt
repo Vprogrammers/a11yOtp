@@ -11,7 +11,12 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 private fun accessibility() =
-    OtpFieldAccessibility("Verification code", "Incorrect code") { "${it.entered} of ${it.total} digits entered" }
+    OtpFieldAccessibility(
+        "Verification code",
+        "Incorrect code",
+        { "${it.entered} of ${it.total} digits entered" },
+        { "${it.receivedDigitCount} digits" },
+    )
 
 private fun field(length: OtpLength = OtpLength.SIX) =
     OtpField(OtpState(length), accessibility(), doneButtonTitle = "Done").also { it.hapticFeedbackOnError = false }
@@ -209,12 +214,12 @@ class OtpAccessibilityValueIosTest {
     fun progressCallbackReceivesEnteredAndTotal() {
         val seen = mutableListOf<OtpProgress>()
         val custom =
-            OtpFieldAccessibility("Code", "Wrong") {
+            OtpFieldAccessibility("Code", "Wrong", {
                 seen += it
                 "p"
-            }
+            }, { "r" })
 
-        otpAccessibilityValue(OtpState(OtpLength.EIGHT).withInput("123").state, custom, masked = false)
+        otpAccessibilityValue(OtpState(OtpLength.EIGHT).typed("123"), custom, masked = false)
 
         assertEquals(listOf(OtpProgress(3, 8)), seen)
     }

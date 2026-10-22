@@ -27,27 +27,45 @@ class OtpState private constructor(
      * Typing, deletion, replacement, and paste all arrive as the new field text.
      * Whitespace, dashes, dots, soft hyphens, and invisible direction marks are ignored,
      * and Unicode decimal digits in the Basic Multilingual Plane are converted to ASCII.
-     * Text containing any other character is rejected and the state is unchanged.
-     * Digits beyond [length] are dropped, keeping the first ones. A change to [code]
-     * clears the error.
+     * Text containing any other character is ignored and the state is unchanged. A change to
+     * [code] clears the error.
      *
-     * When the code is complete and [text] is the current code followed by a different full
-     * code, as happens when a code is pasted or autofilled at the end of a full field, the
-     * new code replaces the old one and reports completion.
+     * The digits that this input inserts are found by comparing [text] with the current code
+     * (the common start and end are not new). Then:
+     * - One digit or fewer (typing or deletion) is applied. A digit typed into a full field is
+     *   ignored without a rejection.
+     * - Exactly [length] digits at once (paste, autofill, or a keyboard suggestion) replace the
+     *   current input and report completion, also over a complete code. Pasting the current
+     *   code again changes nothing.
+     * - Any other number of digits at once is rejected: the state is unchanged, [OtpInputResult.didComplete]
+     *   is false, and [OtpInputResult.rejection] carries the expected and received digit counts.
+     *   A code is never truncated or filled in partially. A rejection means the host's configured
+     *   length probably differs from what its backend sends.
      *
      * Always write `result.state.code` back to the field, also after a rejection, so the
      * visible text and the screen-reader value stay the same.
      */
     fun withInput(text: String): OtpInputResult {
-        if (isComplete && text.length > code.length && text.startsWith(code)) {
-            val replacement = cleared().withInput(text.substring(code.length))
-            if (replacement.state.isComplete && replacement.state.code != code) return replacement
-        }
         val digits = normalizeOtpDigits(text) ?: return OtpInputResult(this, didComplete = false)
-        val newCode = digits.take(length.digitCount)
+        val expected = length.digitCount
+        val inserted = insertedDigits(code, digits)
+        val newCode =
+            when {
+                inserted.length <= 1 -> digits.take(expected)
+
+                inserted.length == expected -> inserted
+
+                else -> return OtpInputResult(
+                    this,
+                    didComplete = false,
+                    rejection = OtpInputRejection(expected, inserted.length),
+                )
+            }
         if (newCode == code) return OtpInputResult(this, didComplete = false)
         val newState = OtpState(length, newCode, isError = false)
-        return OtpInputResult(newState, didComplete = !isComplete && newState.isComplete)
+        // A whole code that replaces a different complete code is a new completion.
+        val replacedWholeCode = inserted.length == expected
+        return OtpInputResult(newState, didComplete = newState.isComplete && (!isComplete || replacedWholeCode))
     }
 
     /** Returns an empty state with the same length and no error. */
@@ -73,11 +91,55 @@ class OtpState private constructor(
  *
  * [didComplete] is true only when this input turned an incomplete code into a complete
  * one, so hosts can submit the code exactly once per completion.
+ *
+ * [rejection] is non-null when the input inserted several digits at once and their count
+ * differs from the field length. The state is then unchanged and [didComplete] is false.
  */
 class OtpInputResult internal constructor(
     val state: OtpState,
     val didComplete: Boolean,
+    val rejection: OtpInputRejection? = null,
 )
+
+/**
+ * A multi-digit input (paste, autofill, keyboard suggestion) that was rejected because it did
+ * not contain exactly [expectedDigitCount] digits. Only the counts are available, never the
+ * digits, so they cannot end up in logs. A rejection usually means that the configured
+ * [OtpLength] differs from the code length of the host's backend.
+ */
+class OtpInputRejection internal constructor(
+    val expectedDigitCount: Int,
+    val receivedDigitCount: Int,
+) {
+    override fun equals(other: Any?): Boolean =
+        other is OtpInputRejection &&
+            other.expectedDigitCount == expectedDigitCount &&
+            other.receivedDigitCount == receivedDigitCount
+
+    override fun hashCode(): Int = 31 * expectedDigitCount + receivedDigitCount
+
+    override fun toString(): String =
+        "OtpInputRejection(expectedDigitCount=$expectedDigitCount, receivedDigitCount=$receivedDigitCount)"
+}
+
+/**
+ * The part of [new] that was inserted into [old]: [new] without the longest common start and then
+ * the longest common end of what remains (the two never overlap).
+ *
+ * The field always shows the cursor at the end, so a selection that replaces only part of the code
+ * cannot be told apart from an insertion here. Selecting all and pasting fewer digits than the field
+ * length is rejected like any other partial paste.
+ */
+private fun insertedDigits(
+    old: String,
+    new: String,
+): String {
+    val prefix = old.commonPrefixWith(new).length
+    val oldRest = old.substring(prefix)
+    val newRest = new.substring(prefix)
+    val suffix = oldRest.commonSuffixWith(newRest).length
+    return newRest.substring(0, newRest.length - suffix)
+}
 
 private const val IGNORED_CHARACTERS =
     "-.\u00AD\u2010\u2011\u2012\u2013\u2014\u2212\uFF0D\uFF0E" +

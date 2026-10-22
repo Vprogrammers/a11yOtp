@@ -19,6 +19,7 @@ class OtpFieldErrorLayoutIosTest {
                     label = "Verification code",
                     errorMessage = "Incorrect code. Try again.",
                     progressDescription = { "${it.entered} of ${it.total} digits entered" },
+                    inputRejectedMessage = { "${it.receivedDigitCount} digits" },
                 ),
                 doneButtonTitle = "Done",
             ).also { it.hapticFeedbackOnError = false }
