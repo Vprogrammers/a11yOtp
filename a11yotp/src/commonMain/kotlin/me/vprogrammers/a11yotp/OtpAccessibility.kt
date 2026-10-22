@@ -55,6 +55,17 @@ class OtpFieldAccessibility(
     }
 }
 
+/**
+ * The host's [OtpFieldAccessibility.inputRejectedMessage] for [rejection], or null with a logged
+ * warning when it is blank, because a blank message would be shown and announced as nothing.
+ */
+internal fun OtpFieldAccessibility.rejectionMessageOrNull(rejection: OtpInputRejection): String? {
+    val message = inputRejectedMessage(rejection)
+    if (message.isNotBlank()) return message
+    logA11yWarning("OtpFieldAccessibility.inputRejectedMessage returned blank text; the rejection is not shown")
+    return null
+}
+
 /** Required, localized accessibility text for an OTP verify button; [label] is also the visible text. */
 class OtpVerifyAccessibility(
     val label: String,
