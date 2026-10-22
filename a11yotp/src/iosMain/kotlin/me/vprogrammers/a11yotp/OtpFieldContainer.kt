@@ -44,7 +44,7 @@ internal class OtpFieldModel(
     val label: String,
     val value: String,
     val errorMessage: String,
-    /** Transient text for a rejected multi-digit input; not shown while [state] is an error. */
+    /** Transient text for a rejected multi-digit input; replaces the error text in the slot while shown. */
     val rejectedMessage: String?,
     val style: OtpFieldStyle,
     val mask: OtpMask,
@@ -174,8 +174,9 @@ internal class OtpFieldContainer : UIView(frame = CGRectMake(0.0, 0.0, 0.0, 0.0)
         val separatorColor = (if (enabled) colors.cellBorder else colors.disabledCellBorder)
         separators.forEach { it.backgroundColor = separatorColor.resolvedColorWithTraitCollection(traits) }
 
-        val showsError = state.isError
-        val message = if (showsError) model.errorMessage else model.rejectedMessage
+        // The cells keep their error styling; the label shows the newest message, without the error icon.
+        val showsError = state.isError && model.rejectedMessage == null
+        val message = model.rejectedMessage ?: if (state.isError) model.errorMessage else null
         errorLabel.hidden = message == null
         errorIcon.hidden = !showsError
         if (message != null) {
@@ -290,9 +291,9 @@ internal class OtpFieldContainer : UIView(frame = CGRectMake(0.0, 0.0, 0.0, 0.0)
         width: Double,
     ): Triple<Double, Double, Double> {
         // Returns icon width, label width, height. A rejection has text but no icon.
-        val message = if (model.state.isError) model.errorMessage else model.rejectedMessage
+        val message = model.rejectedMessage ?: if (model.state.isError) model.errorMessage else null
         if (message == null) return Triple(0.0, 0.0, 0.0)
-        val hasIcon = model.state.isError
+        val hasIcon = model.state.isError && model.rejectedMessage == null
         // `this.` is required: a bare `width` would resolve to the parameter, not CGSize.width.
         val iconWidth = if (hasIcon) errorIcon.intrinsicContentSize().useContents { this.width } else 0.0
         val gap = if (hasIcon) ERROR_ICON_GAP else 0.0
@@ -409,7 +410,7 @@ internal class OtpFieldContainer : UIView(frame = CGRectMake(0.0, 0.0, 0.0, 0.0)
         }
 
         if (model.state.isError || model.rejectedMessage != null) {
-            val hasIcon = model.state.isError
+            val hasIcon = model.state.isError && model.rejectedMessage == null
             val (iconWidth, labelWidth, height) = errorSize(model, width)
             val gap = if (hasIcon) ERROR_ICON_GAP else 0.0
             val rowWidth = iconWidth + gap + labelWidth

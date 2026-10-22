@@ -70,7 +70,7 @@ class OtpField(
             val wasError = field.isError
             field = value
             // A new host state ends the transient rejection message.
-            rejection = null
+            rejectionMessage = null
             rejectionGeneration++
             render()
             if (value.isError && !wasError) {
@@ -142,7 +142,9 @@ class OtpField(
     private val handler = Handler()
     private var doneBar: OtpKeyboardAccessory? = null
     private var errorGeneration = 0
-    private var rejection: OtpInputRejection? = null
+
+    // Resolved host text of the rejection being shown; null when none (or the host text was blank).
+    private var rejectionMessage: String? = null
     private var rejectionGeneration = 0
 
     private inner class Handler :
@@ -218,7 +220,8 @@ class OtpField(
      * caret is pinned to the end, a non-empty [replacement] is appended and an empty one deletes the
      * last digit. The rules of [OtpState.withInput] apply: a multi-digit insertion is accepted only
      * with exactly the field's digit count (it then replaces the input); otherwise the state stays
-     * unchanged, [onInputRejected] is called, and the rejection message is shown and announced.
+     * unchanged, [onInputRejected] is called, and the rejection message is shown, announced once, and added to the accessibility value until the next
+     * input or state change (it replaces the error text while the field is in error).
      * Unsupported characters leave the state unchanged.
      */
     internal fun handleReplacement(replacement: String) {
@@ -233,27 +236,27 @@ class OtpField(
         } else if (rejected != null) {
             showRejection(rejected)
         } else {
-            // No-op input: write the committed code back.
+            // No-op input (ignored digit, unsupported character) is not a rejection: it ends the message.
+            rejectionMessage = null
+            rejectionGeneration++
             render()
         }
         if (result.didComplete) onComplete?.invoke(result.state.code)
     }
 
     private fun showRejection(rejected: OtpInputRejection) {
-        rejection = rejected
+        val message = accessibility.rejectionMessageOrNull(rejected)
+        rejectionMessage = message
         val generation = ++rejectionGeneration
         render()
         onInputRejected?.invoke(rejected)
-        // While in error the error text occupies the slot and is already part of the value.
-        if (state.isError) return
-        val message = accessibility.inputRejectedMessage(rejected)
+        if (message == null) return
+        // The newest message wins, also in the error state; it is in the value too, so it can be re-read.
         val weakSelf = WeakReference(this)
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, ANNOUNCEMENT_DELAY_NANOS), dispatch_get_main_queue()) {
             val self = weakSelf.get()
             // Skip if the message was cleared or replaced in the meantime.
-            if (self != null && self.rejectionGeneration == generation && self.rejection != null &&
-                !self.state.isError
-            ) {
+            if (self != null && self.rejectionGeneration == generation && self.rejectionMessage != null) {
                 UIAccessibilityPostNotification(UIAccessibilityAnnouncementNotification, message)
             }
         }
@@ -280,9 +283,9 @@ class OtpField(
             OtpFieldModel(
                 state = state,
                 label = accessibility.label,
-                value = otpAccessibilityValue(state, accessibility, mask != OtpMask.None),
+                value = otpAccessibilityValue(state, accessibility, mask != OtpMask.None, rejectionMessage),
                 errorMessage = accessibility.errorMessage,
-                rejectedMessage = rejection?.let { accessibility.inputRejectedMessage(it) },
+                rejectedMessage = rejectionMessage,
                 style = style,
                 mask = mask,
                 isEnabled = isEnabled,

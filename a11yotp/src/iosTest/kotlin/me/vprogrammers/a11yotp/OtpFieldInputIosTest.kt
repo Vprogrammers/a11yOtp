@@ -251,13 +251,43 @@ class OtpFieldRejectionIosTest {
     }
 
     @Test
-    fun theMessageIsNotAnErrorAndDoesNotChangeTheAccessibilityValue() {
+    fun theMessageIsNotAnErrorButIsAppendedToTheValueUntilCleared() {
         val field = field()
 
         field.handleReplacement("123")
 
         assertFalse(field.state.isError)
-        assertEquals("0 of 6 digits entered", field.textField().accessibilityValue)
+        assertEquals("0 of 6 digits entered, 3 digits", field.textField().accessibilityValue)
+
+        field.handleReplacement("4")
+
+        assertEquals("4, 1 of 6 digits entered", field.textField().accessibilityValue)
+    }
+
+    @Test
+    fun theValueNeverContainsDigitsFromARejectedPasteWhenMasked() {
+        val field = field()
+        field.mask = OtpMask.FilledCell
+        field.handleReplacement("1")
+
+        field.handleReplacement("98765")
+
+        assertEquals("1 of 6 digits entered, 5 digits", field.textField().accessibilityValue)
+        assertFalse(field.textField().accessibilityValue!!.contains("9"))
+    }
+
+    @Test
+    fun aBlankHostMessageIsNeitherShownNorInTheValueButTheCallbackFires() {
+        val blank = OtpFieldAccessibility("Verification code", "Incorrect code", { "p" }, { "  " })
+        val field = OtpField(OtpState(OtpLength.SIX), blank, doneButtonTitle = "Done")
+        val rejections = mutableListOf<OtpInputRejection>()
+        field.onInputRejected = { rejections += it }
+
+        field.handleReplacement("123")
+
+        assertEquals(1, rejections.size)
+        assertNull(messageOf(field))
+        assertEquals("p", field.textField().accessibilityValue)
     }
 
     @Test
@@ -285,13 +315,28 @@ class OtpFieldRejectionIosTest {
     }
 
     @Test
-    fun aNoOpInputKeepsTheMessage() {
+    fun anUnsupportedCharacterClearsTheMessage() {
         val field = field()
         field.handleReplacement("123")
 
         field.handleReplacement("x")
 
-        assertEquals("3 digits", messageOf(field))
+        assertNull(messageOf(field))
+        assertEquals("0 of 6 digits entered", field.textField().accessibilityValue)
+    }
+
+    @Test
+    fun anIgnoredExtraDigitOnAFullFieldClearsTheMessage() {
+        val field = field(OtpLength.FOUR)
+        field.handleReplacement("1234")
+        field.handleReplacement("12")
+        assertEquals("2 digits", messageOf(field))
+
+        field.handleReplacement("5")
+
+        assertEquals("1234", field.state.code)
+        assertNull(messageOf(field))
+        assertFalse(field.textField().accessibilityValue!!.contains("2 digits"))
     }
 
     @Test
@@ -305,14 +350,21 @@ class OtpFieldRejectionIosTest {
     }
 
     @Test
-    fun theErrorMessageWinsOverTheRejectionMessage() {
+    fun theNewestMessageReplacesTheErrorTextAndReturnsWhenCleared() {
         val field = field()
         field.state = field.state.withError()
+        assertEquals("Incorrect code", messageOf(field))
 
         field.handleReplacement("123")
 
         assertTrue(field.state.isError)
+        assertEquals("3 digits", messageOf(field))
+        assertEquals("0 of 6 digits entered, 3 digits", field.textField().accessibilityValue)
+
+        field.handleReplacement("x")
+
         assertEquals("Incorrect code", messageOf(field))
+        assertEquals("0 of 6 digits entered, Incorrect code", field.textField().accessibilityValue)
     }
 
     @Test
