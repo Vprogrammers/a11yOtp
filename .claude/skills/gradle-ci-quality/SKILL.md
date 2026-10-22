@@ -10,7 +10,8 @@ Keep build changes compatible with the existing KMP project and avoid unrelated 
 ## Current state
 
 - A manually triggered `.github/workflows/ios-swiftlint.yml` workflow runs the pinned SwiftLint ruleset.
-- Broader CI does not exist yet. The first full validation workflow should gate ktlint, SwiftLint, shared logic tests, Android host/Compose tests, Android sample build, and Apple Silicon iOS framework/app validation.
+- `./scripts/check.sh` runs the full local check set (ktlint, host tests, Kotlin/Native compile and framework link, Android device test compile and sample, SwiftLint, iOS sample and UI test builds, optional device tests) and reports skipped steps.
+- `.github/workflows/validation.yml` runs the same checks on pull requests and pushes to `main`: a `jvm` job on `ubuntu-latest` and an `ios` job on `macos-15` (Apple Silicon: `:a11yotp:iosSimulatorArm64Test`, framework link, SwiftLint, XCUITests on a simulator). The `android-device` emulator job runs only on manual dispatch. Keep the workflow and `scripts/check.sh` in sync.
 - `kotlin.native.ignoreDisabledTargets=true` suppresses warnings for native targets that cannot run on the current host; it does not add compatibility or make skipped tests pass.
 - Gradle runs on JDK 21.
 - `androidApp` Kotlin and Java (`sourceCompatibility`/`targetCompatibility`) targets are both JVM 21.
