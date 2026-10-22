@@ -207,6 +207,8 @@ Labels are declared for your **whole app**, not per component. The goal is for t
 
 > **Message text:** iOS and Android choose which number in the message to suggest; the app cannot influence it. Keep the code the only number in the message. A brand name with digits (`A11yOtp`), a phone number or an amount can be suggested instead of the code.
 
+> **Sending:** send codes from your backend through a registered SMS provider (application-to-person, for example Twilio or Vonage). Carriers may block or silently drop code-like messages such as "Your code is …" when they come from a private number, so a test SMS sent from a personal phone can fail to arrive even when the sender is a saved contact. For manual tests, a short text such as `Code is 482915` usually gets through.
+
 > **Google Play:** this library never uses `READ_SMS` or `RECEIVE_SMS`. Those permissions are heavily restricted on Google Play.
 
 ### Android SMS Retriever (optional)
