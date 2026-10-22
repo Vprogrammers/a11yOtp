@@ -74,4 +74,60 @@ class SmsCodeExtractionTest {
         assertNull(resolveSmsResult(STATUS_SUCCESS, null, OtpLength.SIX))
         assertNull(resolveSmsResult(8, "Code 123456\n$hash", OtpLength.SIX))
     }
+
+    private fun mismatch(
+        message: String,
+        length: OtpLength,
+    ) = resolveSmsResult(STATUS_SUCCESS, message, length)
+
+    @Test
+    fun reportsLengthMismatchForEveryFieldAndReceivedLength() {
+        val codes = mapOf(4 to "1234", 5 to "12345", 6 to "123456", 7 to "1234567", 8 to "12345678")
+        for (field in OtpLength.entries) {
+            for ((received, code) in codes) {
+                val result = mismatch("Your code is $code\n$hash", field)
+                if (received == field.digitCount) {
+                    assertEquals(code, assertIs<SmsResult.Code>(result).code)
+                } else {
+                    val failure = assertIs<SmsResult.Failure>(result, "$field $received")
+                    assertEquals(SmsRetrieverFailure.CODE_LENGTH_MISMATCH, failure.reason)
+                }
+            }
+        }
+    }
+
+    @Test
+    fun exactLengthCodeWinsOverOtherLengthRuns() {
+        val result = mismatch("Ref 12345678, code 123456\n$hash", OtpLength.SIX)
+        assertEquals("123456", assertIs<SmsResult.Code>(result).code)
+    }
+
+    @Test
+    fun twoDifferentExactLengthCodesAreNotAMismatch() {
+        assertNull(mismatch("Codes 123456 and 654321\n$hash", OtpLength.SIX))
+        assertNull(mismatch("Codes 123456, 654321 and 1234\n$hash", OtpLength.SIX))
+    }
+
+    @Test
+    fun longNumbersAndShortRunsAreNotAMismatch() {
+        assertNull(mismatch("Call 0123456789 now\n$hash", OtpLength.SIX))
+        assertNull(mismatch("Call +1234567 now\n$hash", OtpLength.SIX))
+        assertNull(mismatch("Only 123 here\n$hash", OtpLength.SIX))
+        assertNull(mismatch("ref A12345678 ok\n$hash", OtpLength.SIX))
+        assertNull(mismatch("No code\n$hash", OtpLength.SIX))
+    }
+
+    @Test
+    fun appHashDigitsAreNotAMismatch() {
+        assertNull(mismatch("Welcome\n12345678901", OtpLength.SIX))
+    }
+
+    @Test
+    fun mismatchOnlyOnSuccessAndNeverExposesDigits() {
+        assertNull(resolveSmsResult(8, "Code 1234\n$hash", OtpLength.SIX))
+        assertNull(resolveSmsResult(STATUS_SUCCESS, null, OtpLength.SIX))
+        val failure = assertIs<SmsResult.Failure>(mismatch("Code 1234\n$hash", OtpLength.SIX))
+        assertEquals("CODE_LENGTH_MISMATCH", failure.reason.name)
+        assertEquals(false, failure.toString().contains("1234"))
+    }
 }
