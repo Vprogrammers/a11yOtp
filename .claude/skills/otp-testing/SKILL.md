@@ -11,24 +11,22 @@ Test the component contract, not implementation details.
 
 Use package `me.vprogrammers.a11yotp`.
 
-- Shared tests: `sharedLogic/src/commonTest/kotlin/me/vprogrammers/a11yotp`
-- Android shared-logic host tests: `sharedLogic/src/androidHostTest/kotlin/me/vprogrammers/a11yotp`
-- Android UI common tests: `sharedUI/src/commonTest/kotlin/me/vprogrammers/a11yotp`
-- Android Compose host tests: `sharedUI/src/androidHostTest/kotlin/me/vprogrammers/a11yotp`
-- Android Compose device tests: `sharedUI/src/androidDeviceTest/kotlin/me/vprogrammers/a11yotp`
-- Kotlin/Native tests: `sharedLogic/src/iosTest/kotlin/me/vprogrammers/a11yotp`
+- Shared tests: `a11yotp/src/commonTest/kotlin/me/vprogrammers/a11yotp`
+- Android host (JVM) tests, including Compose-typed style tests: `a11yotp/src/androidHostTest/kotlin/me/vprogrammers/a11yotp`
+- Android Compose device tests: `a11yotp/src/androidDeviceTest/kotlin/me/vprogrammers/a11yotp`
+- Kotlin/Native tests, including non-visual UIKit component logic: `a11yotp/src/iosTest/kotlin/me/vprogrammers/a11yotp`
 
 There is no Xcode test target yet. Do not create Swift/XCUITest files outside a configured test target or claim they ran.
 
 ## Commands
 
 ```bash
-./gradlew :sharedLogic:testAndroidHostTest
-./gradlew :sharedUI:testAndroidHostTest
-./gradlew :sharedLogic:iosSimulatorArm64Test
-./gradlew :sharedLogic:allTests
-./gradlew :sharedUI:allTests
-./gradlew :sharedUI:connectedAndroidDeviceTest   # needs emulator or device
+./gradlew :a11yotp:testAndroidHostTest
+./gradlew :a11yotp:compileAndroidDeviceTest
+./gradlew :a11yotp:connectedAndroidDeviceTest   # needs emulator or device
+./gradlew :a11yotp:compileTestKotlinIosSimulatorArm64
+./gradlew :a11yotp:iosSimulatorArm64Test        # Apple Silicon only
+./gradlew :a11yotp:allTests
 ./gradlew ktlintCheck
 ```
 
@@ -36,11 +34,9 @@ Use `./gradlew :<module>:tasks --all` when a module task name must be confirmed.
 
 ## Current limitations
 
-- Compose UI test dependencies are not configured yet. Before writing Compose semantics tests, `test-engineer` adds the compatible Compose test dependency to `gradle/libs.versions.toml` and the `sharedUI` test dependency block, and chooses the supported test API for the current AGP/KMP stack; do not assume `runComposeUiTest` or `createComposeRule` is already available.
-- Place Compose UI and semantics integration tests in `androidDeviceTest` by default and run them with `:sharedUI:connectedAndroidDeviceTest` on an emulator or device.
+- Compose UI tests use AndroidX `ui-test-junit4` in `androidDeviceTest`. Run them with `:a11yotp:connectedAndroidDeviceTest` on an emulator or device.
 - Use `androidHostTest` for non-UI JVM tests. Introduce Robolectric Compose tests only when their speed provides clear value and their platform limitations do not affect the behavior being verified.
-- Masked presentation and 8-digit mode are roadmap behavior. Add their tests when those features are implemented; do not make the initial suite fail for absent roadmap features.
-- There is no Xcode test target.
+- There is no Xcode test target. UIKit view behavior that needs a running app (VoiceOver, autofill, focus) is a manual device check.
 
 ## Workflow
 
@@ -59,4 +55,4 @@ For Android Compose, find the logical input through semantics and assert decorat
 
 Use screenshots only for visual regressions such as font scale, themes, RTL, focus, and errors—not interaction behavior.
 
-Until an Xcode test target exists, test shared interop through Kotlin/Native tests and document VoiceOver, Voice Control, paste, focus, keyboard, and one-time-code autofill as manual checks.
+Test iOS component logic that does not need a window (state mapping, accessibility values, masking, contrast warnings) with Kotlin/Native tests. Document VoiceOver, Voice Control, paste, focus, keyboard, and one-time-code autofill as manual device checks.

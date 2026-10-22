@@ -13,8 +13,8 @@ Keep build changes compatible with the existing KMP project and avoid unrelated 
 - Broader CI does not exist yet. The first full validation workflow should gate ktlint, SwiftLint, shared logic tests, Android host/Compose tests, Android sample build, and Apple Silicon iOS framework/app validation.
 - `kotlin.native.ignoreDisabledTargets=true` suppresses warnings for native targets that cannot run on the current host; it does not add compatibility or make skipped tests pass.
 - Gradle runs on JDK 21.
-- `androidApp` Kotlin bytecode target is JVM 21, while its Java `sourceCompatibility` and `targetCompatibility` are 11.
-- `sharedLogic` and `sharedUI` Android targets use JVM 11.
+- `androidApp` Kotlin and Java (`sourceCompatibility`/`targetCompatibility`) targets are both JVM 21.
+- The `a11yotp` and `sampleShared` Android targets use JVM 11.
 - Do not silently change these targets. Align them only in a dedicated build change after verifying AGP/Kotlin compatibility and consumer requirements.
 
 ## Build rules
@@ -32,11 +32,11 @@ Keep build changes compatible with the existing KMP project and avoid unrelated 
 ## Intended CI gates
 
 1. `ktlintCheck`;
-2. `:sharedLogic:testAndroidHostTest`;
-3. `:sharedUI:testAndroidHostTest` (runs `commonTest` and non-UI JVM tests);
-4. `:sharedUI:connectedAndroidDeviceTest` on a managed emulator once Compose device tests exist;
+2. `:a11yotp:testAndroidHostTest` (runs `commonTest` and JVM tests);
+3. `:a11yotp:compileTestKotlinIosSimulatorArm64` (Kotlin/Native test compilation);
+4. `:a11yotp:connectedAndroidDeviceTest` on a managed emulator;
 5. `:androidApp:assembleDebug`;
-6. `:sharedLogic:iosSimulatorArm64Test` and iOS app build on Apple Silicon;
+6. `:a11yotp:iosSimulatorArm64Test`, `:sampleShared:linkDebugFrameworkIosSimulatorArm64`, and the iOS app build on Apple Silicon;
 7. SwiftLint through `./scripts/swiftlint.sh`;
 8. publication validation once publishing exists.
 
