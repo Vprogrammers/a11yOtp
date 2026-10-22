@@ -275,12 +275,10 @@ private fun OtpCell(
     val baseBackground = if (enabled) colors.cellBackground else colors.disabledCellBackground
     val filled = digit != null && mask == OtpMask.FilledCell
     // White on a dark cell background, where a black shadow would not show; black otherwise.
-    val shadowColor =
-        if (baseBackground.alpha == 1f && otpShadowIsLight(baseBackground.toArgb() and 0xFFFFFF)) {
-            Color.White
-        } else {
-            Color.Black
-        }
+    // A white glow needs more opacity than a black shadow to be as noticeable.
+    val lightShadow = baseBackground.alpha == 1f && otpShadowIsLight(baseBackground.toArgb() and 0xFFFFFF)
+    val shadowColor = if (lightShadow) Color.White else Color.Black
+    val shadowAlpha = if (lightShadow) FOCUS_LIGHT_SHADOW_ALPHA else FOCUS_SHADOW_ALPHA
     // The thicker border shows focus; the lift and shadow are extra. Compose animations follow the
     // system animator scale, so "Remove animations" makes the move instant.
     val lift by animateDpAsState(if (isActive && style.liftFocusedCell) FocusLift else 0.dp, label = "otpCellLift")
@@ -294,7 +292,7 @@ private fun OtpCell(
                 radius = FocusShadowRadius.toPx()
                 offset = Offset(0f, FocusShadowOffset.toPx())
                 color = shadowColor
-                alpha = FOCUS_SHADOW_ALPHA * progress
+                alpha = shadowAlpha * progress
             }.defaultMinSize(minWidth = style.cellWidth, minHeight = style.cellHeight)
             .background(if (filled) borderColor else baseBackground, style.cellShape)
             .border(borderWidth, borderColor, style.cellShape)
@@ -333,3 +331,4 @@ private val FocusLift = 4.dp
 private val FocusShadowRadius = 8.dp
 private val FocusShadowOffset = 6.dp
 private const val FOCUS_SHADOW_ALPHA = 0.35f
+private const val FOCUS_LIGHT_SHADOW_ALPHA = 0.6f
