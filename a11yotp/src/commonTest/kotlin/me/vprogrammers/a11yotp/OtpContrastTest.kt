@@ -71,4 +71,14 @@ class OtpContrastTest {
 
         assertTrue(warning!!.contains("WCAG 2.4.13 Focus Appearance requires at least 3.0:1"))
     }
+
+    @Test
+    fun shadowIsLightOnlyOnDarkBackgrounds() {
+        assertTrue(otpShadowIsLight(0x000000))
+        assertTrue(otpShadowIsLight(0x1C1C1E))
+        assertTrue(!otpShadowIsLight(0xFFFFFF))
+        assertTrue(!otpShadowIsLight(0xE8E8E8))
+        // Mid gray: black contrasts more, so the shadow stays black.
+        assertTrue(!otpShadowIsLight(0x9E9E9E))
+    }
 }

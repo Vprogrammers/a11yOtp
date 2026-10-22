@@ -47,7 +47,10 @@ class OtpFieldStyleTest {
 
     @Test
     fun resendColorsWarnOnLowContrast() {
-        assertEquals(1, OtpButtonDefaults.colors(content = Color(0xFFAAAAAA)).contrastWarnings.size)
+        assertEquals(
+            1,
+            OtpButtonDefaults.colors(content = Color(0xFFAAAAAA), container = Color.White).contrastWarnings.size,
+        )
     }
 
     @Test

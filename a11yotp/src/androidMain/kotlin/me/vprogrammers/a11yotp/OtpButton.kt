@@ -1,8 +1,11 @@
 package me.vprogrammers.a11yotp
 
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.indication
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.defaultMinSize
@@ -12,8 +15,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -153,21 +158,37 @@ internal fun OtpButtonSurface(
     val colors = style.colors
     val borderWidth = if (enabled) style.borderWidth else maxOf(style.borderWidth, 1.dp)
     val isRtl = LocalLayoutDirection.current == LayoutDirection.Rtl
+    val interactionSource = remember { MutableInteractionSource() }
     Box(modifier = modifier.fillMaxWidth(), contentAlignment = alignment.absoluteBox(isRtl)) {
+        // The clickable node is larger than the drawn button, so the TalkBack focus outline,
+        // which follows the node bounds, sits around the button instead of on its edge.
         Box(
             modifier =
                 Modifier
-                    .defaultMinSize(minWidth = OtpFieldDefaults.MinTargetSize, minHeight = style.minHeight)
-                    .background(if (enabled) colors.container else colors.disabledContainer, style.shape)
-                    .border(borderWidth, if (enabled) colors.border else colors.disabledBorder, style.shape)
-                    .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
-                    .padding(style.contentPadding),
-            contentAlignment = Alignment.Center,
+                    .clickable(
+                        interactionSource = interactionSource,
+                        indication = null,
+                        enabled = enabled,
+                        role = Role.Button,
+                        onClick = onClick,
+                    ).padding(OtpFieldDefaults.FocusOutlineGap),
         ) {
-            BasicText(
-                text = text,
-                style = style.textStyle.copy(color = if (enabled) colors.content else colors.disabledContent),
-            )
+            Box(
+                modifier =
+                    Modifier
+                        .defaultMinSize(minWidth = OtpFieldDefaults.MinTargetSize, minHeight = style.minHeight)
+                        .clip(style.shape)
+                        .background(if (enabled) colors.container else colors.disabledContainer, style.shape)
+                        .border(borderWidth, if (enabled) colors.border else colors.disabledBorder, style.shape)
+                        .indication(interactionSource, LocalIndication.current)
+                        .padding(style.contentPadding),
+                contentAlignment = Alignment.Center,
+            ) {
+                BasicText(
+                    text = text,
+                    style = style.textStyle.copy(color = if (enabled) colors.content else colors.disabledContent),
+                )
+            }
         }
     }
 }
@@ -177,7 +198,7 @@ object OtpButtonDefaults {
     fun style(
         textStyle: TextStyle =
             TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Medium, textAlign = TextAlign.Center),
-        cornerRadius: Dp = 8.dp,
+        cornerRadius: Dp = 12.dp,
         shape: Shape = RoundedCornerShape(cornerRadius),
         minHeight: Dp = OtpFieldDefaults.MinTargetSize,
         contentPadding: PaddingValues = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
@@ -187,7 +208,8 @@ object OtpButtonDefaults {
 
     fun colors(
         content: Color = Color.White,
-        container: Color = Color(0xFF0B57D0),
+        // Near-black rather than blue, so the TalkBack focus outline stays distinct from the button.
+        container: Color = Color(0xFF1F1F1F),
         border: Color = container,
         disabledContent: Color = Color(0xFF595959),
         disabledContainer: Color = Color(0xFFE8E8E8),

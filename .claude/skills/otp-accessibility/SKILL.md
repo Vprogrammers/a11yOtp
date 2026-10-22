@@ -29,6 +29,7 @@ Verify:
 - Android keyboard type: `KeyboardType.Number` when unmasked and `KeyboardType.NumberPassword` only when masked, because password input types suppress TalkBack key echo unless the user enables "Speak passwords";
 - Android OTP autofill behavior; on API 24–25, where the Autofill Framework is unavailable, degrade gracefully to typing, paste, and keyboard-provided suggestions. Do not add SMS permissions or Play Services as an implicit fallback;
 - iOS one-time-code autofill with `textContentType = UITextContentTypeOneTimeCode`;
+- the optional Android SMS Retriever (`a11yotp-sms-retriever`) hands the whole code to the host, which replaces the input with `state.cleared().withInput(code)` so completion is reported even over a full typed code. The field's progress semantics apply and the library forces no announcement; the host announces the fill or verification result (polite live region), because TalkBack may not speak a value change on an unfocused field. The message and code are never logged;
 - Voice Control visible labels match the accessible name;
 - restoration without duplicate callbacks or announcements;
 - configurable 4, 6, and, once implemented, 8 digit codes.
