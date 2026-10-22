@@ -164,6 +164,7 @@ internal class OtpFieldContainer : UIView(frame = CGRectMake(0.0, 0.0, 0.0, 0.0)
                     ring = if (filled && emphasised) background else null,
                     ringWidth = style.focusedBorderWidth,
                     lifted = isActive && style.liftFocusedCell,
+                    surface = background,
                 ),
                 traits,
             )

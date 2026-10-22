@@ -37,6 +37,8 @@ internal class OtpCellAppearance(
     val ringWidth: Double,
     /** Raised with a shadow, for the focused cell. */
     val lifted: Boolean = false,
+    /** Cell background that picks the shadow color; differs from [fill] for filled cells. */
+    val surface: UIColor = fill,
 )
 
 /** One decorative digit cell. It is never an accessibility element; the text field is. */
@@ -56,7 +58,6 @@ internal class OtpCellView : UIView(frame = CGRectMake(0.0, 0.0, 0.0, 0.0)) {
         addSubview(label)
         ringLayer.fillColor = null
         layer.addSublayer(ringLayer)
-        layer.shadowColor = UIColor.blackColor.CGColor
         layer.shadowOffset = CGSizeMake(0.0, SHADOW_OFFSET)
         layer.shadowRadius = SHADOW_RADIUS
         layer.shadowOpacity = 0f
@@ -108,6 +109,10 @@ internal class OtpCellView : UIView(frame = CGRectMake(0.0, 0.0, 0.0, 0.0)) {
         ringLayer.strokeColor = ring?.resolvedColorWithTraitCollection(traits)?.CGColor
         ringLayer.lineWidth = appearance.ringWidth
         ringInset = RING_GAP + appearance.ringWidth / 2.0
+        // White on a dark cell background, where a black shadow would not show; black otherwise.
+        val surface = appearance.surface.opaqueRgb(traits)
+        layer.shadowColor =
+            (if (surface != null && otpShadowIsLight(surface)) UIColor.whiteColor else UIColor.blackColor).CGColor
         applyLift(appearance.lifted)
         setNeedsLayout()
     }

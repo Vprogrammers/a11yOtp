@@ -30,6 +30,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -273,6 +274,13 @@ private fun OtpCell(
     val borderWidth = if (enabled && (isError || isActive)) style.focusedBorderWidth else style.borderWidth
     val baseBackground = if (enabled) colors.cellBackground else colors.disabledCellBackground
     val filled = digit != null && mask == OtpMask.FilledCell
+    // White on a dark cell background, where a black shadow would not show; black otherwise.
+    val shadowColor =
+        if (baseBackground.alpha == 1f && otpShadowIsLight(baseBackground.toArgb() and 0xFFFFFF)) {
+            Color.White
+        } else {
+            Color.Black
+        }
     // The thicker border shows focus; the lift and shadow are extra. Compose animations follow the
     // system animator scale, so "Remove animations" makes the move instant.
     val lift by animateDpAsState(if (isActive && style.liftFocusedCell) FocusLift else 0.dp, label = "otpCellLift")
@@ -280,12 +288,12 @@ private fun OtpCell(
         Modifier
             .offset { IntOffset(0, -lift.roundToPx()) }
             .dropShadow(style.cellShape) {
-                // Same look as iOS: black, 35% opacity, 8dp blur, 6dp down. Elevation shadows
-                // are too faint on many devices, especially Samsung.
+                // Same look as iOS: 35% opacity, 8dp blur, 6dp down. Elevation shadows are too
+                // faint on many devices, especially Samsung.
                 val progress = lift / FocusLift
                 radius = FocusShadowRadius.toPx()
                 offset = Offset(0f, FocusShadowOffset.toPx())
-                color = Color.Black
+                color = shadowColor
                 alpha = FOCUS_SHADOW_ALPHA * progress
             }.defaultMinSize(minWidth = style.cellWidth, minHeight = style.cellHeight)
             .background(if (filled) borderColor else baseBackground, style.cellShape)
