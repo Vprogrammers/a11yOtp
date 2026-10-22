@@ -261,6 +261,21 @@ keytool -exportcert -alias <alias> -keystore <keystore> \
   | xxd -r -p | base64 | cut -c1-11
 ```
 
+If the hash from the keystore doesn't work, compute it from the app that is actually installed. The retriever checks that app's certificate, so this hash is always the one to use. It needs `apksigner` from the Android SDK build tools:
+
+```bash
+APK=$(adb shell pm path <applicationId> | head -1 | sed 's/package://' | tr -d '\r')
+adb pull "$APK" app.apk
+"$ANDROID_HOME"/build-tools/<version>/apksigner verify --print-certs-pem app.apk \
+  | awk '/BEGIN CERT/,/END CERT/' | openssl x509 -outform der \
+  | xxd -p | tr -d "[:space:]" \
+  | (echo -n "<applicationId> $(cat)") \
+  | shasum -a 256 | tr -d "[:space:]-" \
+  | xxd -r -p | base64 | cut -c1-11
+```
+
+A debug build can be signed with a different debug keystore than `~/.android/debug.keystore`, for example one created by Android Studio on another machine, so the two methods can give different hashes.
+
 For Play App Signing, use the app signing certificate from the Play Console, not your upload key. The retriever needs Google Play services on the device, so a Play Store emulator image or a real device is required to test it. On devices without Google Play services, `onFailure` reports `UNAVAILABLE`; the field still works with autofill, typing and paste.
 
 ---
