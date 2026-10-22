@@ -4,12 +4,14 @@ android-compileSdk = "37"
 android-minSdk = "24"
 android-targetSdk = "37"
 androidx-activity = "1.13.0"
+androidx-core = "1.19.1"
 androidxCompose = "1.12.1"
 # Pinned above the Compose test default: older Espresso crashes on API 37 (InputManager.getInstance removed)
 androidx-test-espresso = "3.7.0"
 kotlin = "2.4.21"
 ktlintPlugin = "14.2.0"
 ktlintVersion = "1.8.0"
+playServicesAuthApiPhone = "18.3.1"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -22,6 +24,8 @@ compose-uiTest = { module = "androidx.compose.ui:ui-test-junit4", version.ref = 
 androidx-test-espresso-core = { module = "androidx.test.espresso:espresso-core", version.ref = "androidx-test-espresso" }
 compose-uiTestManifest = { module = "androidx.compose.ui:ui-test-manifest", version.ref = "androidxCompose" }
 compose-uiToolingPreview = { module = "androidx.compose.ui:ui-tooling-preview", version.ref = "androidxCompose" }
+androidx-core = { module = "androidx.core:core", version.ref = "androidx-core" }
+play-services-auth-api-phone = { module = "com.google.android.gms:play-services-auth-api-phone", version.ref = "playServicesAuthApiPhone" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
