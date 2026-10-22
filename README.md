@@ -153,7 +153,7 @@ Keep a strong reference to the Kotlin object (`OtpField`, `OtpVerifyButton`, `Ot
 
 ### Paste, autofill and the field length
 
-Typing one digit at a time is unchanged; a digit typed into a full field is ignored. A single input that inserts several digits at once (paste, platform autofill, a keyboard suggestion) is accepted **only if it contains exactly as many digits as the field** (`OtpLength.FOUR`, `SIX` or `EIGHT`). It then replaces what is in the field, and `onComplete` fires. Separators such as `123 456` or `123-456` do not count as digits.
+Typing one digit at a time is unchanged; a digit typed into a full field is ignored. A single input that inserts several digits at once (paste, platform autofill, a keyboard suggestion) is accepted **only if it contains exactly as many digits as the field** (`OtpLength.FOUR`, `SIX` or `EIGHT`). It then replaces what is in the field, and `onComplete` fires. The input is also accepted when the resulting field text holds exactly that many digits, for example autofill replacing `12` with `123456`, or typing `12` and then pasting `3456`. Separators such as `123 456` or `123-456` do not count as digits.
 
 Any other multi-digit input is rejected, never truncated or filled in partially: the state stays as it was, nothing completes, and the host learns the expected and received digit counts (never the digits):
 

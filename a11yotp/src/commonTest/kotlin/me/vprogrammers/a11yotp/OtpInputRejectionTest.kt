@@ -37,6 +37,8 @@ class OtpInputRejectionTest {
                 for (k in listOf(2, n - 1, n, n + 1, n + 2)) {
                     val received = digits(k)
                     val label = "$length $fill k=$k"
+                    // Old code plus received digits that total the field length is a whole code (see below).
+                    if (before.code.length + k == n) continue
                     val result = before.withInput(before.code + received)
                     when {
                         k == n -> {
@@ -186,5 +188,71 @@ class OtpInputRejectionTest {
         assertFalse(text.contains("48291"))
         assertEquals(6, rejection?.expectedDigitCount)
         assertEquals(5, rejection?.receivedDigitCount)
+    }
+
+    @Test
+    fun fullCodeSharingTheStartOfThePartialCodeIsAccepted() {
+        val partial = OtpState(OtpLength.SIX).typed("12")
+
+        val result = partial.withInput("123456")
+
+        assertEquals("123456", result.state.code)
+        assertTrue(result.didComplete)
+        assertNull(result.rejection)
+    }
+
+    @Test
+    fun fullCodeSharingTheEndOfThePartialCodeIsAccepted() {
+        val partial = OtpState(OtpLength.SIX).typed("56")
+
+        val result = partial.withInput("123456")
+
+        assertEquals("123456", result.state.code)
+        assertTrue(result.didComplete)
+        assertNull(result.rejection)
+    }
+
+    @Test
+    fun fullCodeSharingTheStartOfACompleteCodeCompletesAgain() {
+        val complete = OtpState(OtpLength.SIX).typed("123456")
+
+        val result = complete.withInput("123999")
+
+        assertEquals("123999", result.state.code)
+        assertTrue(result.didComplete)
+        assertNull(result.rejection)
+    }
+
+    @Test
+    fun appendingDigitsToAPartialCodeThatMakeAFullCodeCompletes() {
+        val partial = OtpState(OtpLength.SIX).typed("12")
+
+        val result = partial.withInput("12" + "3456")
+
+        assertEquals("123456", result.state.code)
+        assertTrue(result.didComplete)
+        assertNull(result.rejection)
+    }
+
+    @Test
+    fun partialPasteIntoPartialCodeIsStillRejected() {
+        val partial = OtpState(OtpLength.SIX).typed("12")
+
+        val result = partial.withInput("1234")
+
+        assertSame(partial, result.state)
+        assertFalse(result.didComplete)
+        assertEquals(OtpInputRejection(6, 2), result.rejection)
+    }
+
+    @Test
+    fun iosStylePasteAppendedToThePartialCodeIsAccepted() {
+        val partial = OtpState(OtpLength.SIX).typed("12")
+
+        val result = partial.withInput("12" + "123456")
+
+        assertEquals("123456", result.state.code)
+        assertTrue(result.didComplete)
+        assertNull(result.rejection)
     }
 }

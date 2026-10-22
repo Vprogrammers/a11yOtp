@@ -32,12 +32,16 @@ class OtpState private constructor(
      *
      * The digits that this input inserts are found by comparing [text] with the current code
      * (the common start and end are not new). Then:
-     * - One digit or fewer (typing or deletion) is applied. A digit typed into a full field is
-     *   ignored without a rejection.
-     * - Exactly [length] digits at once (paste, autofill, or a keyboard suggestion) replace the
-     *   current input and report completion, also over a complete code. Pasting the current
-     *   code again changes nothing.
-     * - Any other number of digits at once is rejected: the state is unchanged, [OtpInputResult.didComplete]
+     * - One digit or fewer inserted (typing or deletion) is applied. A digit typed into a full
+     *   field is ignored without a rejection.
+     * - Otherwise, if [text] holds exactly [length] digits in total, they replace the current
+     *   code (autofill or select-all and paste, also when the new code shares its start or end
+     *   with the old one).
+     * - Otherwise, if the inserted digits number exactly [length] (paste appended to the current
+     *   code, as on iOS), the inserted digits replace the current code.
+     * - An accepted replacement reports completion, also over a different complete code. Pasting
+     *   the current code again changes nothing.
+     * - Any other number of digits inserted at once is rejected: the state is unchanged, [OtpInputResult.didComplete]
      *   is false, and [OtpInputResult.rejection] carries the expected and received digit counts.
      *   A code is never truncated or filled in partially. A rejection means the host's configured
      *   length probably differs from what its backend sends.
@@ -53,6 +57,8 @@ class OtpState private constructor(
             when {
                 inserted.length <= 1 -> digits.take(expected)
 
+                digits.length == expected -> digits
+
                 inserted.length == expected -> inserted
 
                 else -> return OtpInputResult(
@@ -64,7 +70,7 @@ class OtpState private constructor(
         if (newCode == code) return OtpInputResult(this, didComplete = false)
         val newState = OtpState(length, newCode, isError = false)
         // A whole code that replaces a different complete code is a new completion.
-        val replacedWholeCode = inserted.length == expected
+        val replacedWholeCode = inserted.length > 1
         return OtpInputResult(newState, didComplete = newState.isComplete && (!isComplete || replacedWholeCode))
     }
 
@@ -128,7 +134,9 @@ class OtpInputRejection internal constructor(
  *
  * The field always shows the cursor at the end, so a selection that replaces only part of the code
  * cannot be told apart from an insertion here. Selecting all and pasting fewer digits than the field
- * length is rejected like any other partial paste.
+ * length is rejected like any other partial paste. The caller must not use the result to count a
+ * whole-code replacement: shared digits are stripped, so a full code that overlaps the old one
+ * yields fewer digits than its length.
  */
 private fun insertedDigits(
     old: String,
