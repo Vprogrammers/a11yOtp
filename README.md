@@ -205,6 +205,8 @@ Labels are declared for your **whole app**, not per component. The goal is for t
 
 > **Testing:** OTP autofill suggestions need a real device. They do not appear in the iOS simulator.
 
+> **Message text:** iOS and Android choose which number in the message to suggest; the app cannot influence it. Keep the code the only number in the message. A brand name with digits (`A11yOtp`), a phone number or an amount can be suggested instead of the code.
+
 > **Google Play:** this library never uses `READ_SMS` or `RECEIVE_SMS`. Those permissions are heavily restricted on Google Play.
 
 ### Android SMS Retriever (optional)
