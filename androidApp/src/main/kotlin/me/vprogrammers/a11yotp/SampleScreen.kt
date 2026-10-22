@@ -1,5 +1,6 @@
 package me.vprogrammers.a11yotp
 
+import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
@@ -23,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
@@ -44,15 +46,22 @@ private val fieldStyle = OtpFieldDefaults.style(groupSize = 3, cellHeight = 56.d
 /** Square cells drawn as circles. */
 private val roundFieldStyle = OtpFieldDefaults.style(groupSize = 3, cellShape = CircleShape)
 
-private val fieldAccessibility =
+/** The rejection text is a plurals resource, quantity = digits received ("1 digit" vs "4 digits"). */
+private fun fieldAccessibility(context: Context) =
     OtpFieldAccessibility(
         label = "Verification code",
         errorMessage = "Incorrect code. Try again.",
         progressDescription = { "${it.entered} of ${it.total} digits entered" },
         inputRejectedMessage = {
-            "Code not entered: it has ${it.receivedDigitCount} digits, but ${it.expectedDigitCount} are expected."
+            context.resources.getQuantityString(
+                R.plurals.otp_rejected,
+                it.receivedDigitCount,
+                it.receivedDigitCount,
+                it.expectedDigitCount,
+            )
         },
     )
+
 private val verifyAccessibility = OtpVerifyAccessibility("Verify")
 private val resendAccessibility = OtpResendAccessibility("Resend code") { "Resend code in ${it.secondsRemaining} s" }
 
@@ -134,7 +143,7 @@ fun SampleScreen(initialOptions: SampleOptions = SampleOptions()) {
                 if (!it.isComplete) verified = false
             },
             onComplete = ::verify,
-            accessibility = fieldAccessibility,
+            accessibility = fieldAccessibility(LocalContext.current),
             modifier = Modifier.focusRequester(fieldFocus),
             enabled = !verified && !options.isDisabled,
             style = if (options.roundCells) roundFieldStyle else fieldStyle,
