@@ -1,6 +1,7 @@
 package me.vprogrammers.a11yotp
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -95,11 +96,13 @@ fun SampleScreen(initialOptions: SampleOptions = SampleOptions()) {
         },
     )
 
+    val dark = isSystemInDarkTheme()
+    val ink = if (dark) Color.White else Color(0xFF1B1B1F)
     Column(
         modifier =
             Modifier
                 .fillMaxSize()
-                .background(Color.White)
+                .background(if (dark) Color.Black else Color.White)
                 .safeContentPadding()
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp),
@@ -108,7 +111,13 @@ fun SampleScreen(initialOptions: SampleOptions = SampleOptions()) {
     ) {
         BasicText(
             text = "Enter the ${state.length.digitCount}-digit code we sent you",
-            style = TextStyle(fontSize = 22.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center),
+            style =
+                TextStyle(
+                    color = ink,
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                ),
             modifier = Modifier.semantics { heading() },
         )
         OtpField(
@@ -134,7 +143,7 @@ fun SampleScreen(initialOptions: SampleOptions = SampleOptions()) {
             // The check mark and text carry the result, so the default text color is enough.
             BasicText(
                 text = "✓ Code verified",
-                style = TextStyle(fontSize = 18.sp, fontWeight = FontWeight.SemiBold),
+                style = TextStyle(color = ink, fontSize = 18.sp, fontWeight = FontWeight.SemiBold),
                 modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
             )
         }
