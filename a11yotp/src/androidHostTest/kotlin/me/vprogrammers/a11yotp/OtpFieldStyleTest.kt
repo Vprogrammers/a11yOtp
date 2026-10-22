@@ -5,6 +5,8 @@ import androidx.compose.ui.unit.dp
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertNotEquals
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class OtpFieldStyleTest {
@@ -83,5 +85,33 @@ class OtpFieldStyleTest {
     fun focusLiftIsOnByDefaultAndPartOfEquality() {
         assertTrue(OtpFieldDefaults.style().liftFocusedCell)
         assertTrue(OtpFieldDefaults.style() != OtpFieldDefaults.style(liftFocusedCell = false))
+    }
+
+    @Test
+    fun darkColorsHaveNoWarnings() {
+        assertTrue(OtpFieldDefaults.darkColors().contrastWarnings.isEmpty())
+        assertTrue(OtpButtonDefaults.darkColors().contrastWarnings.isEmpty())
+    }
+
+    @Test
+    fun darkColorsDifferFromLightColors() {
+        assertNotEquals(OtpFieldDefaults.colors(), OtpFieldDefaults.darkColors())
+        assertNotEquals(OtpButtonDefaults.colors(), OtpButtonDefaults.darkColors())
+    }
+
+    @Test
+    fun defaultStylesFollowTheSystemTheme() {
+        assertNull(OtpFieldDefaults.style().colors)
+        assertNull(OtpButtonDefaults.style().colors)
+        assertEquals(OtpFieldDefaults.style(), OtpFieldDefaults.style())
+    }
+
+    @Test
+    fun explicitColorsAreKept() {
+        val field = OtpFieldDefaults.darkColors()
+        val button = OtpButtonDefaults.colors()
+        assertEquals(field, OtpFieldDefaults.style(colors = field).colors)
+        assertEquals(button, OtpButtonDefaults.style(colors = button).colors)
+        assertNotEquals(OtpFieldDefaults.style(), OtpFieldDefaults.style(colors = field))
     }
 }

@@ -1,8 +1,10 @@
 package me.vprogrammers.a11yotp
 
+import android.content.res.Configuration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.width
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -13,6 +15,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.hapticfeedback.HapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -71,7 +74,7 @@ class OtpFieldTest {
         style: OtpFieldStyle = OtpFieldDefaults.style(),
         alignment: OtpAlignment = OtpAlignment.START,
     ) {
-        rule.setContent {
+        setThemedContent(night = false) {
             CompositionLocalProvider(
                 LocalLayoutDirection provides direction,
                 LocalHapticFeedback provides fakeHaptics,
@@ -89,6 +92,93 @@ class OtpFieldTest {
                 )
             }
         }
+    }
+
+    /** Forces the system theme so pixel checks do not depend on the phone's dark mode setting. */
+    private fun setThemedContent(
+        night: Boolean,
+        content: @Composable () -> Unit,
+    ) {
+        rule.setContent {
+            val base = LocalConfiguration.current
+            val themed =
+                Configuration(base).apply {
+                    uiMode = (uiMode and Configuration.UI_MODE_NIGHT_MASK.inv()) or
+                        if (night) Configuration.UI_MODE_NIGHT_YES else Configuration.UI_MODE_NIGHT_NO
+                }
+            CompositionLocalProvider(LocalConfiguration provides themed, content = content)
+        }
+    }
+
+    private fun pixel(tag: String) =
+        rule
+            .onNodeWithTag(tag)
+            .captureToImage()
+            .toPixelMap()
+            .let { it[it.width / 2, it.height / 2] }
+
+    private fun themedCellAndButton(
+        night: Boolean,
+        style: OtpFieldStyle,
+        buttonStyle: OtpButtonStyle,
+    ) = setThemedContent(night) {
+        Column(Modifier.width(400.dp)) {
+            OtpField(
+                state = OtpState(OtpLength.SIX),
+                onStateChange = {},
+                onComplete = {},
+                accessibility = accessibility,
+                style = style,
+                alignment = OtpAlignment.START,
+                modifier = Modifier.testTag("field"),
+            )
+            OtpVerifyButton(
+                state = OtpState(OtpLength.SIX).withInput("123456").state,
+                onVerify = {},
+                accessibility = OtpVerifyAccessibility("Verify"),
+                style = buttonStyle,
+                modifier = Modifier.testTag("button"),
+            )
+        }
+    }
+
+    /** Samples the first cell's background, left of its center to avoid a placeholder or digit. */
+    private fun firstCellBackground(): Color {
+        val map = rule.onNodeWithTag("field").captureToImage().toPixelMap()
+        val gap = with(rule.density) { OtpFieldDefaults.FocusOutlineGap.roundToPx() }
+        return map[gap + with(rule.density) { 6.dp.roundToPx() }, map.height / 2]
+    }
+
+    @Test
+    fun defaultStyleFollowsNightThemeForCellAndButton() {
+        themedCellAndButton(true, OtpFieldDefaults.style(), OtpButtonDefaults.style())
+        assertEquals(Color(0xFF1C1C1E), firstCellBackground())
+        // Sample just inside the top edge of the drawn button, above its text.
+        val button = rule.onNodeWithTag("button").captureToImage().toPixelMap()
+        val gap = with(rule.density) { OtpFieldDefaults.FocusOutlineGap.roundToPx() }
+        assertEquals(Color(0xFFE5E5EA), button[button.width / 2, gap + 3])
+    }
+
+    @Test
+    fun defaultStyleFollowsDayThemeForCellAndButton() {
+        themedCellAndButton(false, OtpFieldDefaults.style(), OtpButtonDefaults.style())
+        assertEquals(Color.White, firstCellBackground())
+        val button = rule.onNodeWithTag("button").captureToImage().toPixelMap()
+        val gap = with(rule.density) { OtpFieldDefaults.FocusOutlineGap.roundToPx() }
+        assertEquals(Color(0xFF1F1F1F), button[button.width / 2, gap + 3])
+    }
+
+    @Test
+    fun explicitLightColorsStayLightUnderNightTheme() {
+        themedCellAndButton(
+            true,
+            OtpFieldDefaults.style(colors = OtpFieldDefaults.colors()),
+            OtpButtonDefaults.style(colors = OtpButtonDefaults.colors()),
+        )
+        assertEquals(Color.White, firstCellBackground())
+        val button = rule.onNodeWithTag("button").captureToImage().toPixelMap()
+        val gap = with(rule.density) { OtpFieldDefaults.FocusOutlineGap.roundToPx() }
+        assertEquals(Color(0xFF1F1F1F), button[button.width / 2, gap + 3])
     }
 
     private fun field() = rule.onNode(hasSetTextAction())
@@ -303,7 +393,7 @@ class OtpFieldTest {
     @Test
     fun verifyButtonIsEnabledOnlyForCompleteCodeAndVerifiesOnce() {
         val verified = mutableListOf<String>()
-        rule.setContent {
+        setThemedContent(night = false) {
             OtpVerifyButton(
                 state = state,
                 onVerify = { verified += it },
@@ -326,7 +416,7 @@ class OtpFieldTest {
         direction: LayoutDirection,
         alignment: OtpAlignment,
     ): Pair<Int, Int> {
-        rule.setContent {
+        setThemedContent(night = false) {
             CompositionLocalProvider(LocalLayoutDirection provides direction) {
                 OtpVerifyButton(
                     state = OtpState(OtpLength.SIX).withInput("123456").state,
@@ -372,7 +462,7 @@ class OtpFieldTest {
     fun resendButtonNameIsItsVisibleTextAndHasNoLiveRegion() {
         var seconds by mutableStateOf(25)
         var resends = 0
-        rule.setContent {
+        setThemedContent(night = false) {
             OtpResendButton(
                 secondsRemaining = seconds,
                 onResend = { resends++ },
@@ -460,7 +550,7 @@ class OtpFieldTest {
 
     @Test
     fun buttonsMeetMinimumTargetSize() {
-        rule.setContent {
+        setThemedContent(night = false) {
             OtpVerifyButton(
                 state = OtpState(OtpLength.SIX),
                 onVerify = {},
@@ -480,7 +570,7 @@ class OtpFieldTest {
     fun largeFontScaleGrowsCellsAndKeepsButtonTextUnclipped() {
         state = OtpState(OtpLength.EIGHT).withInput("12345678").state
         var density = 1f
-        rule.setContent {
+        setThemedContent(night = false) {
             val current = LocalDensity.current
             density = current.density
             CompositionLocalProvider(LocalDensity provides Density(current.density, fontScale = 2f)) {
