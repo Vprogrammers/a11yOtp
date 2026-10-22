@@ -18,6 +18,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -77,9 +78,12 @@ import kotlin.math.roundToInt
  * accepted only with exactly the field's digit count; see [OtpState.withInput]. Otherwise the state
  * stays unchanged, [onInputRejected] is called once with the digit counts, and
  * [OtpFieldAccessibility.inputRejectedMessage] appears below the field in the slot of the error
- * message (which wins while [OtpState.isError]) in a polite live region. This is not an error
- * state: there is no error border or haptic feedback, and focus does not move. The message is
- * cleared by the next edit and when [state] changes. A rejection means the field length probably
+ * message in a polite live region, announced on every rejection (also an identical one). While
+ * [OtpState.isError] the newest message wins: the rejection replaces the error text, the error
+ * styling and semantics stay, and the error text returns when the rejection is cleared. A
+ * rejection is not an error state itself: no error border or haptic feedback, no focus move, and
+ * [onStateChange] is not called when the state is unchanged. A blank message shows nothing. The
+ * message is cleared by the next edit and when [state] changes. A rejection means the field length probably
  * differs from the code length of the host's backend.
  */
 @OptIn(ExperimentalComposeUiApi::class)
@@ -110,8 +114,10 @@ fun OtpField(
     SideEffect { duplicateGuard.base = null }
     val currentOnInputRejected by rememberUpdatedState(onInputRejected)
     val visibleError = if (state.isError) accessibility.errorMessage else null
-    val visibleMessage =
-        visibleError ?: rejected?.let { accessibility.inputRejectedMessage(it.rejection) }
+    // The newest message wins: a shown rejection replaces the error text; the error styling and
+    // semantics stay because state.isError is unchanged. A blank host message shows nothing.
+    val rejectedText = rejected?.let { accessibility.rejectionMessageOrNull(it.rejection) }
+    val visibleMessage = rejectedText ?: visibleError
     val masked = mask != OtpMask.None
     var focused by remember { mutableStateOf(false) }
     val reported = remember { ReportedCompletion() }
@@ -133,7 +139,7 @@ fun OtpField(
             value = fieldValue,
             onValueChange = { new ->
                 val result = state.withInput(new.text)
-                onStateChange(result.state)
+                if (result.rejection == null || result.state != state) onStateChange(result.state)
                 val rejection = result.rejection
                 if (rejection == null) {
                     rejected = null
@@ -193,22 +199,28 @@ fun OtpField(
             },
         )
         if (visibleMessage != null) {
-            BasicText(
-                text = visibleMessage,
-                style =
-                    style.errorTextStyle.copy(
-                        color = if (visibleError != null) colors.errorText else colors.text,
-                        textAlign = textAlign,
-                    ),
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(top = 8.dp)
-                        .semantics { liveRegion = LiveRegionMode.Polite },
-            )
+            // A new node per rejection (and for the error text) so the live region announces each
+            // appearance, including a second identical rejection.
+            key(rejected ?: ErrorTextKey) {
+                BasicText(
+                    text = visibleMessage,
+                    style =
+                        style.errorTextStyle.copy(
+                            color = if (state.isError) colors.errorText else colors.text,
+                            textAlign = textAlign,
+                        ),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(top = 8.dp)
+                            .semantics { liveRegion = LiveRegionMode.Polite },
+                )
+            }
         }
     }
 }
+
+private val ErrorTextKey = Any()
 
 /** A rejection to display. No equality, so each rejection is a new value for Compose. */
 private class RejectedInput(

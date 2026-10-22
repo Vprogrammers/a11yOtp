@@ -27,6 +27,7 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertHeightIsAtLeast
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
@@ -66,7 +67,7 @@ class OtpFieldTest {
                 haptics += hapticFeedbackType
             }
         }
-    private val accessibility =
+    private var accessibility =
         OtpFieldAccessibility(
             label = "Code",
             errorMessage = "Wrong code",
@@ -74,6 +75,7 @@ class OtpFieldTest {
             inputRejectedMessage = { "Got ${it.receivedDigitCount} digits, expected ${it.expectedDigitCount}" },
         )
     private val rejections = mutableListOf<OtpInputRejection>()
+    private var stateChanges = 0
 
     private fun setField(
         enabled: Boolean = true,
@@ -89,7 +91,10 @@ class OtpFieldTest {
             ) {
                 OtpField(
                     state = state,
-                    onStateChange = { state = it },
+                    onStateChange = {
+                        stateChanges++
+                        state = it
+                    },
                     onComplete = { completions += it },
                     accessibility = accessibility,
                     enabled = enabled,
@@ -437,7 +442,7 @@ class OtpFieldTest {
         state = state.typed("123")
         rule.waitForIdle()
         button.assertIsNotEnabled()
-        state = state.withInput("123456").state
+        state = state.cleared().withInput("123456").state
         rule.waitForIdle()
         button.assertIsEnabled()
         button.performClick()
@@ -753,7 +758,7 @@ class OtpFieldTest {
     }
 
     @Test
-    fun errorMessageWinsOverRejectionMessage() {
+    fun rejectionWhileInErrorShowsRejectionAndKeepsErrorSemantics() {
         setField()
         field().performTextReplacement("123")
         rule.waitForIdle()
@@ -761,14 +766,57 @@ class OtpFieldTest {
         rule.waitForIdle()
         rule.onNode(hasText("Wrong code")).assertExists()
         rejectionMessage().assertDoesNotExist()
-        assertEquals("Wrong code", field().fetchSemanticsNode().config.getOrNull(SemanticsProperties.Error))
-        // A rejection while in error keeps the error and still notifies the host.
         field().performTextInput("1234567")
         rule.waitForIdle()
         assertEquals(2, rejections.size)
-        rule.onNode(hasText("Wrong code")).assertExists()
-        rejectionMessage().assertDoesNotExist()
+        rejectionMessage().assertTextEquals("Got 7 digits, expected 6")
+        rule.onNode(hasText("Wrong code")).assertDoesNotExist()
+        assertEquals("Wrong code", field().fetchSemanticsNode().config.getOrNull(SemanticsProperties.Error))
+        assertEquals(
+            LiveRegionMode.Polite,
+            rejectionMessage().fetchSemanticsNode().config.getOrNull(SemanticsProperties.LiveRegion),
+        )
         assertTrue(state.isError)
+    }
+
+    @Test
+    fun errorTextReturnsAfterRejectionIsCleared() {
+        setField()
+        state = state.withError()
+        rule.waitForIdle()
+        field().performTextReplacement("123")
+        rule.waitForIdle()
+        rejectionMessage().assertExists()
+        state = state.typed("4").withError()
+        rule.waitForIdle()
+        rejectionMessage().assertDoesNotExist()
+        rule.onNode(hasText("Wrong code")).assertExists()
+    }
+
+    @Test
+    fun blankRejectionMessageShowsNothingButCallbackFires() {
+        accessibility =
+            OtpFieldAccessibility(
+                label = "Code",
+                errorMessage = "Wrong code",
+                progressDescription = { "${it.entered} of ${it.total} digits entered" },
+                inputRejectedMessage = { " " },
+            )
+        setField()
+        field().performTextReplacement("123")
+        rule.waitForIdle()
+        assertEquals(listOf(OtpInputRejection(6, 3)), rejections)
+        rule.onAllNodes(hasText(" ")).assertCountEquals(0)
+        rule.onNode(hasText("Wrong code")).assertDoesNotExist()
+    }
+
+    @Test
+    fun rejectionDoesNotCallOnStateChangeWhenStateIsUnchanged() {
+        setField()
+        field().performTextReplacement("123")
+        rule.waitForIdle()
+        assertEquals(1, rejections.size)
+        assertEquals(0, stateChanges)
     }
 
     @Test
