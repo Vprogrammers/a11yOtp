@@ -290,11 +290,14 @@ internal class OtpFieldContainer : UIView(frame = CGRectMake(0.0, 0.0, 0.0, 0.0)
     private fun glassInset(model: OtpFieldModel): Double =
         if (model.style.glass && sharedGlassEffect != null) GLASS_PADDING else 0.0
 
+    /** Space around the cells: room for the glass, and at least the VoiceOver focus ring gap. */
+    private fun layoutInset(model: OtpFieldModel): Double = maxOf(glassInset(model), FOCUS_OUTLINE_GAP)
+
     override fun sizeThatFits(size: CValue<CGSize>): CValue<CGSize> {
         val model = model ?: return CGSizeMake(0.0, MIN_FALLBACK_HEIGHT)
         val proposed = size.useContents { width }
         val width = if (proposed.isFinite() && proposed > 0.0 && proposed < UNBOUNDED / 2) proposed else null
-        val inset = glassInset(model)
+        val inset = layoutInset(model)
         val traits = traitCollection
         val planner = planner(model, traits)
         val plan = planner.plan(width?.let { it - 2 * inset })
@@ -319,7 +322,7 @@ internal class OtpFieldContainer : UIView(frame = CGRectMake(0.0, 0.0, 0.0, 0.0)
         val width = bounds.useContents { size.width }
         val traits = traitCollection
         val style = model.style
-        val inset = glassInset(model)
+        val inset = layoutInset(model)
         val planner = planner(model, traits)
         val plan = planner.plan(width - 2 * inset)
         val cellHeight = cellHeight(model, traits)
@@ -358,15 +361,27 @@ internal class OtpFieldContainer : UIView(frame = CGRectMake(0.0, 0.0, 0.0, 0.0)
         }
         separators.forEachIndexed { index, separator -> separator.hidden = index !in shown }
         val rowsHeight = plan.rows.size * cellHeight + (plan.rows.size - 1) * style.cellSpacing
-        // The text field has the frame of the visible cells, so the VoiceOver focus ring, Voice Control
-        // overlay, and touch target match what users see.
-        if (minX <= maxX) textField.setFrame(CGRectMake(minX, inset, maxX - minX, rowsHeight))
+        // The text field covers the visible cells plus a gap, so the VoiceOver focus ring sits around
+        // the cells instead of on their edges, and Voice Control and touch match what users see.
+        if (minX <= maxX) {
+            textField.setFrame(
+                CGRectMake(
+                    minX - FOCUS_OUTLINE_GAP,
+                    inset - FOCUS_OUTLINE_GAP,
+                    maxX - minX + 2 * FOCUS_OUTLINE_GAP,
+                    rowsHeight + 2 * FOCUS_OUTLINE_GAP,
+                ),
+            )
+        }
+        val glassInset = glassInset(model)
         glassView?.let { glass ->
-            if (minX <= maxX && inset > 0.0) {
-                val glassHeight = rowsHeight + 2 * inset
-                glass.setFrame(CGRectMake(minX - inset, 0.0, maxX - minX + 2 * inset, glassHeight))
+            if (minX <= maxX && glassInset > 0.0) {
+                val glassHeight = rowsHeight + 2 * glassInset
+                glass.setFrame(
+                    CGRectMake(minX - glassInset, inset - glassInset, maxX - minX + 2 * glassInset, glassHeight),
+                )
                 // Concentric with the cells, so round cells get a capsule.
-                glass.layer.cornerRadius = minOf(style.cornerRadius + inset, glassHeight / 2.0)
+                glass.layer.cornerRadius = minOf(style.cornerRadius + glassInset, glassHeight / 2.0)
             }
         }
 
@@ -407,6 +422,7 @@ internal val sharedGlassEffect: UIVisualEffect? by lazy {
 
 private const val ERROR_GAP = 8.0
 private const val GLASS_PADDING = 10.0
+private const val FOCUS_OUTLINE_GAP = 8.0
 private const val ERROR_ICON_GAP = 6.0
 private const val MIN_FALLBACK_HEIGHT = 56.0
 private const val UNBOUNDED = 100_000.0
