@@ -94,6 +94,7 @@ fun OtpField(
     val visibleError = if (state.isError) accessibility.errorMessage else null
     val masked = mask != OtpMask.None
     var focused by remember { mutableStateOf(false) }
+    val reported = remember { ReportedCompletion() }
     // Always show the committed code with the cursor at the end.
     val fieldValue = TextFieldValue(state.code, TextRange(state.code.length))
     val progress = accessibility.progressDescription(OtpProgress(state.enteredDigitCount, total))
@@ -113,7 +114,14 @@ fun OtpField(
             onValueChange = { new ->
                 val result = state.withInput(new.text)
                 onStateChange(result.state)
-                if (result.didComplete) onComplete(result.state.code)
+                // The IME can deliver the same edit twice (for example commit and finish composing)
+                // before this composition sees the host's new state. Both calls then start from the
+                // same stale state and would each report the completion.
+                if (result.didComplete && !(reported.base === state && reported.code == result.state.code)) {
+                    reported.base = state
+                    reported.code = result.state.code
+                    onComplete(result.state.code)
+                }
             },
             modifier =
                 Modifier
@@ -169,6 +177,12 @@ fun OtpField(
             )
         }
     }
+}
+
+/** The state instance a completion was last reported from, to drop duplicate edits on a stale state. */
+private class ReportedCompletion {
+    var base: OtpState? = null
+    var code: String? = null
 }
 
 /**
