@@ -68,7 +68,14 @@ Minimum versions are not final and may change before the first release.
 
 ## Installation
 
-Not published yet. The library will ship as one Maven artifact that you add only to your KMP shared module. Coordinates will be added with the first release.
+Not on Maven Central yet; the first release will be `0.1.0`. You add the library only to your KMP shared module; the Android app gets the Compose components through it, and the iOS app gets the UIKit components through its framework.
+
+| Artifact | Contents |
+|---|---|
+| `me.vprogrammers:a11yotp` | OTP state and the Android and iOS components (`android`, `iosArm64`, `iosSimulatorArm64`) |
+| `me.vprogrammers:a11yotp-sms-retriever` | optional Android-only SMS Retriever integration |
+
+Requirements: Kotlin 2.4.21 or newer (Kotlin/Native libraries need a compiler at least as new as the one that built them), Android minSdk 24 and compileSdk 37 (built with AGP 9.3.1), iOS 18.2.
 
 ```kotlin
 // shared/build.gradle.kts
@@ -76,16 +83,16 @@ kotlin {
     listOf(iosArm64(), iosSimulatorArm64()).forEach {
         it.binaries.framework {
             baseName = "Shared"
-            export("<coordinates>:a11yotp:<version>") // makes the iOS components visible to Swift
+            export("me.vprogrammers:a11yotp:0.1.0") // makes the iOS components visible to Swift
         }
     }
     sourceSets.commonMain.dependencies {
-        api("<coordinates>:a11yotp:<version>") // api, so androidApp sees the Compose components
+        api("me.vprogrammers:a11yotp:0.1.0") // api, so androidApp sees the Compose components
     }
 }
 ```
 
-`sample/shared/build.gradle.kts` is a working example that uses a project dependency.
+`sample/shared/build.gradle.kts` is a working example that uses a project dependency, and `scripts/consumer-check` builds the same setup against the published artifacts.
 
 ---
 
@@ -235,7 +242,7 @@ It lives in a separate, Android-only module so apps that don't use it never get 
 ```kotlin
 // shared/build.gradle.kts
 sourceSets.androidMain.dependencies {
-    implementation("<coordinates>:a11yotp-sms-retriever:<version>")
+    implementation("me.vprogrammers:a11yotp-sms-retriever:0.1.0")
 }
 ```
 
@@ -332,7 +339,7 @@ Requirements: JDK 21, Android SDK, and Xcode for iOS.
 ```bash
 ./scripts/check.sh                          # everything: kmp, android, ios
 ./scripts/check.sh kmp                      # ktlint, host tests, Kotlin/Native compile, Shared framework link
-./scripts/check.sh android                  # Android device test compile, Android sample
+./scripts/check.sh android                  # Android device test compile, Android sample, publication and consumer
 ./scripts/check.sh ios                      # SwiftLint, iOS sample and UI test builds for the simulator
 ./scripts/check.sh android --device         # plus Android device tests on a connected, unlocked device or emulator
 ./scripts/check.sh ios --device <iphone-id> # plus iOS UI tests on a connected, unlocked iPhone
@@ -351,6 +358,21 @@ Run it before opening a pull request. The individual commands are below.
 - **Android device tests**: only when started by hand (Actions → Validation → Run workflow, with the emulator option), because they are slow.
 
 A manual run can also pick a single target: `all`, `kmp`, `android`, or `ios`.
+
+The JVM job also runs `./scripts/verify-publication.sh`: it publishes both modules to Maven Local and builds a clean consumer project (`scripts/consumer-check`) against them, for Android everywhere and for iOS on macOS.
+
+### Releasing
+
+`.github/workflows/publish.yml` releases the `VERSION_NAME` from `gradle.properties` to Maven Central. Nothing is ever published automatically.
+
+1. Raise `VERSION_NAME` in a pull request and merge it.
+2. Start Actions → Publish → Run workflow on `main`. Other branches are refused.
+3. The full validation runs, including the Android device tests on an emulator.
+4. The publish job waits for approval in the protected `release` environment. It refuses a version that already has a tag or is already on Maven Central, verifies the publication with a clean consumer, signs, and uploads.
+5. Check the deployment in the [Central Portal](https://central.sonatype.com/publishing/deployments) and publish it there. Uploads are not released automatically.
+6. Publish the draft GitHub release `v<version>` that the workflow created.
+
+The `release` environment holds the secrets `MAVEN_CENTRAL_USERNAME` and `MAVEN_CENTRAL_PASSWORD` (a Central Portal user token), and `SIGNING_KEY` and `SIGNING_KEY_PASSWORD` (the ASCII-armored GPG private key). They never go into the repository. Local `publishToMavenLocal` runs are unsigned and need none of them.
 
 ### Individual commands
 
@@ -423,7 +445,7 @@ For an Xcode Run Script phase, set `ENABLE_USER_SCRIPT_SANDBOXING = NO`; otherwi
 - [x] Masked mode
 - [ ] Real-device verification with TalkBack, VoiceOver and Voice Control
 - [ ] Alphanumeric codes
-- [ ] Maven publication
+- [ ] Maven Central publication (configured; first release pending)
 - [ ] Optional Compose Multiplatform UI module
 - [x] Optional SMS Retriever module for Android
 - [ ] Optional SMS User Consent support for Android

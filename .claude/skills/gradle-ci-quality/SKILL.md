@@ -13,6 +13,8 @@ Keep build changes compatible with the existing KMP project and avoid unrelated 
 - `./scripts/check.sh` runs the full local check set (ktlint, host tests, Kotlin/Native compile and framework link, Android device test compile and sample, SwiftLint, iOS sample and UI test builds, optional device tests) and reports skipped steps.
 - `.github/workflows/validation.yml` runs the same checks on pull requests and pushes to `main`: a `jvm` job on `ubuntu-latest` and an `ios` job on `macos-15` (Apple Silicon: `:a11yotp:iosSimulatorArm64Test`, framework link, SwiftLint, XCUITests on a simulator). The `android-device` emulator job runs only on manual dispatch. Keep the workflow and `scripts/check.sh` in sync.
 - `kotlin.native.ignoreDisabledTargets=true` suppresses warnings for native targets that cannot run on the current host; it does not add compatibility or make skipped tests pass.
+- Publishing uses `com.vanniktech.maven.publish` with POM metadata in `gradle.properties` (root and per module). Publications are signed only when `signingInMemoryKey` is passed. `./scripts/verify-publication.sh` publishes to Maven Local and builds `scripts/consumer-check`, a separate Gradle build that resolves `me.vprogrammers` only from Maven Local; the JVM validation job runs it.
+- `.github/workflows/publish.yml` is manual only, refuses non-`main` refs and existing versions, reuses `validation.yml` (`workflow_call`, with emulator device tests), waits for the `release` environment, uploads without automatic release, and drafts the GitHub release. Its actions are pinned to commit SHAs.
 - Gradle runs on JDK 21.
 - `androidApp` Kotlin and Java (`sourceCompatibility`/`targetCompatibility`) targets are both JVM 21.
 - The `a11yotp` and `sampleShared` Android targets use JVM 11.
@@ -39,7 +41,7 @@ Keep build changes compatible with the existing KMP project and avoid unrelated 
 5. `:androidApp:assembleDebug`;
 6. `:a11yotp:iosSimulatorArm64Test`, `:sampleShared:linkDebugFrameworkIosSimulatorArm64`, and the iOS app build on Apple Silicon;
 7. SwiftLint through `./scripts/swiftlint.sh`;
-8. publication validation once publishing exists.
+8. publication validation: `./scripts/verify-publication.sh`.
 
 Before the first iOS CI job, mark the `iosApp` scheme as Shared in Xcode and commit `iosApp/iosApp.xcodeproj/xcshareddata`. The scheme currently exists only in ignored `xcuserdata`.
 
