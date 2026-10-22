@@ -25,8 +25,9 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -274,8 +275,15 @@ private fun OtpCell(
     var cellModifier =
         Modifier
             .offset { IntOffset(0, -lift.roundToPx()) }
-            .shadow(elevation = lift * FOCUS_SHADOW_FACTOR, shape = style.cellShape, clip = false)
-            .defaultMinSize(minWidth = style.cellWidth, minHeight = style.cellHeight)
+            .dropShadow(style.cellShape) {
+                // Same look as iOS: black, 35% opacity, 8dp blur, 6dp down. Elevation shadows
+                // are too faint on many devices, especially Samsung.
+                val progress = lift / FocusLift
+                radius = FocusShadowRadius.toPx()
+                offset = Offset(0f, FocusShadowOffset.toPx())
+                color = Color.Black
+                alpha = FOCUS_SHADOW_ALPHA * progress
+            }.defaultMinSize(minWidth = style.cellWidth, minHeight = style.cellHeight)
             .background(if (filled) borderColor else baseBackground, style.cellShape)
             .border(borderWidth, borderColor, style.cellShape)
     if (filled) {
@@ -310,5 +318,6 @@ private fun OtpCell(
 private val FilledRingWidth = 2.dp
 private val FocusLift = 4.dp
 
-// The shadow elevation is 3x the lift (12dp), so the raised cell stands out like a lifted card.
-private const val FOCUS_SHADOW_FACTOR = 3f
+private val FocusShadowRadius = 8.dp
+private val FocusShadowOffset = 6.dp
+private const val FOCUS_SHADOW_ALPHA = 0.35f
