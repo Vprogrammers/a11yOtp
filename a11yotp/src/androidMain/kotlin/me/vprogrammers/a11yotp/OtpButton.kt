@@ -171,7 +171,7 @@ internal fun OtpButtonSurface(
                         enabled = enabled,
                         role = Role.Button,
                         onClick = onClick,
-                    ).padding(FocusOutlineGap),
+                    ).padding(OtpFieldDefaults.FocusOutlineGap),
         ) {
             Box(
                 modifier =
@@ -192,9 +192,6 @@ internal fun OtpButtonSurface(
         }
     }
 }
-
-/** Space between the drawn button and the edge of its clickable, focusable area. */
-private val FocusOutlineGap = 4.dp
 
 /** Default styles for [OtpVerifyButton] and [OtpResendButton]. */
 object OtpButtonDefaults {

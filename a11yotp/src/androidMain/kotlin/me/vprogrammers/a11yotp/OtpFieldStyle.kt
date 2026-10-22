@@ -188,6 +188,12 @@ object OtpFieldDefaults {
     /** Minimum touch target dimension for the whole field. */
     internal val MinTargetSize: Dp = 48.dp
 
+    /**
+     * Space between what is drawn and the edge of the focusable node. TalkBack draws its focus
+     * outline on the node bounds, so this keeps the outline clear of the cells and buttons.
+     */
+    internal val FocusOutlineGap: Dp = 8.dp
+
     fun style(
         textStyle: TextStyle =
             TextStyle(

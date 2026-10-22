@@ -138,8 +138,9 @@ fun OtpField(
             visualTransformation = if (masked) PasswordVisualTransformation() else VisualTransformation.None,
             cursorBrush = SolidColor(Color.Transparent),
             decorationBox = { innerTextField ->
-                // The real input stays in the tree but is invisible; cells are decorative.
-                Box(Modifier.fillMaxWidth()) {
+                // The real input stays in the tree but is invisible; cells are decorative. The gap keeps
+                // the TalkBack focus outline around the cells, including the lifted focused cell.
+                Box(Modifier.fillMaxWidth().padding(OtpFieldDefaults.FocusOutlineGap)) {
                     Box(Modifier.size(1.dp).alpha(0f)) { innerTextField() }
                     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
                         OtpCells(state, focused && enabled, enabled, style, mask, horizontal)
