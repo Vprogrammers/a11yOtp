@@ -1,7 +1,11 @@
 package me.vprogrammers.a11yotp
 
+import kotlinx.cinterop.ExperimentalForeignApi
+import platform.Foundation.NSSelectorFromString
+import platform.UIKit.UIControl
 import platform.UIKit.UIControlEventTouchUpInside
 import platform.UIKit.accessibilityLabel
+import platform.darwin.NSObject
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -46,7 +50,7 @@ class OtpButtonsIosTest {
         var taps = 0
         button.onResend = { taps++ }
 
-        button.control().sendActionsForControlEvents(UIControlEventTouchUpInside)
+        button.control().tap()
 
         assertEquals(1, taps)
     }
@@ -76,7 +80,7 @@ class OtpButtonsIosTest {
         val codes = mutableListOf<String>()
         button.onVerify = { codes += it }
 
-        button.control().sendActionsForControlEvents(UIControlEventTouchUpInside)
+        button.control().tap()
 
         assertEquals(listOf("4821"), codes)
         assertEquals("Verify", button.control().accessibilityLabel)
@@ -94,3 +98,20 @@ class OtpButtonsIosTest {
 private fun OtpResendButton.control() = (view as OtpButtonContainer).control
 
 private fun OtpVerifyButton.control() = (view as OtpButtonContainer).control
+
+/**
+ * Invokes the touch-up-inside actions registered on the control. `sendActionsForControlEvents`
+ * dispatches through UIApplication, which does not exist in the Kotlin/Native test binary.
+ */
+@OptIn(ExperimentalForeignApi::class)
+private fun UIControl.tap() {
+    var invoked = false
+    for (target in allTargets) {
+        val handler = target as? NSObject ?: continue
+        for (action in actionsForTarget(handler, forControlEvent = UIControlEventTouchUpInside).orEmpty()) {
+            handler.performSelector(NSSelectorFromString(action as String))
+            invoked = true
+        }
+    }
+    check(invoked) { "No touch-up-inside action registered" }
+}
