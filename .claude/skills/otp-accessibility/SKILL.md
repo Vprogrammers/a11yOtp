@@ -22,14 +22,14 @@ Treat accessibility behavior as part of the public component contract.
 
 Verify:
 
-- typing, backspace, selection replacement, complete-code paste, partial paste, and overlong paste;
+- typing, backspace, selection replacement, exact-length paste, partial paste, and overlong paste. A single input inserting several digits is accepted only with exactly the field's digit count (it replaces the input); any other count is rejected without changing state, reported to the host as `OtpInputRejection` (counts only, never digits), and never truncated. On Android the field shows the host-localized `inputRejectedMessage` in the error-message slot (error wins) in a polite live region, announced once, with no focus move, no error styling or haptic, and it clears on the next edit or state change. Extra single digits typed into a full field are ignored silently;
 - normalization and rejection of unsupported characters;
 - visual digit order remains left-to-right inside the OTP field even when the surrounding locale is RTL;
 - software numeric keyboard and hardware keyboard input;
 - Android keyboard type: `KeyboardType.Number` when unmasked and `KeyboardType.NumberPassword` only when masked, because password input types suppress TalkBack key echo unless the user enables "Speak passwords";
 - Android OTP autofill behavior; on API 24–25, where the Autofill Framework is unavailable, degrade gracefully to typing, paste, and keyboard-provided suggestions. Do not add SMS permissions or Play Services as an implicit fallback;
 - iOS one-time-code autofill with `textContentType = UITextContentTypeOneTimeCode`;
-- the optional Android SMS Retriever (`a11yotp-sms-retriever`) hands the whole code to the host, which replaces the input with `state.cleared().withInput(code)` so completion is reported even over a full typed code. The field's progress semantics apply and the library forces no announcement; the host announces the fill or verification result (polite live region), because TalkBack may not speak a value change on an unfocused field. The message and code are never logged;
+- the optional Android SMS Retriever (`a11yotp-sms-retriever`) hands the whole code to the host, which replaces the input with `state.cleared().withInput(code)` so completion is reported even over a full typed code. The field's progress semantics apply and the library forces no announcement; the host announces the fill or verification result (polite live region), because TalkBack may not speak a value change on an unfocused field. If a message has a plausible code (4 to 8 digits) of another length, `SmsRetrieverFailure.CODE_LENGTH_MISMATCH` is reported at once. The message and code are never logged;
 - Voice Control visible labels match the accessible name;
 - restoration without duplicate callbacks or announcements;
 - configurable 4, 6, and, once implemented, 8 digit codes.
