@@ -177,7 +177,7 @@ object OtpButtonDefaults {
     fun style(
         textStyle: TextStyle =
             TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Medium, textAlign = TextAlign.Center),
-        cornerRadius: Dp = 8.dp,
+        cornerRadius: Dp = 12.dp,
         shape: Shape = RoundedCornerShape(cornerRadius),
         minHeight: Dp = OtpFieldDefaults.MinTargetSize,
         contentPadding: PaddingValues = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
@@ -187,7 +187,8 @@ object OtpButtonDefaults {
 
     fun colors(
         content: Color = Color.White,
-        container: Color = Color(0xFF0B57D0),
+        // Near-black rather than blue, so the TalkBack focus outline stays distinct from the button.
+        container: Color = Color(0xFF1F1F1F),
         border: Color = container,
         disabledContent: Color = Color(0xFF595959),
         disabledContainer: Color = Color(0xFFE8E8E8),
