@@ -325,6 +325,25 @@ Before you ship, check the field with assistive technology on real devices:
 
 Requirements: JDK 21, Android SDK, and Xcode for iOS.
 
+### Local checks
+
+`./scripts/check.sh` runs all project checks on your machine, so you don't need GitHub Actions or its minutes. GitHub runs nothing automatically in this repository.
+
+```bash
+./scripts/check.sh                          # everything: kmp, android, ios
+./scripts/check.sh kmp                      # ktlint, host tests, Kotlin/Native compile, Shared framework link
+./scripts/check.sh android                  # Android device test compile, Android sample
+./scripts/check.sh ios                      # SwiftLint, iOS sample and UI test builds for the simulator
+./scripts/check.sh android --device         # plus Android device tests on a connected, unlocked device or emulator
+./scripts/check.sh ios --device <iphone-id> # plus iOS UI tests on a connected, unlocked iPhone
+```
+
+Each step runs even if an earlier one failed. At the end the script prints which steps passed, failed, or were skipped, and it exits non-zero if anything failed. Steps that this machine can't run are skipped, never silently passed. The Kotlin/Native tests on the iOS simulator need Apple Silicon, so an Intel Mac skips them. Device tests run only with `--device`.
+
+Run it before opening a pull request. The individual commands are below.
+
+### Individual commands
+
 ```bash
 ./gradlew ktlintCheck                              # formatting
 ./gradlew :a11yotp:testAndroidHostTest             # shared and Android tests on the JVM

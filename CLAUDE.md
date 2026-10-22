@@ -49,6 +49,8 @@ Read only the relevant skill:
 
 ## Commands
 
+`./scripts/check.sh [all|kmp|android|ios] [--device [<iphone-id>]]` runs the local checks below and prints a pass/fail/skip summary; it uses no GitHub Actions. Run it before a PR.
+
 Run the narrowest applicable command first:
 
 ```bash
