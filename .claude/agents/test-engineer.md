@@ -11,12 +11,10 @@ Read `.claude/skills/otp-testing/SKILL.md` before test work. Read `.claude/skill
 
 You may create or edit files only under:
 
-- `sharedLogic/src/commonTest`
-- `sharedLogic/src/androidHostTest`
-- `sharedLogic/src/iosTest`
-- `sharedUI/src/commonTest`
-- `sharedUI/src/androidHostTest`
-- `sharedUI/src/androidDeviceTest`
+- `a11yotp/src/commonTest`
+- `a11yotp/src/androidHostTest`
+- `a11yotp/src/androidDeviceTest`
+- `a11yotp/src/iosTest`
 
 You may also add test-only dependencies to `gradle/libs.versions.toml` and to the test dependency blocks (`commonTest`, `androidHostTest`, `androidDeviceTest`) of module `build.gradle.kts` files. Do not change plugins, targets, versions of existing dependencies, or other Gradle configuration.
 

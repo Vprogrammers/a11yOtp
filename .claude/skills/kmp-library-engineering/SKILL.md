@@ -9,14 +9,18 @@ This file is the authoritative source for module boundaries.
 
 ## Module boundaries
 
-- `sharedLogic`: platform-neutral OTP state, normalization, validation, completion behavior, and shared/Kotlin platform tests.
-- `sharedUI`: technically a Compose Multiplatform module using `org.jetbrains.compose` and Compose code in `commonMain`, but its product scope is Android UI only. Do not consume it from iOS.
-- `androidApp`: Android sample and integration host.
-- `iosApp`: native SwiftUI component, iOS accessibility behavior, and iOS sample.
-- Do not introduce Compose Multiplatform UI on iOS.
-- Keep Android and iOS accessibility integrations platform-native.
+The primary consumer is a KMP app with native Android UI and native iOS UI. Consumers add the library only through their shared module's `build.gradle.kts` (`api(...)` plus `export(...)` in their iOS framework). There is no Swift package: Kotlin dependencies cannot carry Swift source.
 
-Before expanding `sharedUI`, decide explicitly whether Android-facing APIs use AndroidX Compose artifacts and whether Android-only implementations belong in `androidMain` instead of `commonMain`. Do not add lifecycle ViewModel or alpha Material3 dependencies unless the component needs them.
+- `a11yotp`: the single library module (targets `android`, `iosArm64`, `iosSimulatorArm64`).
+  - `commonMain`: OTP state, normalization, validation, completion, WCAG contrast checks, and platform-neutral configuration (`OtpMask`, `OtpAlignment`, accessibility text types). No Android, Compose, UIKit, or Foundation types.
+  - `androidMain`: Jetpack Compose components on AndroidX Compose artifacts, plus Android styles (Compose `Color`, `TextStyle`, `Shape`).
+  - `iosMain`: UIKit components written in Kotlin/Native, plus iOS styles (`UIColor`, `UIFont`).
+- `sample/shared` (`:sampleShared`): consumer-like shared module that exports `a11yotp` in the `Shared` framework. Both sample apps use the library through it.
+- `androidApp`: Android sample and integration host.
+- `iosApp`: SwiftUI sample that embeds the Kotlin UIKit components through `UIViewRepresentable` wrappers. It contains no library code.
+- Colors, fonts, and shapes stay platform-native so dark mode, Increase Contrast, and dynamic colors keep working.
+- Do not add the Compose Multiplatform plugin or Compose runtime to iOS. A future shared-Compose-UI module may depend on `a11yotp` without changing its APIs.
+- Do not add lifecycle ViewModel or alpha Material3 dependencies unless the component needs them.
 
 ## Workflow
 
@@ -29,7 +33,7 @@ Before expanding `sharedUI`, decide explicitly whether Android-facing APIs use A
 
 ## Public API rules
 
-- Keep shared APIs small, deterministic, and free of Android, Compose, SwiftUI, UIKit, and Foundation types.
+- Keep `commonMain` APIs small, deterministic, and free of Android, Compose, UIKit, and Foundation types. Platform types may appear only in `androidMain` and `iosMain` APIs.
 - Prefer immutable configuration and explicit state transitions.
 - Avoid wrappers, use cases, repositories, DI, and abstractions that add no behavior.
 - Do not expose internal focus, animation, or rendering mechanics.
@@ -39,21 +43,25 @@ Before expanding `sharedUI`, decide explicitly whether Android-facing APIs use A
 
 ## Swift interoperability
 
-Expose APIs that remain understandable from Swift. Avoid deeply nested generics, ambiguous overloads, and Kotlin-only idioms that produce awkward Objective-C headers. Keep SwiftUI state and focus ownership in Swift.
+Swift sees the library through the consumer's Objective-C-exported framework. Expose APIs that remain understandable from Swift:
+
+- Avoid deeply nested generics, ambiguous overloads, and Kotlin-only idioms that produce awkward Objective-C headers.
+- Do not expose lambdas with primitive parameters; they import as `KotlinInt`. Pass a small value object instead (for example `(OtpProgress) -> String`).
+- Kotlin default arguments are not visible from Swift. Give iOS types usable defaults through properties or factory functions.
+- Swift cannot use a Kotlin subclass of a UIKit class. iOS components are Kotlin classes that own a `view: UIView`.
+- Any reference from a UIKit object back to Kotlin must be weak; cycles across the boundary are not collected.
+- The host owns the OTP state and focus; components expose callbacks and `focus()`/`blur()`.
+- Kotlin/Native does not weak-link. Never reference an Objective-C class newer than the iOS deployment target (for example `UIGlassEffect`, iOS 26) directly: it becomes a strong `_OBJC_CLASS_$_` symbol and the app fails to launch on older iOS. Look the class up with `NSClassFromString` behind a version check, and confirm with `nm -u` on the framework. New methods on older classes are selector calls and only need the version check.
 
 ## Distribution status
 
-No publication configuration exists yet. The project has not decided:
-
-- whether Android artifacts are published separately for `sharedLogic` and `sharedUI`;
-- whether iOS distribution uses Swift Package Manager, an XCFramework, or both;
-- artifact coordinates, versioning policy, repository, signing, or release automation.
+No publication configuration exists yet. Decided: one Maven artifact for `a11yotp`, consumed from the KMP shared module, with no Swift Package Manager or CocoaPods distribution. Not decided: artifact coordinates, minimum consumer Kotlin version, versioning policy, repository, signing, or release automation.
 
 Treat these as explicit design decisions. Do not claim that consumers can install the library until publication is implemented and verified.
 
 ## Dependencies
 
-Reuse the existing stack. Add a dependency only when its value exceeds its API, build, publication, and maintenance cost. Never add Android dependencies to `sharedLogic`.
+Reuse the existing stack. Add a dependency only when its value exceeds its API, build, publication, and maintenance cost. Never add Android or Compose dependencies to `commonMain` or `iosMain`.
 
 ## Review output
 

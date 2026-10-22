@@ -1,7 +1,7 @@
 # a11y-otp
 
 **An accessibility-first one-time code field for Android and iOS.**
-One real text field, drawn as boxes. Native on each platform: Jetpack Compose on Android, SwiftUI on iOS, with OTP state and input normalization shared in Kotlin Multiplatform.
+One real text field, drawn as boxes. Native on each platform: Jetpack Compose on Android and UIKit on iOS. Add it once to your Kotlin Multiplatform shared module; no Swift package needed.
 
 [![Kotlin](https://img.shields.io/badge/Kotlin-Multiplatform-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org/docs/multiplatform.html)
 [![Platforms](https://img.shields.io/badge/platforms-Android%20%7C%20iOS-lightgrey)](#platforms)
@@ -30,20 +30,22 @@ The boxes in **a11y-otp** are decoration. Underneath is a single platform text i
 
 | Module | Contents |
 |---|---|
-| `sharedLogic` | Platform-neutral Kotlin: OTP state, normalization, validation, completion |
-| `sharedUI` | Android Jetpack Compose component and TalkBack integration |
-| `iosApp` | Native SwiftUI component, VoiceOver integration and iOS sample app |
+| `a11yotp` | The library. `commonMain`: OTP state, normalization, contrast checks, masks, alignment and accessibility text. `androidMain`: Jetpack Compose components. `iosMain`: UIKit components written in Kotlin/Native. |
+| `sample/shared` | A consumer-style KMP shared module that adds `a11yotp` once and exports it to iOS |
 | `androidApp` | Android sample app |
+| `iosApp` | SwiftUI sample app that embeds the UIKit components |
 
-iOS UI is native SwiftUI. Compose is not used on iOS, so iOS apps do not take on the Compose runtime. Only `sharedLogic` is shared, as the `SharedLogic` framework.
+Both platforms use native UI and native accessibility APIs. Compose is not used on iOS, so iOS apps do not take on the Compose runtime. Colors and fonts are platform-native (Compose `Color`, `UIColor`), so dark mode and Increase Contrast work as usual.
+
+Why UIKit and not SwiftUI on iOS: the library is delivered through Gradle, and a Kotlin dependency cannot carry Swift source. Kotlin/Native can build UIKit views, and SwiftUI apps embed them with a short `UIViewRepresentable` wrapper (see below).
 
 ---
 
 ## Goals
 
 - One logical input per platform; digit cells are hidden from assistive technology
-- TalkBack and VoiceOver: label, progress, entered digits (unless masked) and announced errors
-- Platform OTP autofill: `ContentType.SmsOtpCode` on Android, `.textContentType(.oneTimeCode)` on iOS
+- TalkBack and VoiceOver: label, progress, reviewable entered digits (unless masked) and announced errors; the exact speech is verified per platform on devices
+- Platform OTP autofill: `ContentType.SmsOtpCode` on Android, `oneTimeCode` text content type on iOS
 - Paste cleanup: spaces, dashes and non-ASCII digits are normalized
 - Scales with Android font scale and Dynamic Type
 - Respects Reduce Motion / Remove animations
@@ -58,7 +60,7 @@ iOS UI is native SwiftUI. Compose is not used on iOS, so iOS apps do not take on
 | Platform | Minimum (current project settings) | UI |
 |---|---|---|
 | Android | minSdk 24 | Jetpack Compose |
-| iOS | 18.2 (Xcode deployment target), arm64 device and arm64 simulator | SwiftUI |
+| iOS | 18.2 (Xcode deployment target), arm64 device and arm64 simulator | UIKit (embeddable in SwiftUI) |
 
 Minimum versions are not final and may change before the first release.
 
@@ -66,52 +68,78 @@ Minimum versions are not final and may change before the first release.
 
 ## Installation
 
-Not published yet. The distribution format is not decided:
+Not published yet. The library will ship as one Maven artifact that you add only to your KMP shared module. Coordinates will be added with the first release.
 
-- **Android:** Maven, as one artifact or separate `sharedLogic` and `sharedUI` artifacts.
-- **iOS:** Swift Package Manager containing the SwiftUI source and a binary `SharedLogic` XCFramework, or another distribution structure selected before the first release.
+```kotlin
+// shared/build.gradle.kts
+kotlin {
+    listOf(iosArm64(), iosSimulatorArm64()).forEach {
+        it.binaries.framework {
+            baseName = "Shared"
+            export("<coordinates>:a11yotp:<version>") // makes the iOS components visible to Swift
+        }
+    }
+    sourceSets.commonMain.dependencies {
+        api("<coordinates>:a11yotp:<version>") // api, so androidApp sees the Compose components
+    }
+}
+```
 
-Coordinates and package URLs will be added with the first release.
+`sample/shared/build.gradle.kts` is a working example that uses a project dependency.
 
 ---
 
-## Planned usage
+## Usage
 
-The API below is the design target and may change before release.
+The API may change before the first release. The host app owns the state and verifies the code with its server. All text is supplied by the host, so it can be localized.
 
 ### Android (Compose)
 
 ```kotlin
-@Composable
-fun VerifyScreen(viewModel: VerifyViewModel) {
-    val otp = rememberOtpState(length = 6)
+var state by remember { mutableStateOf(OtpState(OtpLength.SIX)) }
 
-    OtpField(
-        state = otp,
-        onComplete = { code -> viewModel.verify(code) },
-        label = "Verification code",
-    )
-}
+OtpField(
+    state = state,
+    onStateChange = { state = it },
+    onComplete = { code -> viewModel.verify(code) },
+    accessibility =
+        OtpFieldAccessibility(
+            label = "Verification code",
+            errorMessage = "Incorrect code. Try again.",
+            progressDescription = { "${it.entered} of ${it.total} digits entered" },
+        ),
+)
+OtpVerifyButton(state = state, onVerify = viewModel::verify, accessibility = OtpVerifyAccessibility("Verify"))
+OtpResendButton(
+    secondsRemaining = seconds,
+    onResend = viewModel::resend,
+    accessibility = OtpResendAccessibility("Resend code") { "Resend code in ${it.secondsRemaining} s" },
+)
 ```
 
 ### iOS (SwiftUI)
 
-```swift
-struct VerifyView: View {
-    @State private var code = ""
-    @State private var error: String?
+The components are UIKit classes that own a `view`. Embed them with a small wrapper; `iosApp/iosApp/Components/` contains ready-to-copy wrappers for the field and both buttons.
 
-    var body: some View {
-        OtpField(
-            code: $code,
-            length: 6,
-            label: "Verification code",
-            error: error,
-            onComplete: { code in viewModel.verify(code) }
-        )
-    }
-}
+```swift
+import Shared
+
+let field = OtpField(
+    state: OtpState(length: .six),
+    accessibility: OtpFieldAccessibility(
+        label: "Verification code",
+        errorMessage: "Incorrect code. Try again.",
+        progressDescription: { "\($0.entered) of \($0.total) digits entered" }
+    ),
+    doneButtonTitle: "Done"
+)
+field.onStateChange = { [weak field] newState in field?.state = newState }
+field.onComplete = { code in verify(code) }
+// Add field.view to your view hierarchy, or use OtpFieldView in SwiftUI:
+// OtpFieldView(state: $otp, accessibility: accessibility, onComplete: verify)
 ```
+
+Keep a strong reference to the Kotlin object (`OtpField`, `OtpVerifyButton`, `OtpResendButton`) for as long as its view is on screen. The sample wrappers keep it in their coordinator.
 
 ### Handling a wrong code
 
@@ -171,7 +199,7 @@ Labels are declared for your **whole app**, not per component. The goal is for t
 
 | | Android | iOS |
 |---|---|---|
-| Mechanism | `ContentType.SmsOtpCode` | `.textContentType(.oneTimeCode)` |
+| Mechanism | `ContentType.SmsOtpCode` | `UITextContentTypeOneTimeCode` |
 | Where the code comes from | Autofill service, keyboard suggestion | Messages, Mail |
 | SMS permission | Not used | Not available |
 
@@ -186,7 +214,7 @@ Labels are declared for your **whole app**, not per component. The goal is for t
 By design, it stays a UI component:
 
 - No network calls or code verification
-- No resend timer
+- No resend timer: the resend button shows the seconds you pass in
 - No SMS reading (no SMS Retriever, no permissions)
 - No rate limiting. Your server must enforce attempt limits.
 
@@ -212,19 +240,19 @@ Before you ship, check the field with assistive technology on real devices:
 Requirements: JDK 21, Android SDK, and Xcode for iOS.
 
 ```bash
-./gradlew ktlintCheck                       # formatting
-./gradlew :sharedLogic:testAndroidHostTest  # shared logic tests on the JVM
-./gradlew test                              # all JVM tests
-./gradlew :androidApp:assembleDebug         # Android sample app
+./gradlew ktlintCheck                              # formatting
+./gradlew :a11yotp:testAndroidHostTest             # shared and Android tests on the JVM
+./gradlew :a11yotp:compileTestKotlinIosSimulatorArm64  # compile Kotlin/Native tests
+./gradlew :androidApp:assembleDebug                # Android sample app
 ```
 
-Open `iosApp/iosApp.xcodeproj` in Xcode to run the iOS sample. The build phase runs `:sharedLogic:embedAndSignAppleFrameworkForXcode`.
+Open `iosApp/iosApp.xcodeproj` in Xcode to run the iOS sample. The build phase runs `:sampleShared:embedAndSignAppleFrameworkForXcode`.
 
-> **Intel Macs** cannot run the ARM64 iOS simulator tests (`:sharedLogic:iosSimulatorArm64Test`). Run them on Apple Silicon. The deprecated `iosX64` target is intentionally not added.
+> **Intel Macs** cannot run the ARM64 iOS simulator tests (`:a11yotp:iosSimulatorArm64Test`). Run them on Apple Silicon. The deprecated `iosX64` target is intentionally not added.
 
 ### SwiftLint
 
-Native Swift and SwiftUI sources are checked with the version pinned in `Mintfile`, so local and CI checks use the same ruleset.
+Swift sources in the sample app are checked with the version pinned in `Mintfile`, so local and CI checks use the same ruleset.
 
 Install [Mint](https://github.com/yonaskolb/Mint) once:
 
@@ -254,12 +282,14 @@ For an Xcode Run Script phase, set `ENABLE_USER_SCRIPT_SANDBOXING = NO`; otherwi
 
 ## Roadmap
 
-- [ ] Shared OTP state and normalization
-- [ ] Android Compose component
-- [ ] Native SwiftUI component
-- [ ] Masked mode
+- [x] Shared OTP state and normalization
+- [x] Android Compose component
+- [x] iOS UIKit component (Kotlin/Native)
+- [x] Masked mode
+- [ ] Real-device verification with TalkBack, VoiceOver and Voice Control
 - [ ] Alphanumeric codes
-- [ ] Android and iOS distribution
+- [ ] Maven publication
+- [ ] Optional Compose Multiplatform UI module
 - [ ] Optional SMS User Consent module for Android
 
 ---
