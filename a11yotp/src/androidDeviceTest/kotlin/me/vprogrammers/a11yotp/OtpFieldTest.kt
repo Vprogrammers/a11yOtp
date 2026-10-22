@@ -250,7 +250,9 @@ class OtpFieldTest {
     private fun gaps(): Pair<Int, Int> {
         val map = field().captureToImage().toPixelMap()
         val inked = (0 until map.width).filter { x -> (0 until map.height).any { y -> map[x, y] != Color.White } }
-        return inked.first() to (map.width - 1 - inked.last())
+        // Measured from the drawn content, not from the focus outline gap around it.
+        val gap = with(rule.density) { OtpFieldDefaults.FocusOutlineGap.roundToPx() }
+        return (inked.first() - gap) to (map.width - 1 - inked.last() - gap)
     }
 
     @Test
@@ -337,7 +339,9 @@ class OtpFieldTest {
         }
         val map = rule.onNodeWithTag("host").captureToImage().toPixelMap()
         val inked = (0 until map.width).filter { x -> (0 until map.height).any { y -> map[x, y] != Color.White } }
-        return inked.first() to (map.width - 1 - inked.last())
+        // Measured from the drawn content, not from the focus outline gap around it.
+        val gap = with(rule.density) { OtpFieldDefaults.FocusOutlineGap.roundToPx() }
+        return (inked.first() - gap) to (map.width - 1 - inked.last() - gap)
     }
 
     @Test
@@ -548,6 +552,7 @@ class OtpFieldTest {
             if (runs.lastOrNull() != inked) runs += inked
         }
         // Border band, then background-colored ring, then the fill.
-        assertTrue(runs.take(3) == listOf(true, false, true), runs.toString())
+        // Skip the focus outline gap before the first cell.
+        assertTrue(runs.dropWhile { !it }.take(3) == listOf(true, false, true), runs.toString())
     }
 }

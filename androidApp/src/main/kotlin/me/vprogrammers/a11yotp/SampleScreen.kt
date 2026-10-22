@@ -19,6 +19,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.heading
@@ -32,6 +34,7 @@ import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import me.vprogrammers.a11yotp.sample.SAMPLE_RESEND_SECONDS
 import me.vprogrammers.a11yotp.sample.isSampleCodeRejected
+import me.vprogrammers.a11yotp.smsretriever.SmsRetrieverEffect
 
 /** Groups of 3 give "123 - 456"; 4 and 8 digits do not split evenly, so they get no separator. */
 private val fieldStyle = OtpFieldDefaults.style(groupSize = 3, cellHeight = 56.dp)
@@ -58,6 +61,13 @@ fun SampleScreen(initialOptions: SampleOptions = SampleOptions()) {
     var state by remember { mutableStateOf(OtpState(options.length)) }
     var verified by remember { mutableStateOf(false) }
     var seconds by remember { mutableIntStateOf(SAMPLE_RESEND_SECONDS) }
+    var resendCount by remember { mutableIntStateOf(0) }
+    val fieldFocus = remember { FocusRequester() }
+
+    // Focus the field once so the keyboard and its code suggestion appear without a tap.
+    LaunchedEffect(Unit) {
+        if (!options.isDisabled) fieldFocus.requestFocus()
+    }
 
     LaunchedEffect(seconds) {
         if (seconds > 0) {
@@ -71,6 +81,19 @@ fun SampleScreen(initialOptions: SampleOptions = SampleOptions()) {
         if (verified) return
         if (isSampleCodeRejected(code)) state = state.withError() else verified = true
     }
+
+    // Optional SMS Retriever: the SMS carries the whole code, so it replaces what was typed and
+    // still goes through withInput, which reports completion once.
+    SmsRetrieverEffect(
+        length = state.length,
+        restartKey = resendCount,
+        enabled = !verified && !options.isDisabled,
+        onCode = { code ->
+            val result = state.cleared().withInput(code)
+            state = result.state
+            if (result.didComplete) verify(result.state.code)
+        },
+    )
 
     Column(
         modifier =
@@ -96,6 +119,7 @@ fun SampleScreen(initialOptions: SampleOptions = SampleOptions()) {
             },
             onComplete = ::verify,
             accessibility = fieldAccessibility,
+            modifier = Modifier.focusRequester(fieldFocus),
             enabled = !verified && !options.isDisabled,
             style = if (options.roundCells) roundFieldStyle else fieldStyle,
             mask = options.mask,
@@ -120,6 +144,7 @@ fun SampleScreen(initialOptions: SampleOptions = SampleOptions()) {
                 state = state.cleared()
                 verified = false
                 seconds = SAMPLE_RESEND_SECONDS
+                resendCount++
             },
             accessibility = resendAccessibility,
         )

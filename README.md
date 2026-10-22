@@ -51,7 +51,7 @@ Why UIKit and not SwiftUI on iOS: the library is delivered through Gradle, and a
 - Respects Reduce Motion / Remove animations
 - Errors are never shown by color alone
 - Code digits stay left-to-right in right-to-left layouts
-- No SMS permissions and no Google Play services dependency
+- No SMS permissions. The core library has no Google Play services dependency; the optional `a11yotp-sms-retriever` module is the only part that uses it.
 
 ---
 
@@ -205,7 +205,78 @@ Labels are declared for your **whole app**, not per component. The goal is for t
 
 > **Testing:** OTP autofill suggestions need a real device. They do not appear in the iOS simulator.
 
+> **Message text:** iOS and Android choose which number in the message to suggest; the app cannot influence it. Keep the code the only number in the message. A brand name with digits (`A11yOtp`), a phone number or an amount can be suggested instead of the code.
+
+> **Sending:** send codes from your backend through a registered SMS provider (application-to-person, for example Twilio or Vonage). Carriers may block or silently drop code-like messages such as "Your code is …" when they come from a private number, so a test SMS sent from a personal phone can fail to arrive even when the sender is a saved contact. For manual tests, a short text such as `Code is 482915` usually gets through.
+
 > **Google Play:** this library never uses `READ_SMS` or `RECEIVE_SMS`. Those permissions are heavily restricted on Google Play.
+
+### Android SMS Retriever (optional)
+
+Platform autofill above needs no setup: the keyboard or autofill service offers the code and the user taps it. If your backend can change the SMS text, Android can also deliver the code automatically, without a tap and without SMS permissions, through Google's [SMS Retriever API](https://developers.google.com/identity/sms-retriever/overview).
+
+It lives in a separate, Android-only module so apps that don't use it never get Google Play services:
+
+```kotlin
+// shared/build.gradle.kts
+sourceSets.androidMain.dependencies {
+    implementation("<coordinates>:a11yotp-sms-retriever:<version>")
+}
+```
+
+Start listening on the OTP screen. The SMS carries the whole code, so replace what the user typed and still go through `withInput`:
+
+```kotlin
+SmsRetrieverEffect(
+    length = otp.length,
+    restartKey = resendCount, // listen again after each resend
+    onCode = { code ->
+        val result = otp.cleared().withInput(code) // reports completion even over a full typed code
+        otp = result.state
+        if (result.didComplete) viewModel.verify(result.state.code)
+    },
+    onFailure = { /* TIMEOUT after 5 minutes, or UNAVAILABLE without Play services */ },
+)
+```
+
+The retriever listens for one message for up to 5 minutes. Change `restartKey` to listen again, for example when the user requests a new code. A message with no code, or with two different codes, is ignored.
+
+**Accessibility.** The field's value and progress update like after typing, but the library makes no announcement. TalkBack usually speaks a state change only on the focused element, so a user whose focus is elsewhere hears nothing when the code arrives. Announce the fill or the verification result in your UI, for example with a polite live region (`Code filled automatically, verifying`). The library never logs the message or the code.
+
+**Backend message format.** The SMS must contain the code and end with your app's 11-character hash, and must be no longer than 140 bytes:
+
+```text
+Your Example code is 123456
+
+FA+9qCX9VSu
+```
+
+The hash depends on the package name and the signing key, so debug, release and Play App Signing builds each have their own hash. Compute it once per signing key and configure it on your backend:
+
+```bash
+keytool -exportcert -alias <alias> -keystore <keystore> \
+  | xxd -p | tr -d "[:space:]" \
+  | echo -n "<applicationId> $(cat)" \
+  | shasum -a 256 | tr -d "[:space:]-" \
+  | xxd -r -p | base64 | cut -c1-11
+```
+
+If the hash from the keystore doesn't work, compute it from the app that is actually installed. The retriever checks that app's certificate, so this hash is always the one to use. It needs `apksigner` from the Android SDK build tools:
+
+```bash
+APK=$(adb shell pm path <applicationId> | head -1 | sed 's/package://' | tr -d '\r')
+adb pull "$APK" app.apk
+"$ANDROID_HOME"/build-tools/<version>/apksigner verify --print-certs-pem app.apk \
+  | awk '/BEGIN CERT/,/END CERT/' | openssl x509 -outform der \
+  | xxd -p | tr -d "[:space:]" \
+  | (echo -n "<applicationId> $(cat)") \
+  | shasum -a 256 | tr -d "[:space:]-" \
+  | xxd -r -p | base64 | cut -c1-11
+```
+
+A debug build can be signed with a different debug keystore than `~/.android/debug.keystore`, for example one created by Android Studio on another machine, so the two methods can give different hashes.
+
+For Play App Signing, use the app signing certificate from the Play Console, not your upload key. The retriever needs Google Play services on the device, so a Play Store emulator image or a real device is required to test it. On devices without Google Play services, `onFailure` reports `UNAVAILABLE`; the field still works with autofill, typing and paste.
 
 ---
 
@@ -215,7 +286,7 @@ By design, it stays a UI component:
 
 - No network calls or code verification
 - No resend timer: the resend button shows the seconds you pass in
-- No SMS reading (no SMS Retriever, no permissions)
+- No SMS reading in the core library and no SMS permissions. Automatic SMS delivery on Android is opt-in through `a11yotp-sms-retriever`.
 - No rate limiting. Your server must enforce attempt limits.
 
 ---
@@ -290,7 +361,8 @@ For an Xcode Run Script phase, set `ENABLE_USER_SCRIPT_SANDBOXING = NO`; otherwi
 - [ ] Alphanumeric codes
 - [ ] Maven publication
 - [ ] Optional Compose Multiplatform UI module
-- [ ] Optional SMS User Consent module for Android
+- [x] Optional SMS Retriever module for Android
+- [ ] Optional SMS User Consent support for Android
 
 ---
 

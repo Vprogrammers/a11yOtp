@@ -72,3 +72,10 @@ object OtpContrast {
         return "${hundredths / 100}.${(hundredths % 100).toString().padStart(2, '0')}"
     }
 }
+
+/**
+ * True when the focused-cell shadow should be white: the cell background is dark, which is when
+ * white contrasts with it more than black does. Black would be invisible on a dark background.
+ */
+internal fun otpShadowIsLight(backgroundRgb: Int): Boolean =
+    OtpContrast.ratio(0xFFFFFF, backgroundRgb) > OtpContrast.ratio(0x000000, backgroundRgb)

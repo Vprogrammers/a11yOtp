@@ -25,10 +25,12 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -137,8 +139,12 @@ fun OtpField(
             visualTransformation = if (masked) PasswordVisualTransformation() else VisualTransformation.None,
             cursorBrush = SolidColor(Color.Transparent),
             decorationBox = { innerTextField ->
-                // The real input stays in the tree but is invisible; cells are decorative.
-                Box(Modifier.fillMaxWidth()) {
+                // The real input stays in the tree but is invisible; cells are decorative. The gap keeps
+                // the TalkBack focus outline around the cells; the top also makes room for the lift, so
+                // the lifted focused cell stays centered in the outline.
+                val gap = OtpFieldDefaults.FocusOutlineGap
+                val top = if (style.liftFocusedCell) gap + FocusLift else gap
+                Box(Modifier.fillMaxWidth().padding(start = gap, top = top, end = gap, bottom = gap)) {
                     Box(Modifier.size(1.dp).alpha(0f)) { innerTextField() }
                     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
                         OtpCells(state, focused && enabled, enabled, style, mask, horizontal)
@@ -268,14 +274,26 @@ private fun OtpCell(
     val borderWidth = if (enabled && (isError || isActive)) style.focusedBorderWidth else style.borderWidth
     val baseBackground = if (enabled) colors.cellBackground else colors.disabledCellBackground
     val filled = digit != null && mask == OtpMask.FilledCell
+    // White on a dark cell background, where a black shadow would not show; black otherwise.
+    // A white glow needs more opacity than a black shadow to be as noticeable.
+    val lightShadow = baseBackground.alpha == 1f && otpShadowIsLight(baseBackground.toArgb() and 0xFFFFFF)
+    val shadowColor = if (lightShadow) Color.White else Color.Black
+    val shadowAlpha = if (lightShadow) FOCUS_LIGHT_SHADOW_ALPHA else FOCUS_SHADOW_ALPHA
     // The thicker border shows focus; the lift and shadow are extra. Compose animations follow the
     // system animator scale, so "Remove animations" makes the move instant.
     val lift by animateDpAsState(if (isActive && style.liftFocusedCell) FocusLift else 0.dp, label = "otpCellLift")
     var cellModifier =
         Modifier
             .offset { IntOffset(0, -lift.roundToPx()) }
-            .shadow(elevation = lift * FOCUS_SHADOW_FACTOR, shape = style.cellShape, clip = false)
-            .defaultMinSize(minWidth = style.cellWidth, minHeight = style.cellHeight)
+            .dropShadow(style.cellShape) {
+                // Same look as iOS: 35% opacity, 8dp blur, 6dp down. Elevation shadows are too
+                // faint on many devices, especially Samsung.
+                val progress = lift / FocusLift
+                radius = FocusShadowRadius.toPx()
+                offset = Offset(0f, FocusShadowOffset.toPx())
+                color = shadowColor
+                alpha = shadowAlpha * progress
+            }.defaultMinSize(minWidth = style.cellWidth, minHeight = style.cellHeight)
             .background(if (filled) borderColor else baseBackground, style.cellShape)
             .border(borderWidth, borderColor, style.cellShape)
     if (filled) {
@@ -310,5 +328,7 @@ private fun OtpCell(
 private val FilledRingWidth = 2.dp
 private val FocusLift = 4.dp
 
-// The shadow elevation is 3x the lift (12dp), so the raised cell stands out like a lifted card.
-private const val FOCUS_SHADOW_FACTOR = 3f
+private val FocusShadowRadius = 8.dp
+private val FocusShadowOffset = 6.dp
+private const val FOCUS_SHADOW_ALPHA = 0.35f
+private const val FOCUS_LIGHT_SHADOW_ALPHA = 0.6f

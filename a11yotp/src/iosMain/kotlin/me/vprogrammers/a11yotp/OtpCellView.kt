@@ -37,6 +37,8 @@ internal class OtpCellAppearance(
     val ringWidth: Double,
     /** Raised with a shadow, for the focused cell. */
     val lifted: Boolean = false,
+    /** Cell background that picks the shadow color; differs from [fill] for filled cells. */
+    val surface: UIColor = fill,
 )
 
 /** One decorative digit cell. It is never an accessibility element; the text field is. */
@@ -46,6 +48,7 @@ internal class OtpCellView : UIView(frame = CGRectMake(0.0, 0.0, 0.0, 0.0)) {
     private var ringInset = 0.0
     private var requestedCornerRadius = 0.0
     private var lifted = false
+    private var liftedShadowOpacity = SHADOW_OPACITY
 
     init {
         setIsAccessibilityElement(false)
@@ -56,7 +59,6 @@ internal class OtpCellView : UIView(frame = CGRectMake(0.0, 0.0, 0.0, 0.0)) {
         addSubview(label)
         ringLayer.fillColor = null
         layer.addSublayer(ringLayer)
-        layer.shadowColor = UIColor.blackColor.CGColor
         layer.shadowOffset = CGSizeMake(0.0, SHADOW_OFFSET)
         layer.shadowRadius = SHADOW_RADIUS
         layer.shadowOpacity = 0f
@@ -82,7 +84,7 @@ internal class OtpCellView : UIView(frame = CGRectMake(0.0, 0.0, 0.0, 0.0)) {
         val change = {
             transform =
                 if (lifted) CGAffineTransformMakeTranslation(0.0, -LIFT) else CGAffineTransformIdentity.readValue()
-            layer.shadowOpacity = if (lifted) SHADOW_OPACITY else 0f
+            layer.shadowOpacity = if (lifted) liftedShadowOpacity else 0f
         }
         // The thicker border already shows focus; the lift is extra, so it is not animated under Reduce Motion.
         if (window == null || UIAccessibilityIsReduceMotionEnabled()) {
@@ -108,6 +110,13 @@ internal class OtpCellView : UIView(frame = CGRectMake(0.0, 0.0, 0.0, 0.0)) {
         ringLayer.strokeColor = ring?.resolvedColorWithTraitCollection(traits)?.CGColor
         ringLayer.lineWidth = appearance.ringWidth
         ringInset = RING_GAP + appearance.ringWidth / 2.0
+        // White on a dark cell background, where a black shadow would not show; black otherwise.
+        // A white glow needs more opacity than a black shadow to be as noticeable.
+        val surface = appearance.surface.opaqueRgb(traits)
+        val light = surface != null && otpShadowIsLight(surface)
+        layer.shadowColor = (if (light) UIColor.whiteColor else UIColor.blackColor).CGColor
+        liftedShadowOpacity = if (light) LIGHT_SHADOW_OPACITY else SHADOW_OPACITY
+        if (lifted) layer.shadowOpacity = liftedShadowOpacity
         applyLift(appearance.lifted)
         setNeedsLayout()
     }
@@ -141,3 +150,4 @@ private const val LIFT_DURATION = 0.18
 private const val SHADOW_OFFSET = 6.0
 private const val SHADOW_RADIUS = 8.0
 private const val SHADOW_OPACITY = 0.35f
+private const val LIGHT_SHADOW_OPACITY = 0.6f

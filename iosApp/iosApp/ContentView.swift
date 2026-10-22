@@ -52,6 +52,7 @@ struct ContentView: View {
                     accessibility: Self.fieldAccessibility,
                     style: fieldStyle,
                     mask: options.mask,
+                    focusOnAppear: !options.isDisabled,
                     onComplete: verify
                 )
                 .disabled(isVerified || options.isDisabled)
