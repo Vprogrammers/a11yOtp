@@ -116,6 +116,7 @@ run_android() {
     }
     step "compile Android device tests" ./gradlew :a11yotp:compileAndroidDeviceTest
     step "Android sample" ./gradlew :androidApp:assembleDebug
+    step "publication and consumer" ./scripts/verify-publication.sh
     if [[ "${device}" == true ]]; then
         if android_device_connected; then
             step "Android device tests" ./gradlew :a11yotp:connectedAndroidDeviceTest
