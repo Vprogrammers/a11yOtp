@@ -35,7 +35,7 @@ The boxes in **a11y-otp** are decoration. Underneath is a single platform text i
 | `androidApp` | Android sample app |
 | `iosApp` | SwiftUI sample app that embeds the UIKit components |
 
-Both platforms use native UI and native accessibility APIs. Compose is not used on iOS, so iOS apps do not take on the Compose runtime. Colors and fonts are platform-native (Compose `Color`, `UIColor`), so dark mode and Increase Contrast work as usual.
+Both platforms use native UI and native accessibility APIs. Compose is not used on iOS, so iOS apps do not take on the Compose runtime. Colors and fonts are platform-native (Compose `Color`, `UIColor`). The default colors follow the system light or dark theme on both platforms, and Increase Contrast works as usual on iOS.
 
 Why UIKit and not SwiftUI on iOS: the library is delivered through Gradle, and a Kotlin dependency cannot carry Swift source. Kotlin/Native can build UIKit views, and SwiftUI apps embed them with a short `UIViewRepresentable` wrapper (see below).
 
@@ -158,6 +158,21 @@ By default the entered digits are visible and readable by screen readers, so use
 ### Custom cells
 
 Both platforms accept a cell slot to change the look of each box. Custom cells are always hidden from screen readers: accessibility is handled by the field, whatever you draw.
+
+### Dark mode
+
+The default colors follow the system theme. On iOS they are dynamic system colors. On Android, a style without `colors` uses light or dark colors depending on the system setting, also when you change other style values:
+
+```kotlin
+// Follows the system theme
+OtpFieldDefaults.style(groupSize = 3)
+
+// Your app has its own theme switch: pick the colors yourself
+OtpFieldDefaults.style(colors = if (appIsDark) OtpFieldDefaults.darkColors() else OtpFieldDefaults.colors())
+OtpButtonDefaults.style(colors = if (appIsDark) OtpButtonDefaults.darkColors() else OtpButtonDefaults.colors())
+```
+
+Both palettes meet WCAG contrast (4.5:1 for text, 3:1 for borders and focus). In dark mode the focused cell has a white border and a white shadow, because a blue border would be too close to the normal border and a black shadow would not show.
 
 ---
 

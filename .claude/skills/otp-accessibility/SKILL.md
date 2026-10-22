@@ -45,16 +45,18 @@ Avoid one editable field per digit. It produces fragile focus, paste, autofill, 
 - Verify on a device that error semantics and the polite live region produce one useful announcement per transition into the error state. Do not add a separate forced announcement when the live region already announces the message.
 - Prefer semantics matchers in tests; use test tags only when semantics cannot identify the node cleanly.
 - Verify TalkBack, Switch Access, hardware keyboard navigation, software keyboard behavior, and autofill on a device or emulator when host tests are insufficient.
+- Default colors follow the system theme: a style with `colors = null` resolves to `OtpFieldDefaults.systemColors()` / `OtpButtonDefaults.systemColors()` (`isSystemInDarkTheme`). Dark focus is a white border, because blue would not contrast 3:1 with the gray cell border. Keep both palettes free of contrast warnings.
+- TalkBack draws its focus outline on the focusable node's bounds and ignores shapes, so the field and buttons keep `OtpFieldDefaults.FocusOutlineGap` between their bounds and what they draw.
 
 ## iOS UIKit (Kotlin/Native)
 
 The iOS components are UIKit views written in Kotlin in `a11yotp/src/iosMain`. Hosts embed them in SwiftUI through `UIViewRepresentable`.
 
 - Use one real `UITextField` as the single logical editable accessibility element. Set `isAccessibilityElement = false` on the container and the decorative digit cells.
-- Give the text field the same frame as the visible cell row so the VoiceOver focus outline, Voice Control overlay, and touch target match the visible field. Do not shrink it to a 1-point frame or hide it; hidden views cannot become first responder.
+- Give the text field the frame of the visible cell row plus a small gap (more at the top for the lifted focused cell), so the VoiceOver focus outline surrounds the cells instead of cutting through them, and Voice Control and touch match the visible field. Do not shrink it to a 1-point frame or hide it; hidden views cannot become first responder.
 - Provide an intentional `accessibilityLabel`, `accessibilityValue` (progress or masked progress), useful hint, and invalid-state feedback.
 - Announce errors with `UIAccessibilityPostNotification(UIAccessibilityAnnouncementNotification, message)` only on the transition into the error state, without moving focus.
-- Use `keyboardType = UIKeyboardTypeNumberPad` and an `inputAccessoryView` Done button, because number pad has no Return key.
+- Use `keyboardType = UIKeyboardTypeNumberPad`. The number pad has no Return key; the Done bar (`inputAccessoryView`) is detached for now because it blocked the one-time-code suggestion, and keyboard dismissal is tracked in issue #10.
 - Use dynamic `UIColor`s so dark mode and Increase Contrast work, `UIFontMetrics` for Dynamic Type, and `UIAccessibilityIsReduceMotionEnabled()` for motion.
 - Verify VoiceOver, Voice Control, hardware keyboard, Dynamic Type, and one-time-code autofill on a device; an Intel Mac cannot run the ARM64 simulator.
 

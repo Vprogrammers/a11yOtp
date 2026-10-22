@@ -2,6 +2,7 @@ package me.vprogrammers.a11yotp
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,6 +16,7 @@ import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -40,8 +42,18 @@ private val masks =
         "Character" to OtpMask.Character('•'),
         "Filled cell" to OtpMask.FilledCell,
     )
-private val textStyle = TextStyle(fontSize = 16.sp, color = Color(0xFF1B1B1F))
-private val outline = Color(0xFF767676)
+private val ink: Color
+    @Composable @ReadOnlyComposable
+    get() = if (isSystemInDarkTheme()) Color.White else Color(0xFF1B1B1F)
+private val pageBackground: Color
+    @Composable @ReadOnlyComposable
+    get() = if (isSystemInDarkTheme()) Color.Black else Color.White
+private val outline: Color
+    @Composable @ReadOnlyComposable
+    get() = if (isSystemInDarkTheme()) Color(0xFF8E8E93) else Color(0xFF767676)
+private val textStyle: TextStyle
+    @Composable @ReadOnlyComposable
+    get() = TextStyle(fontSize = 16.sp, color = ink)
 
 @Composable
 fun SampleOptionsPanel(
@@ -72,6 +84,9 @@ private fun <T> Segmented(
     onSelect: (T) -> Unit,
 ) {
     val shape = RoundedCornerShape(8.dp)
+    val ink = ink
+    val pageBackground = pageBackground
+    val textStyle = textStyle
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         BasicText(label, style = textStyle)
         Row(Modifier.fillMaxWidth().border(1.dp, outline, shape).selectableGroup()) {
@@ -82,7 +97,7 @@ private fun <T> Segmented(
                         Modifier
                             .weight(1f)
                             .defaultMinSize(minHeight = 48.dp)
-                            .background(if (isSelected) Color(0xFF1B1B1F) else Color.Transparent, shape)
+                            .background(if (isSelected) ink else Color.Transparent, shape)
                             .selectable(selected = isSelected, role = Role.RadioButton, onClick = { onSelect(value) }),
                     contentAlignment = Alignment.Center,
                 ) {
@@ -90,7 +105,7 @@ private fun <T> Segmented(
                         text,
                         style =
                             textStyle.copy(
-                                color = if (isSelected) Color.White else textStyle.color,
+                                color = if (isSelected) pageBackground else textStyle.color,
                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                             ),
                     )
@@ -117,7 +132,7 @@ private fun Checkbox(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Box(
-            modifier = Modifier.size(24.dp).border(2.dp, Color(0xFF1B1B1F), RoundedCornerShape(4.dp)),
+            modifier = Modifier.size(24.dp).border(2.dp, ink, RoundedCornerShape(4.dp)),
             contentAlignment = Alignment.Center,
         ) {
             if (checked) BasicText("✓", style = textStyle.copy(fontWeight = FontWeight.Bold))

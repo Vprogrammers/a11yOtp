@@ -89,6 +89,7 @@ fun OtpField(
     val isRtl = LocalLayoutDirection.current == LayoutDirection.Rtl
     val horizontal = alignment.absoluteHorizontal(isRtl)
     val textAlign = alignment.absoluteTextAlign(isRtl)
+    val colors = style.resolvedColors()
     val total = state.length.digitCount
     val visibleError = if (state.isError) accessibility.errorMessage else null
     val masked = mask != OtpMask.None
@@ -147,7 +148,7 @@ fun OtpField(
                 Box(Modifier.fillMaxWidth().padding(start = gap, top = top, end = gap, bottom = gap)) {
                     Box(Modifier.size(1.dp).alpha(0f)) { innerTextField() }
                     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
-                        OtpCells(state, focused && enabled, enabled, style, mask, horizontal)
+                        OtpCells(state, focused && enabled, enabled, style, colors, mask, horizontal)
                     }
                 }
             },
@@ -157,7 +158,7 @@ fun OtpField(
                 text = visibleError,
                 style =
                     style.errorTextStyle.copy(
-                        color = style.colors.errorText,
+                        color = colors.errorText,
                         textAlign = textAlign,
                     ),
                 modifier =
@@ -181,6 +182,7 @@ private fun OtpCells(
     focused: Boolean,
     enabled: Boolean,
     style: OtpFieldStyle,
+    colors: OtpFieldColors,
     mask: OtpMask,
     horizontal: Alignment.Horizontal,
 ) {
@@ -197,13 +199,14 @@ private fun OtpCells(
                     isError = state.isError,
                     enabled = enabled,
                     style = style,
+                    colors = colors,
                     mask = mask,
                 )
             }
             repeat(separatorCount) {
                 BasicText(
                     text = "–",
-                    style = style.textStyle.copy(color = if (enabled) style.colors.text else style.colors.disabledText),
+                    style = style.textStyle.copy(color = if (enabled) colors.text else colors.disabledText),
                 )
             }
         },
@@ -260,9 +263,9 @@ private fun OtpCell(
     isError: Boolean,
     enabled: Boolean,
     style: OtpFieldStyle,
+    colors: OtpFieldColors,
     mask: OtpMask,
 ) {
-    val colors = style.colors
     val borderColor =
         when {
             !enabled -> colors.disabledCellBorder
