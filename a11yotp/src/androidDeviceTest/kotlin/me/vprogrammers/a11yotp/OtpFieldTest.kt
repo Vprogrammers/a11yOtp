@@ -2,7 +2,6 @@ package me.vprogrammers.a11yotp
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
@@ -550,27 +549,5 @@ class OtpFieldTest {
         }
         // Border band, then background-colored ring, then the fill.
         assertTrue(runs.take(3) == listOf(true, false, true), runs.toString())
-    }
-
-    @Test
-    fun zzProbe() {
-        rule.setContent {
-            val current = LocalDensity.current
-            CompositionLocalProvider(LocalDensity provides Density(current.density, fontScale = 2f)) {
-                androidx.compose.foundation.layout.Box(Modifier.testTag("probe").defaultMinSize(48.dp, 48.dp)) {
-                    androidx.compose.foundation.text.BasicText(
-                        "1",
-                        style =
-                            androidx.compose.ui.text.TextStyle(
-                                fontSize =
-                                    androidx.compose.ui.unit
-                                        .TextUnit(24f, androidx.compose.ui.unit.TextUnitType.Sp),
-                            ),
-                    )
-                }
-            }
-        }
-        val h = rule.onNodeWithTag("probe").fetchSemanticsNode().size
-        assertTrue(false, "probe $h")
     }
 }
