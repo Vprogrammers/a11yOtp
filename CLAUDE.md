@@ -24,7 +24,7 @@ Read `.claude/skills/kmp-library-engineering/SKILL.md` for the authoritative mod
 - Kotlin framework: `Shared`, built by Xcode through `:sampleShared:embedAndSignAppleFrameworkForXcode`
 - iOS deployment target: 18.2
 - Xcode UI test target: `iosAppUITests` (`iosApp/iosAppUITests`), in the shared `iosApp` scheme. Device signing reads `TEAM_ID` from the git-ignored `iosApp/Configuration/Local.xcconfig`; never commit a team ID.
-- No publication configuration exists yet. A manually triggered SwiftLint workflow exists; broader CI does not.
+- No publication configuration exists yet. `.github/workflows/validation.yml` runs on pull requests and pushes to `main` (JVM checks on Ubuntu; Kotlin/Native simulator tests, SwiftLint, and iOS UI tests on Apple Silicon macOS); Android emulator device tests run only on manual dispatch.
 - Gradle uses JDK 21. Library modules target JVM 11 and `androidApp` targets JVM 21; see `gradle-ci-quality/SKILL.md`.
 
 ## Project skills
@@ -49,7 +49,7 @@ Read only the relevant skill:
 
 ## Commands
 
-`./scripts/check.sh [all|kmp|android|ios] [--device [<iphone-id>]]` runs the local checks below and prints a pass/fail/skip summary; it uses no GitHub Actions. Run it before a PR.
+`./scripts/check.sh [all|kmp|android|ios] [--device [<iphone-id>]]` runs the local checks below (the same set as the GitHub validation workflow) and prints a pass/fail/skip summary. Run it before a PR.
 
 Run the narrowest applicable command first:
 
