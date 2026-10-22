@@ -89,21 +89,26 @@ jobs:
         run: ./gradlew :a11yotp:iosSimulatorArm64Test
 
       - name: Link the Shared framework
+        if: ${{ !cancelled() }}
         run: ./gradlew :sampleShared:linkDebugFrameworkIosSimulatorArm64
 
       - name: Cache Mint builds
+        if: ${{ !cancelled() }}
         uses: actions/cache@v6
         with:
           path: ~/.mint
           key: ${{ runner.os }}-mint-${{ hashFiles('Mintfile') }}
 
       - name: Install Mint
+        if: ${{ !cancelled() }}
         run: brew install mint
 
       - name: SwiftLint
+        if: ${{ !cancelled() }}
         run: ./scripts/swiftlint.sh --reporter github-actions-logging
 
       - name: Pick an iPhone simulator
+        if: ${{ !cancelled() }}
         id: simulator
         run: |
           udid=$(xcrun simctl list devices available -j | python3 -c '
@@ -118,6 +123,7 @@ jobs:
           echo "udid=${udid}" >> "${GITHUB_OUTPUT}"
 
       - name: iOS UI tests on the simulator
+        if: ${{ !cancelled() && steps.simulator.outputs.udid != '' }}
         run: >
           xcodebuild test
           -project iosApp/iosApp.xcodeproj
@@ -126,12 +132,20 @@ jobs:
           -destination "id=${{ steps.simulator.outputs.udid }}"
           CODE_SIGNING_ALLOWED=NO
 
+      - name: Collect crash reports
+        if: failure()
+        run: |
+          mkdir -p crash-reports
+          find ~/Library/Logs/DiagnosticReports -type f -mmin -90 -exec cp {} crash-reports/ \; 2>/dev/null || true
+
       - name: Upload test reports
         if: failure()
         uses: actions/upload-artifact@v7
         with:
           name: ios-test-reports
-          path: a11yotp/build/reports/tests/
+          path: |
+            a11yotp/build/reports/tests/
+            crash-reports/
           retention-days: 7
 
   android-device:
