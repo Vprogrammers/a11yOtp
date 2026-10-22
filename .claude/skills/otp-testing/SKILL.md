@@ -17,7 +17,7 @@ Use package `me.vprogrammers.a11yotp`.
 - Kotlin/Native tests, including non-visual UIKit component logic: `a11yotp/src/iosTest/kotlin/me/vprogrammers/a11yotp`
 - SMS Retriever host tests (code extraction and result mapping): `a11yotp-sms-retriever/src/androidHostTest/kotlin/me/vprogrammers/a11yotp/smsretriever`
 
-There is no Xcode test target yet. Do not create Swift/XCUITest files outside a configured test target or claim they ran.
+- iOS UI tests (XCUITest, drive the SwiftUI sample): `iosApp/iosAppUITests`, target `iosAppUITests` in the shared `iosApp` scheme. The sample accepts `-resendSeconds <n>` and `-manualVerify YES` launch arguments for deterministic tests.
 
 ## Commands
 
@@ -39,7 +39,8 @@ Use `./gradlew :<module>:tasks --all` when a module task name must be confirmed.
 - Compose UI tests use AndroidX `ui-test-junit4` in `androidDeviceTest`. Run them with `:a11yotp:connectedAndroidDeviceTest` on an emulator or device.
 - Use `androidHostTest` for non-UI JVM tests. Introduce Robolectric Compose tests only when their speed provides clear value and their platform limitations do not affect the behavior being verified.
 - Instrumentation cannot send the SMS Retriever broadcast (it is protected by a Play Services signature permission). End-to-end SMS Retriever delivery is a manual check on a device with Play Services.
-- There is no Xcode test target. UIKit view behavior that needs a running app (VoiceOver, autofill, focus) is a manual device check.
+- `iosAppUITests` runs on a real iPhone (also from the Intel Mac) with `xcodebuild test -project iosApp/iosApp.xcodeproj -scheme iosApp -destination 'id=<device id>' -allowProvisioningUpdates`; the phone must be unlocked and `TEAM_ID` set in the git-ignored `Local.xcconfig`. Simulator runs need Apple Silicon.
+- XCUITest lists decorative cells even though they are not accessibility elements, so assert one text field rather than the absence of cell elements. Paste, Messages autofill, and VoiceOver speech remain manual device checks.
 
 ## Workflow
 
