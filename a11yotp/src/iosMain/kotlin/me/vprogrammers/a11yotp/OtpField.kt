@@ -183,7 +183,8 @@ class OtpField(
         textField.tintColor = platform.UIKit.UIColor.clearColor
         textField.backgroundColor = platform.UIKit.UIColor.clearColor
         textField.setIsAccessibilityElement(true)
-        textField.inputAccessoryView = doneBar()
+        // Done bar detached for now: it gets in the way of the one-time-code suggestion (#10).
+        // textField.inputAccessoryView = doneBar()
 
         val weakSelf = WeakReference(this)
         container.onTraitsChanged = { weakSelf.get()?.render() }
