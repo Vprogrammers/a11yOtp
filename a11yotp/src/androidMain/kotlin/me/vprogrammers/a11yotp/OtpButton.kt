@@ -6,6 +6,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.indication
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.defaultMinSize
@@ -85,6 +86,8 @@ class OtpButtonColors internal constructor(
 /**
  * Style of [OtpVerifyButton] and [OtpResendButton], created with [OtpButtonDefaults.style]. [minHeight] is raised to 48dp. A disabled
  * button always draws at least a 1dp border so its state is not shown by color alone.
+ * [colors] null (the default) follows the system light or dark theme; pass
+ * [OtpButtonDefaults.colors] or [OtpButtonDefaults.darkColors] to force one.
  */
 @Immutable
 class OtpButtonStyle internal constructor(
@@ -93,7 +96,7 @@ class OtpButtonStyle internal constructor(
     minHeight: Dp,
     val contentPadding: PaddingValues,
     val borderWidth: Dp,
-    val colors: OtpButtonColors,
+    val colors: OtpButtonColors? = null,
 ) {
     val minHeight: Dp = minHeight.coerceAtLeast(OtpFieldDefaults.MinTargetSize)
 
@@ -155,7 +158,7 @@ internal fun OtpButtonSurface(
     style: OtpButtonStyle,
     modifier: Modifier,
 ) {
-    val colors = style.colors
+    val colors = style.colors ?: OtpButtonDefaults.systemColors()
     val borderWidth = if (enabled) style.borderWidth else maxOf(style.borderWidth, 1.dp)
     val isRtl = LocalLayoutDirection.current == LayoutDirection.Rtl
     val interactionSource = remember { MutableInteractionSource() }
@@ -203,9 +206,27 @@ object OtpButtonDefaults {
         minHeight: Dp = OtpFieldDefaults.MinTargetSize,
         contentPadding: PaddingValues = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
         borderWidth: Dp = 0.dp,
-        colors: OtpButtonColors = colors(),
+        colors: OtpButtonColors? = null,
     ): OtpButtonStyle = OtpButtonStyle(textStyle, shape, minHeight, contentPadding, borderWidth, colors)
 
+    /** Colors that follow the system light or dark theme; what a style with null colors uses. */
+    @Composable
+    fun systemColors(): OtpButtonColors {
+        val dark = isSystemInDarkTheme()
+        return remember(dark) { if (dark) darkColors() else colors() }
+    }
+
+    /** Dark-theme colors. */
+    fun darkColors(
+        content: Color = Color(0xFF1C1C1E),
+        container: Color = Color(0xFFE5E5EA),
+        border: Color = container,
+        disabledContent: Color = Color(0xFF8E8E93),
+        disabledContainer: Color = Color(0xFF2C2C2E),
+        disabledBorder: Color = Color(0xFF8E8E93),
+    ): OtpButtonColors = OtpButtonColors(content, container, border, disabledContent, disabledContainer, disabledBorder)
+
+    /** Light-theme colors. */
     fun colors(
         content: Color = Color.White,
         // Near-black rather than blue, so the TalkBack focus outline stays distinct from the button.

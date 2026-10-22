@@ -1,7 +1,10 @@
 package me.vprogrammers.a11yotp
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.TextStyle
@@ -24,6 +27,8 @@ import androidx.compose.ui.unit.sp
  * [errorTextStyle] styles the visible error message (sp, so it follows font scale).
  * [liftFocusedCell] raises the focused cell slightly with a shadow, in addition to its thicker
  * border; with "Remove animations" on, it moves without animation.
+ * [colors] null (the default) follows the system light or dark theme; pass
+ * [OtpFieldDefaults.colors] or [OtpFieldDefaults.darkColors] to force one.
  * Create instances with [OtpFieldDefaults.style].
  */
 @Immutable
@@ -35,7 +40,7 @@ class OtpFieldStyle internal constructor(
     val cellSpacing: Dp,
     val borderWidth: Dp,
     val focusedBorderWidth: Dp,
-    val colors: OtpFieldColors,
+    val colors: OtpFieldColors? = null,
     val groupSize: Int? = null,
     val placeholder: Char? = null,
     val errorTextStyle: TextStyle = TextStyle(fontSize = 14.sp),
@@ -208,7 +213,7 @@ object OtpFieldDefaults {
         cellSpacing: Dp = 8.dp,
         borderWidth: Dp = 1.dp,
         focusedBorderWidth: Dp = 2.dp,
-        colors: OtpFieldColors = colors(),
+        colors: OtpFieldColors? = null,
         groupSize: Int? = null,
         placeholder: Char? = null,
         errorTextStyle: TextStyle = TextStyle(fontSize = 14.sp),
@@ -229,6 +234,40 @@ object OtpFieldDefaults {
             liftFocusedCell = liftFocusedCell,
         )
 
+    /** Colors that follow the system light or dark theme; what a style with null colors uses. */
+    @Composable
+    fun systemColors(): OtpFieldColors {
+        val dark = isSystemInDarkTheme()
+        return remember(dark) { if (dark) darkColors() else colors() }
+    }
+
+    /** Dark-theme colors. Every checked pair meets the contrast requirements. */
+    fun darkColors(
+        text: Color = Color(0xFFFFFFFF),
+        cellBackground: Color = Color(0xFF1C1C1E),
+        cellBorder: Color = Color(0xFF8E8E93),
+        focusedCellBorder: Color = Color(0xFFFFFFFF),
+        errorCellBorder: Color = Color(0xFFFF453A),
+        errorText: Color = Color(0xFFFF453A),
+        disabledText: Color = Color(0xFF8E8E93),
+        disabledCellBackground: Color = Color(0xFF2C2C2E),
+        disabledCellBorder: Color = Color(0xFF48484A),
+        placeholder: Color = Color(0xFF8E8E93),
+    ): OtpFieldColors =
+        OtpFieldColors(
+            text = text,
+            cellBackground = cellBackground,
+            cellBorder = cellBorder,
+            focusedCellBorder = focusedCellBorder,
+            errorCellBorder = errorCellBorder,
+            errorText = errorText,
+            disabledText = disabledText,
+            disabledCellBackground = disabledCellBackground,
+            disabledCellBorder = disabledCellBorder,
+            placeholder = placeholder,
+        )
+
+    /** Light-theme colors. */
     fun colors(
         text: Color = Color(0xFF1B1B1F),
         cellBackground: Color = Color.White,
@@ -254,3 +293,6 @@ object OtpFieldDefaults {
             placeholder = placeholder,
         )
 }
+
+@Composable
+internal fun OtpFieldStyle.resolvedColors(): OtpFieldColors = colors ?: OtpFieldDefaults.systemColors()
