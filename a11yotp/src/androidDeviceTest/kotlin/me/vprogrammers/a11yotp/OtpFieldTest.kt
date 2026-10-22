@@ -41,6 +41,7 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
@@ -239,6 +240,20 @@ class OtpFieldTest {
         rule.waitForIdle()
         assertEquals("482913", state.code)
         assertEquals(listOf("123456", "482913"), completions)
+    }
+
+    @Test
+    fun duplicateEditBeforeRecompositionCompletesOnce() {
+        setField()
+        val setText = field().fetchSemanticsNode().config[SemanticsActions.SetText].action!!
+        // Two identical edits before the next frame, as an IME can deliver them.
+        rule.runOnUiThread {
+            setText(AnnotatedString("123456"))
+            setText(AnnotatedString("123456"))
+        }
+        rule.waitForIdle()
+        assertEquals("123456", state.code)
+        assertEquals(listOf("123456"), completions)
     }
 
     @Test
