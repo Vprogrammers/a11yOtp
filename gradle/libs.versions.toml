@@ -11,6 +11,7 @@ androidx-test-espresso = "3.7.0"
 kotlin = "2.4.21"
 ktlintPlugin = "14.2.0"
 ktlintVersion = "1.8.0"
+mavenPublish = "0.37.0"
 playServicesAuthApiPhone = "18.3.1"
 
 [libraries]
@@ -33,3 +34,4 @@ androidMultiplatformLibrary = { id = "com.android.kotlin.multiplatform.library",
 composeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlintPlugin" }
+mavenPublish = { id = "com.vanniktech.maven.publish", version.ref = "mavenPublish" }

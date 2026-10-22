@@ -5,6 +5,15 @@ on:
   push:
     branches: [main]
   pull_request:
+  # Reused by the release workflow, so a release runs exactly these checks.
+  workflow_call:
+    inputs:
+      target:
+        type: string
+        default: all
+      android-device-tests:
+        type: boolean
+        default: false
   workflow_dispatch:
     inputs:
       target:
@@ -21,13 +30,13 @@ permissions:
   contents: read
 
 concurrency:
-  group: validation-${{ github.ref }}-${{ inputs.target || 'all' }}
+  group: ${{ github.workflow }}-validation-${{ github.ref }}-${{ inputs.target || 'all' }}
   cancel-in-progress: true
 
 jobs:
   jvm:
     name: Shared and Android (JVM)
-    if: github.event_name != 'workflow_dispatch' || contains(fromJSON('["all", "kmp", "android"]'), inputs.target)
+    if: github.event_name == 'push' || github.event_name == 'pull_request' || contains(fromJSON('["all", "kmp", "android"]'), inputs.target)
     runs-on: ubuntu-latest
     timeout-minutes: 45
 
@@ -56,6 +65,9 @@ jobs:
       - name: Android sample
         run: ./gradlew :androidApp:assembleDebug
 
+      - name: Publication and Android consumer
+        run: ./scripts/verify-publication.sh
+
       - name: Upload test reports
         if: failure()
         uses: actions/upload-artifact@v7
@@ -68,7 +80,7 @@ jobs:
 
   ios:
     name: iOS (Apple Silicon)
-    if: github.event_name != 'workflow_dispatch' || contains(fromJSON('["all", "kmp", "ios"]'), inputs.target)
+    if: github.event_name == 'push' || github.event_name == 'pull_request' || contains(fromJSON('["all", "kmp", "ios"]'), inputs.target)
     runs-on: macos-15
     timeout-minutes: 60
 
@@ -150,7 +162,7 @@ jobs:
 
   android-device:
     name: Android device tests (emulator)
-    if: github.event_name == 'workflow_dispatch' && inputs.android-device-tests && contains(fromJSON('["all", "android"]'), inputs.target)
+    if: inputs.android-device-tests && contains(fromJSON('["all", "android"]'), inputs.target)
     runs-on: ubuntu-latest
     timeout-minutes: 60
 

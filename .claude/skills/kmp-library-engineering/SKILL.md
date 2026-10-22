@@ -56,7 +56,7 @@ Swift sees the library through the consumer's Objective-C-exported framework. Ex
 
 ## Distribution status
 
-No publication configuration exists yet. Decided: a Maven artifact for `a11yotp` plus an optional Android-only artifact for `a11yotp-sms-retriever`, both consumed from the KMP shared module, with no Swift Package Manager or CocoaPods distribution. Not decided: artifact coordinates, minimum consumer Kotlin version, versioning policy, repository, signing, or release automation.
+Publishing is configured but nothing is released yet. Decided: Maven Central, coordinates `me.vprogrammers:a11yotp` and the optional Android-only `me.vprogrammers:a11yotp-sms-retriever`, both consumed from the KMP shared module, first version `0.1.0`, GPG-signed releases from the manual `publish.yml` workflow, no Swift Package Manager or CocoaPods distribution. Consumers need Kotlin 2.4.21 or newer. Not decided: the compatibility policy for 0.x and 1.0.
 
 Treat these as explicit design decisions. Do not claim that consumers can install the library until publication is implemented and verified.
 
