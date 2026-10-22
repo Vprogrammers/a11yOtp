@@ -137,13 +137,13 @@ class OtpFieldIosTest {
     }
 
     @Test
-    fun partialPasteIsAppended() {
+    fun partialPasteIsRejectedNotAppended() {
         val field = newField()
         field.handleReplacement("12")
 
         field.handleReplacement("34")
 
-        assertEquals("1234", field.state.code)
+        assertEquals("12", field.state.code)
     }
 
     @Test
