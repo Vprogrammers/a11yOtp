@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidMultiplatformLibrary)
     alias(libs.plugins.composeCompiler)
+    alias(libs.plugins.mavenPublish)
 }
 
 kotlin {
@@ -63,4 +64,12 @@ composeCompiler {
 
 dependencies {
     androidRuntimeClasspath(libs.compose.uiTooling)
+}
+
+// Coordinates and POM come from gradle.properties. Release builds pass the signing key as
+// ORG_GRADLE_PROJECT_signingInMemoryKey; local publishToMavenLocal runs stay unsigned.
+mavenPublishing {
+    if (providers.gradleProperty("signingInMemoryKey").isPresent) {
+        signAllPublications()
+    }
 }

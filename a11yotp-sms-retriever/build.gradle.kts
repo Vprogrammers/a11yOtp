@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidMultiplatformLibrary)
     alias(libs.plugins.composeCompiler)
+    alias(libs.plugins.mavenPublish)
 }
 
 // Optional Android-only module: Play Services stays off the classpath of a11yotp consumers.
@@ -42,4 +43,12 @@ kotlin {
 
 composeCompiler {
     targetKotlinPlatforms.set(setOf(KotlinPlatformType.androidJvm))
+}
+
+// Coordinates and POM come from gradle.properties. Release builds pass the signing key as
+// ORG_GRADLE_PROJECT_signingInMemoryKey; local publishToMavenLocal runs stay unsigned.
+mavenPublishing {
+    if (providers.gradleProperty("signingInMemoryKey").isPresent) {
+        signAllPublications()
+    }
 }

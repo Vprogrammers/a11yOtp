@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.composeCompiler) apply false
     alias(libs.plugins.kotlinMultiplatform) apply false
     alias(libs.plugins.ktlint)
+    alias(libs.plugins.mavenPublish) apply false
 }
 
 val ktlintRulesetVersion = libs.versions.ktlintVersion.get()
