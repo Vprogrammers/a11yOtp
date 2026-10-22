@@ -11,12 +11,13 @@ This file is the authoritative source for module boundaries.
 
 The primary consumer is a KMP app with native Android UI and native iOS UI. Consumers add the library only through their shared module's `build.gradle.kts` (`api(...)` plus `export(...)` in their iOS framework). There is no Swift package: Kotlin dependencies cannot carry Swift source.
 
-- `a11yotp`: the single library module (targets `android`, `iosArm64`, `iosSimulatorArm64`).
+- `a11yotp`: the main library module and the only iOS-facing one (targets `android`, `iosArm64`, `iosSimulatorArm64`).
   - `commonMain`: OTP state, normalization, validation, completion, WCAG contrast checks, and platform-neutral configuration (`OtpMask`, `OtpAlignment`, accessibility text types). No Android, Compose, UIKit, or Foundation types.
   - `androidMain`: Jetpack Compose components on AndroidX Compose artifacts, plus Android styles (Compose `Color`, `TextStyle`, `Shape`).
   - `iosMain`: UIKit components written in Kotlin/Native, plus iOS styles (`UIColor`, `UIFont`).
+- `a11yotp-sms-retriever`: optional Android-only module (target `android`) with the Google SMS Retriever integration (`SmsRetrieverEffect`). It depends on `a11yotp` with `api` and is the only module allowed to depend on Play Services, so consumers who don't opt in never get it on their classpath. Consumers add it from their shared module's `androidMain` dependencies. No gms types in its public API.
 - `sample/shared` (`:sampleShared`): consumer-like shared module that exports `a11yotp` in the `Shared` framework. Both sample apps use the library through it.
-- `androidApp`: Android sample and integration host.
+- `androidApp`: Android sample and integration host. It depends on `a11yotp-sms-retriever` directly, because `sampleShared` is exported to the iOS framework.
 - `iosApp`: SwiftUI sample that embeds the Kotlin UIKit components through `UIViewRepresentable` wrappers. It contains no library code.
 - Colors, fonts, and shapes stay platform-native so dark mode, Increase Contrast, and dynamic colors keep working.
 - Do not add the Compose Multiplatform plugin or Compose runtime to iOS. A future shared-Compose-UI module may depend on `a11yotp` without changing its APIs.
@@ -55,13 +56,13 @@ Swift sees the library through the consumer's Objective-C-exported framework. Ex
 
 ## Distribution status
 
-No publication configuration exists yet. Decided: one Maven artifact for `a11yotp`, consumed from the KMP shared module, with no Swift Package Manager or CocoaPods distribution. Not decided: artifact coordinates, minimum consumer Kotlin version, versioning policy, repository, signing, or release automation.
+No publication configuration exists yet. Decided: a Maven artifact for `a11yotp` plus an optional Android-only artifact for `a11yotp-sms-retriever`, both consumed from the KMP shared module, with no Swift Package Manager or CocoaPods distribution. Not decided: artifact coordinates, minimum consumer Kotlin version, versioning policy, repository, signing, or release automation.
 
 Treat these as explicit design decisions. Do not claim that consumers can install the library until publication is implemented and verified.
 
 ## Dependencies
 
-Reuse the existing stack. Add a dependency only when its value exceeds its API, build, publication, and maintenance cost. Never add Android or Compose dependencies to `commonMain` or `iosMain`.
+Reuse the existing stack. Add a dependency only when its value exceeds its API, build, publication, and maintenance cost. Never add Android or Compose dependencies to `commonMain` or `iosMain`. Optional integrations that bring heavy or policy-sensitive dependencies (such as Play Services) get their own module instead of going into `a11yotp`.
 
 ## Review output
 
