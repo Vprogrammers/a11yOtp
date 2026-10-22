@@ -139,8 +139,11 @@ fun OtpField(
             cursorBrush = SolidColor(Color.Transparent),
             decorationBox = { innerTextField ->
                 // The real input stays in the tree but is invisible; cells are decorative. The gap keeps
-                // the TalkBack focus outline around the cells, including the lifted focused cell.
-                Box(Modifier.fillMaxWidth().padding(OtpFieldDefaults.FocusOutlineGap)) {
+                // the TalkBack focus outline around the cells; the top also makes room for the lift, so
+                // the lifted focused cell stays centered in the outline.
+                val gap = OtpFieldDefaults.FocusOutlineGap
+                val top = if (style.liftFocusedCell) gap + FocusLift else gap
+                Box(Modifier.fillMaxWidth().padding(start = gap, top = top, end = gap, bottom = gap)) {
                     Box(Modifier.size(1.dp).alpha(0f)) { innerTextField() }
                     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
                         OtpCells(state, focused && enabled, enabled, style, mask, horizontal)

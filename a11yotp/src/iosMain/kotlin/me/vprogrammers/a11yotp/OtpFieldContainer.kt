@@ -291,7 +291,12 @@ internal class OtpFieldContainer : UIView(frame = CGRectMake(0.0, 0.0, 0.0, 0.0)
         if (model.style.glass && sharedGlassEffect != null) GLASS_PADDING else 0.0
 
     /** Space around the cells: room for the glass, and at least the VoiceOver focus ring gap. */
-    private fun layoutInset(model: OtpFieldModel): Double = maxOf(glassInset(model), FOCUS_OUTLINE_GAP)
+    private fun layoutInset(model: OtpFieldModel): Double =
+        maxOf(glassInset(model), FOCUS_OUTLINE_GAP + focusRingTopExtra(model))
+
+    /** Extra ring space above the cells, so the lifted focused cell looks centered in the ring. */
+    private fun focusRingTopExtra(model: OtpFieldModel): Double =
+        if (model.style.liftFocusedCell) FOCUS_RING_TOP_EXTRA else 0.0
 
     override fun sizeThatFits(size: CValue<CGSize>): CValue<CGSize> {
         val model = model ?: return CGSizeMake(0.0, MIN_FALLBACK_HEIGHT)
@@ -367,9 +372,9 @@ internal class OtpFieldContainer : UIView(frame = CGRectMake(0.0, 0.0, 0.0, 0.0)
             textField.setFrame(
                 CGRectMake(
                     minX - FOCUS_OUTLINE_GAP,
-                    inset - FOCUS_OUTLINE_GAP,
+                    inset - FOCUS_OUTLINE_GAP - focusRingTopExtra(model),
                     maxX - minX + 2 * FOCUS_OUTLINE_GAP,
-                    rowsHeight + 2 * FOCUS_OUTLINE_GAP,
+                    rowsHeight + 2 * FOCUS_OUTLINE_GAP + focusRingTopExtra(model),
                 ),
             )
         }
@@ -423,6 +428,7 @@ internal val sharedGlassEffect: UIVisualEffect? by lazy {
 private const val ERROR_GAP = 8.0
 private const val GLASS_PADDING = 10.0
 private const val FOCUS_OUTLINE_GAP = 8.0
+private const val FOCUS_RING_TOP_EXTRA = 2.0
 private const val ERROR_ICON_GAP = 6.0
 private const val MIN_FALLBACK_HEIGHT = 56.0
 private const val UNBOUNDED = 100_000.0
