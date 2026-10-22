@@ -10,6 +10,8 @@ struct OtpFieldView: UIViewRepresentable {
     var mask: OtpMask = OtpMaskNone.shared
     var alignment: OtpAlignment = .center
     var hapticFeedbackOnError = true
+    /// Focuses the field once when it appears, so the keyboard and its code suggestion show without a tap.
+    var focusOnAppear = false
     var onComplete: (String) -> Void = { _ in }
 
     /// Created once so SwiftUI updates do not look like style changes.
@@ -30,6 +32,10 @@ struct OtpFieldView: UIViewRepresentable {
         field.onStateChange = { [weak coordinator] newState in coordinator?.setState(newState) }
         field.onComplete = { [weak coordinator] code in coordinator?.onComplete(code) }
         configure(field, context: context)
+        if focusOnAppear {
+            // The view must be in a window before it can become first responder.
+            DispatchQueue.main.async { [weak field] in field?.focus() }
+        }
         return field.view
     }
 

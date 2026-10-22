@@ -19,6 +19,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.heading
@@ -60,6 +62,12 @@ fun SampleScreen(initialOptions: SampleOptions = SampleOptions()) {
     var verified by remember { mutableStateOf(false) }
     var seconds by remember { mutableIntStateOf(SAMPLE_RESEND_SECONDS) }
     var resendCount by remember { mutableIntStateOf(0) }
+    val fieldFocus = remember { FocusRequester() }
+
+    // Focus the field once so the keyboard and its code suggestion appear without a tap.
+    LaunchedEffect(Unit) {
+        if (!options.isDisabled) fieldFocus.requestFocus()
+    }
 
     LaunchedEffect(seconds) {
         if (seconds > 0) {
@@ -111,6 +119,7 @@ fun SampleScreen(initialOptions: SampleOptions = SampleOptions()) {
             },
             onComplete = ::verify,
             accessibility = fieldAccessibility,
+            modifier = Modifier.focusRequester(fieldFocus),
             enabled = !verified && !options.isDisabled,
             style = if (options.roundCells) roundFieldStyle else fieldStyle,
             mask = options.mask,
