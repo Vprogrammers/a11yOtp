@@ -1,4 +1,6 @@
 TEAM_ID=
+// Optional, git-ignored: put TEAM_ID=<your team id> in Local.xcconfig to sign for a device.
+#include? "Local.xcconfig"
 
 PRODUCT_NAME=A11yOtp
 PRODUCT_BUNDLE_IDENTIFIER=me.vprogrammers.a11yotp.A11yOtp$(TEAM_ID)
