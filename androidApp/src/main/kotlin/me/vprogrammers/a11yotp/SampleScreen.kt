@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import me.vprogrammers.a11yotp.sample.SAMPLE_RESEND_SECONDS
 import me.vprogrammers.a11yotp.sample.isSampleCodeRejected
+import me.vprogrammers.a11yotp.smsretriever.SmsRetrieverEffect
 
 /** Groups of 3 give "123 - 456"; 4 and 8 digits do not split evenly, so they get no separator. */
 private val fieldStyle = OtpFieldDefaults.style(groupSize = 3, cellHeight = 56.dp)
@@ -58,6 +59,7 @@ fun SampleScreen(initialOptions: SampleOptions = SampleOptions()) {
     var state by remember { mutableStateOf(OtpState(options.length)) }
     var verified by remember { mutableStateOf(false) }
     var seconds by remember { mutableIntStateOf(SAMPLE_RESEND_SECONDS) }
+    var resendCount by remember { mutableIntStateOf(0) }
 
     LaunchedEffect(seconds) {
         if (seconds > 0) {
@@ -71,6 +73,19 @@ fun SampleScreen(initialOptions: SampleOptions = SampleOptions()) {
         if (verified) return
         if (isSampleCodeRejected(code)) state = state.withError() else verified = true
     }
+
+    // Optional SMS Retriever: the SMS carries the whole code, so it replaces what was typed and
+    // still goes through withInput, which reports completion once.
+    SmsRetrieverEffect(
+        length = state.length,
+        restartKey = resendCount,
+        enabled = !verified && !options.isDisabled,
+        onCode = { code ->
+            val result = state.cleared().withInput(code)
+            state = result.state
+            if (result.didComplete) verify(result.state.code)
+        },
+    )
 
     Column(
         modifier =
@@ -120,6 +135,7 @@ fun SampleScreen(initialOptions: SampleOptions = SampleOptions()) {
                 state = state.cleared()
                 verified = false
                 seconds = SAMPLE_RESEND_SECONDS
+                resendCount++
             },
             accessibility = resendAccessibility,
         )

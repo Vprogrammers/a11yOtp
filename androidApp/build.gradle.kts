@@ -12,6 +12,8 @@ kotlin {
 }
 dependencies {
     implementation(project(":sampleShared"))
+    // Android only: sampleShared is exported to the iOS framework.
+    implementation(project(":a11yotp-sms-retriever"))
 
     implementation(libs.androidx.activity.compose)
     implementation(libs.compose.foundation)
