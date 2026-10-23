@@ -587,3 +587,17 @@ class OtpFieldAutofillIosTest {
         assertEquals("7", field.state.code)
     }
 }
+
+class OtpFieldQueuedInputOrderIosTest {
+    @Test
+    fun aDeletionKeepsItsPlaceBetweenQueuedInsertions() {
+        val field = field()
+        "12".forEach { field.handleReplacement(it.toString()) }
+
+        field.enqueueReplacement("3")
+        field.enqueueReplacement("")
+        field.flushPendingInput()
+
+        assertEquals("12", field.state.code)
+    }
+}

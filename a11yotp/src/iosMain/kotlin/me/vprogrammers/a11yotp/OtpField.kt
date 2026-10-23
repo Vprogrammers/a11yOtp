@@ -235,7 +235,8 @@ class OtpField(
      * Queues a replacement and applies everything queued in the same run-loop turn together. iOS
      * one-time-code autofill inserts a code one character at a time within a single turn, so without
      * this a 4-digit code would fill 4 cells of a 6-digit field and an 8-digit code would be cut to
-     * 6, never reaching the length rule. Typing delivers each key in its own turn.
+     * 6, never reaching the length rule. On-screen keyboard typing delivers each key in its own turn
+     * (verified on device, also with XCUITest typing).
      */
     internal fun enqueueReplacement(replacement: String) {
         pendingReplacements += replacement
@@ -244,14 +245,22 @@ class OtpField(
         dispatch_async(dispatch_get_main_queue()) { weakSelf.get()?.flushPendingInput() }
     }
 
-    /** Applies the queued replacements: deletions one by one, then all inserted text as one input. */
+    /** Applies the queued replacements in order; consecutive insertions are applied as one input. */
     internal fun flushPendingInput() {
         if (pendingReplacements.isEmpty()) return
         val replacements = pendingReplacements.toList()
         pendingReplacements.clear()
-        replacements.filter { it.isEmpty() }.forEach { handleReplacement(it) }
-        val inserted = replacements.joinToString("")
-        if (inserted.isNotEmpty()) handleReplacement(inserted)
+        val inserted = StringBuilder()
+        for (replacement in replacements) {
+            if (replacement.isNotEmpty()) {
+                inserted.append(replacement)
+                continue
+            }
+            if (inserted.isNotEmpty()) handleReplacement(inserted.toString())
+            inserted.clear()
+            handleReplacement(replacement)
+        }
+        if (inserted.isNotEmpty()) handleReplacement(inserted.toString())
     }
 
     /**
