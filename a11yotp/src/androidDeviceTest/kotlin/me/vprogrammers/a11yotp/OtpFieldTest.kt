@@ -156,11 +156,22 @@ class OtpFieldTest {
         }
     }
 
+    /**
+     * Vertical center of the first row of cells, in pixels. Not half the field height: on a narrow
+     * screen (such as the CI emulator, about 320dp) six cells wrap into two rows, and the middle of
+     * the field is the gap between them. The cells start below the focus outline gap and the room
+     * kept for the 4dp focus lift (default style), and are at least 48dp tall.
+     */
+    private fun firstRowCenterY(): Int =
+        with(rule.density) {
+            (OtpFieldDefaults.FocusOutlineGap + 4.dp + 24.dp).roundToPx()
+        }
+
     /** Samples the first cell's background, left of its center to avoid a placeholder or digit. */
     private fun firstCellBackground(): Color {
         val map = rule.onNodeWithTag("field").captureToImage().toPixelMap()
         val gap = with(rule.density) { OtpFieldDefaults.FocusOutlineGap.roundToPx() }
-        return map[gap + with(rule.density) { 6.dp.roundToPx() }, map.height / 2]
+        return map[gap + with(rule.density) { 6.dp.roundToPx() }, firstRowCenterY()]
     }
 
     @Test
@@ -667,7 +678,7 @@ class OtpFieldTest {
         state = OtpState(OtpLength.SIX).withInput("1").state
         setField(mask = OtpMask.FilledCell, alignment = OtpAlignment.START)
         val map = field().captureToImage().toPixelMap()
-        val y = map.height / 2
+        val y = firstRowCenterY()
         val runs = mutableListOf<Boolean>()
         for (x in 0 until map.width / 8) {
             val inked = map[x, y] != Color.White
