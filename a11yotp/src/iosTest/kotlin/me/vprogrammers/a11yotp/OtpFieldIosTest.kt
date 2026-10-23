@@ -115,7 +115,7 @@ class OtpFieldIosTest {
     @Test
     fun deletionRemovesTheLastDigit() {
         val field = newField()
-        field.handleReplacement("123")
+        "123".forEach { field.handleReplacement(it.toString()) }
 
         field.handleReplacement("")
 
@@ -139,7 +139,7 @@ class OtpFieldIosTest {
     @Test
     fun partialPasteIsRejectedNotAppended() {
         val field = newField()
-        field.handleReplacement("12")
+        "12".forEach { field.handleReplacement(it.toString()) }
 
         field.handleReplacement("34")
 
@@ -163,7 +163,7 @@ class OtpFieldIosTest {
     fun maskedFieldIsSecureAndValueHasNoDigits() {
         val field = newField()
         field.mask = OtpMask.FilledCell
-        field.handleReplacement("123")
+        "123".forEach { field.handleReplacement(it.toString()) }
 
         assertTrue(textFieldOf(field).secureTextEntry)
         assertEquals("3 of 6 digits entered", valueOf(field))

@@ -81,7 +81,7 @@ class OtpFieldInputIosTest {
     @Test
     fun rejectedPasteWritesTheCommittedCodeBackAndKeepsError() {
         val field = field()
-        field.handleReplacement("12")
+        "12".forEach { field.handleReplacement(it.toString()) }
         field.state = field.state.withError()
         var changes = 0
         field.onStateChange = { changes++ }
@@ -231,7 +231,7 @@ class OtpFieldRejectionIosTest {
     fun partialAndOverlongPastesAreRejectedFromEmptyPartialAndCompleteFields() {
         rejectionCase(OtpLength.SIX, "", "123", 6, 3)
         rejectionCase(OtpLength.SIX, "", "12345678", 6, 8)
-        rejectionCase(OtpLength.SIX, "12", "3456", 6, 4)
+        rejectionCase(OtpLength.SIX, "12", "34", 6, 2)
         rejectionCase(OtpLength.EIGHT, "123", "456789", 8, 6)
         rejectionCase(OtpLength.FOUR, "1234", "123456", 4, 6)
         rejectionCase(OtpLength.EIGHT, "12345678", "12", 8, 2)
@@ -270,9 +270,9 @@ class OtpFieldRejectionIosTest {
         field.mask = OtpMask.FilledCell
         field.handleReplacement("1")
 
-        field.handleReplacement("98765")
+        field.handleReplacement("9876")
 
-        assertEquals("1 of 6 digits entered, 5 digits", field.textField().accessibilityValue)
+        assertEquals("1 of 6 digits entered, 4 digits", field.textField().accessibilityValue)
         assertFalse(field.textField().accessibilityValue!!.contains("9"))
     }
 
