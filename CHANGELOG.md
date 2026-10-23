@@ -26,6 +26,7 @@ First release.
   - Masks (`None`, `Character`, `FilledCell`) that hide the digits from screen readers too.
   - Default colors that follow the system theme and meet WCAG contrast; your own colors are checked.
   - Dynamic Type and font scale, Reduce Motion, right-to-left layouts.
+- **Saving the state:** `OtpState.restore(length, code, isError)` (shared) and `OtpStateSaver` for Compose `rememberSaveable`, so a partly entered code survives Android configuration changes and process death.
 - **`a11yotp-sms-retriever`**: optional Android module for Google's SMS Retriever, with `CODE_LENGTH_MISMATCH` reporting.
 
 [Unreleased]: https://github.com/Vprogrammers/a11yOtp/compare/v0.1.0...HEAD

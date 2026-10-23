@@ -18,6 +18,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -72,7 +73,8 @@ private val resendAccessibility = OtpResendAccessibility("Resend code") { "Resen
 @Composable
 fun SampleScreen(initialOptions: SampleOptions = SampleOptions()) {
     var options by remember { mutableStateOf(initialOptions) }
-    var state by remember { mutableStateOf(OtpState(options.length)) }
+    // rememberSaveable with OtpStateSaver keeps a partly entered code across rotation and process death.
+    var state by rememberSaveable(stateSaver = OtpStateSaver) { mutableStateOf(OtpState(options.length)) }
     var verified by remember { mutableStateOf(false) }
     var seconds by remember { mutableIntStateOf(SAMPLE_RESEND_SECONDS) }
     var resendCount by remember { mutableIntStateOf(0) }

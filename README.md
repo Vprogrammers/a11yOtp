@@ -70,7 +70,7 @@ The artifacts are on Maven Central (`mavenCentral()`):
 Android (Compose):
 
 ```kotlin
-var otp by remember { mutableStateOf(OtpState(OtpLength.SIX)) }
+var otp by rememberSaveable(stateSaver = OtpStateSaver) { mutableStateOf(OtpState(OtpLength.SIX)) }
 
 OtpField(
     state = otp,

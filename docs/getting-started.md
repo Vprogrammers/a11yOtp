@@ -31,6 +31,7 @@ val empty = OtpState(OtpLength.SIX)  // FOUR, SIX or EIGHT; must match your back
 | `withError()` | The same code, marked as rejected by your server |
 | `withoutError()` | The same code, without the error |
 | `cleared()` | An empty state of the same length, without an error |
+| `OtpState.restore(length, code, isError)` | Rebuilds a saved state; null for values a state cannot hold (see [Saving the state](#saving-the-state)) |
 
 The field calls `withInput` for you. Call it yourself only when code comes from somewhere else, such as the [SMS Retriever](sms-retriever.md).
 
@@ -39,7 +40,8 @@ The field calls `withInput` for you. Call it yourself only when code comes from 
 ```kotlin
 @Composable
 fun OtpScreen(viewModel: OtpViewModel) {
-    var otp by remember { mutableStateOf(OtpState(OtpLength.SIX)) }
+    // rememberSaveable keeps a partly entered code across rotation and process death.
+    var otp by rememberSaveable(stateSaver = OtpStateSaver) { mutableStateOf(OtpState(OtpLength.SIX)) }
     val context = LocalContext.current
 
     val accessibility = OtpFieldAccessibility(
@@ -134,7 +136,30 @@ Localize the counts with plural rules. In SwiftUI, automatic grammar agreement w
 
 After a wrong code, the next complete code reports completion again, whether the user edits the code or you call `cleared()`.
 
-## 6. Recommended message text
+## 6. Saving the state
+
+Save the state, so that a partly entered code is not lost when Android recreates the screen. That happens on rotation, on a theme or language change, and when the system ends the app in the background, for example while the user looks for the code in Messages.
+
+- **Compose:** `rememberSaveable(stateSaver = OtpStateSaver)`, as in the example above.
+- **A ViewModel with `SavedStateHandle`:** save the three values and rebuild with `restore`:
+
+  ```kotlin
+  handle["otpLength"] = otp.length.name; handle["otpCode"] = otp.code; handle["otpError"] = otp.isError
+
+  val restored = OtpLength.entries.firstOrNull { it.name == handle.get<String>("otpLength") }
+      ?.let { OtpState.restore(it, handle["otpCode"] ?: "", handle["otpError"] ?: false) }
+      ?: OtpState(OtpLength.SIX)
+  ```
+
+- **iOS:** UIKit does not recreate the screen on rotation, so the state you hold survives. To restore a scene after the app was ended, save the same values (for example with `@SceneStorage`) and call `OtpState.companion.restore(length: .six, code: savedCode, isError: savedError)`.
+
+How restoring works:
+
+- **Only valid values:** `restore` returns null for a value a state cannot hold, such as a code longer than the field or with anything but the ASCII digits `0`–`9`. `OtpStateSaver` then falls back to the initial value.
+- **Not input:** no callback fires and completion is not reported again, so a restored complete code is not submitted twice.
+- **Disk:** the platform can write saved state to disk, code included. If the code must not outlive the screen, do not save it, or clear the state when the user leaves the screen.
+
+## 7. Recommended message text
 
 So that autofill offers the right number:
 
