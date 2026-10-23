@@ -84,7 +84,7 @@ is_apple_silicon() {
 
 run_kmp() {
     java_ok || {
-        echo "error: a JDK is required (JDK 21, see README)." >&2
+        echo "error: a JDK is required (JDK 21, see CONTRIBUTING.md)." >&2
         exit 1
     }
     step "ktlint" ./gradlew ktlintCheck
@@ -113,7 +113,7 @@ android_device_connected() {
 
 run_android() {
     java_ok || {
-        echo "error: a JDK is required (JDK 21, see README)." >&2
+        echo "error: a JDK is required (JDK 21, see CONTRIBUTING.md)." >&2
         exit 1
     }
     step "compile Android device tests" ./gradlew :a11yotp:compileAndroidDeviceTest
