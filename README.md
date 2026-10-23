@@ -7,7 +7,7 @@ One real text field, drawn as boxes. Native on each platform: Jetpack Compose on
 [![Platforms](https://img.shields.io/badge/platforms-Android%20%7C%20iOS-lightgrey)](#platforms)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
-> **Status: pre-release.** The library is under active development and is not published yet. This README describes the design target. Behavior marked as a goal is verified on real devices before it is claimed as supported.
+> **Status: 0.1.0, the first release.** While the version is 0.x, minor versions may still change the API; every change is listed in the GitHub release notes. Behavior is claimed as supported only after it is verified (see [Accessibility](#accessibility)).
 
 ---
 
@@ -68,7 +68,7 @@ Minimum versions are not final and may change before the first release.
 
 ## Installation
 
-Not on Maven Central yet; the first release will be `0.1.0`. You add the library only to your KMP shared module; the Android app gets the Compose components through it, and the iOS app gets the UIKit components through its framework.
+Available from Maven Central (`mavenCentral()`). You add the library only to your KMP shared module; the Android app gets the Compose components through it, and the iOS app gets the UIKit components through its framework.
 
 | Artifact | Contents |
 |---|---|
@@ -237,7 +237,7 @@ The exact wording and order depend on the platform screen reader.
 | Error messages | Described in text and announced | 3.3.1 |
 | Accessible authentication | Paste and autofill are always allowed | 3.3.8 |
 
-These are goals. Support will be documented per platform after real-device checks with TalkBack, Switch Access, VoiceOver and Voice Control.
+Every change is checked automatically: the Accessibility Test Framework on Android (every field state and both buttons, light and dark theme, 200% font scale) and Apple's accessibility audit in the iOS UI tests (also in dark mode and at the largest accessibility text size). On real devices it is verified with TalkBack (Android 17) and VoiceOver (iOS 26). Switch Access, Switch Control and Voice Control are not verified on devices yet.
 
 ### App Store Accessibility Nutrition Labels
 
@@ -406,6 +406,8 @@ The `release` environment holds the secrets `MAVEN_CENTRAL_USERNAME` and `MAVEN_
 
 ```bash
 ./gradlew ktlintCheck                              # formatting
+./gradlew checkKotlinAbi                           # public API against the api/ dumps (macOS)
+./gradlew updateKotlinAbi                          # after an intended public API change; commit api/
 ./gradlew :a11yotp:testAndroidHostTest             # shared and Android tests on the JVM
 ./gradlew :a11yotp:compileTestKotlinIosSimulatorArm64  # compile Kotlin/Native tests
 ./gradlew :androidApp:assembleDebug                # Android sample app
@@ -471,9 +473,10 @@ For an Xcode Run Script phase, set `ENABLE_USER_SCRIPT_SANDBOXING = NO`; otherwi
 - [x] Android Compose component
 - [x] iOS UIKit component (Kotlin/Native)
 - [x] Masked mode
-- [ ] Real-device verification with TalkBack, VoiceOver and Voice Control
+- [x] Real-device verification with TalkBack and VoiceOver
+- [ ] Real-device verification with Voice Control, Switch Access and Switch Control
 - [ ] Alphanumeric codes
-- [ ] Maven Central publication (configured; first release pending)
+- [x] Maven Central publication (0.1.0)
 - [ ] Optional Compose Multiplatform UI module
 - [x] Optional SMS Retriever module for Android
 - [ ] Optional SMS User Consent support for Android

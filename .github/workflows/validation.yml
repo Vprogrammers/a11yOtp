@@ -97,7 +97,13 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6
 
+      # The ABI dump covers the iOS targets, which only build on macOS. After an intended public API
+      # change, run ./gradlew updateKotlinAbi and commit the api/ files.
+      - name: Public API (ABI) check
+        run: ./gradlew :a11yotp:checkKotlinAbi :a11yotp-sms-retriever:checkKotlinAbi
+
       - name: Kotlin/Native tests on the iOS simulator
+        if: ${{ !cancelled() }}
         run: ./gradlew :a11yotp:iosSimulatorArm64Test
 
       - name: Link the Shared framework

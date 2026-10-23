@@ -1,0 +1,390 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <A11yOtp:a11yotp>
+final enum class me.vprogrammers.a11yotp/OtpAlignment : kotlin/Enum<me.vprogrammers.a11yotp/OtpAlignment> { // me.vprogrammers.a11yotp/OtpAlignment|null[0]
+    enum entry CENTER // me.vprogrammers.a11yotp/OtpAlignment.CENTER|null[0]
+    enum entry END // me.vprogrammers.a11yotp/OtpAlignment.END|null[0]
+    enum entry START // me.vprogrammers.a11yotp/OtpAlignment.START|null[0]
+
+    final val entries // me.vprogrammers.a11yotp/OtpAlignment.entries|#static{}entries[0]
+        final fun <get-entries>(): kotlin.enums/EnumEntries<me.vprogrammers.a11yotp/OtpAlignment> // me.vprogrammers.a11yotp/OtpAlignment.entries.<get-entries>|<get-entries>#static(){}[0]
+
+    final fun valueOf(kotlin/String): me.vprogrammers.a11yotp/OtpAlignment // me.vprogrammers.a11yotp/OtpAlignment.valueOf|valueOf#static(kotlin.String){}[0]
+    final fun values(): kotlin/Array<me.vprogrammers.a11yotp/OtpAlignment> // me.vprogrammers.a11yotp/OtpAlignment.values|values#static(){}[0]
+}
+
+final enum class me.vprogrammers.a11yotp/OtpContrastRequirement : kotlin/Enum<me.vprogrammers.a11yotp/OtpContrastRequirement> { // me.vprogrammers.a11yotp/OtpContrastRequirement|null[0]
+    enum entry FOCUS_INDICATOR // me.vprogrammers.a11yotp/OtpContrastRequirement.FOCUS_INDICATOR|null[0]
+    enum entry NON_TEXT // me.vprogrammers.a11yotp/OtpContrastRequirement.NON_TEXT|null[0]
+    enum entry TEXT // me.vprogrammers.a11yotp/OtpContrastRequirement.TEXT|null[0]
+
+    final val criterion // me.vprogrammers.a11yotp/OtpContrastRequirement.criterion|{}criterion[0]
+        final fun <get-criterion>(): kotlin/String // me.vprogrammers.a11yotp/OtpContrastRequirement.criterion.<get-criterion>|<get-criterion>(){}[0]
+    final val entries // me.vprogrammers.a11yotp/OtpContrastRequirement.entries|#static{}entries[0]
+        final fun <get-entries>(): kotlin.enums/EnumEntries<me.vprogrammers.a11yotp/OtpContrastRequirement> // me.vprogrammers.a11yotp/OtpContrastRequirement.entries.<get-entries>|<get-entries>#static(){}[0]
+    final val minimumRatio // me.vprogrammers.a11yotp/OtpContrastRequirement.minimumRatio|{}minimumRatio[0]
+        final fun <get-minimumRatio>(): kotlin/Double // me.vprogrammers.a11yotp/OtpContrastRequirement.minimumRatio.<get-minimumRatio>|<get-minimumRatio>(){}[0]
+    final val subject // me.vprogrammers.a11yotp/OtpContrastRequirement.subject|{}subject[0]
+        final fun <get-subject>(): kotlin/String // me.vprogrammers.a11yotp/OtpContrastRequirement.subject.<get-subject>|<get-subject>(){}[0]
+
+    final fun valueOf(kotlin/String): me.vprogrammers.a11yotp/OtpContrastRequirement // me.vprogrammers.a11yotp/OtpContrastRequirement.valueOf|valueOf#static(kotlin.String){}[0]
+    final fun values(): kotlin/Array<me.vprogrammers.a11yotp/OtpContrastRequirement> // me.vprogrammers.a11yotp/OtpContrastRequirement.values|values#static(){}[0]
+}
+
+final enum class me.vprogrammers.a11yotp/OtpLength : kotlin/Enum<me.vprogrammers.a11yotp/OtpLength> { // me.vprogrammers.a11yotp/OtpLength|null[0]
+    enum entry EIGHT // me.vprogrammers.a11yotp/OtpLength.EIGHT|null[0]
+    enum entry FOUR // me.vprogrammers.a11yotp/OtpLength.FOUR|null[0]
+    enum entry SIX // me.vprogrammers.a11yotp/OtpLength.SIX|null[0]
+
+    final val digitCount // me.vprogrammers.a11yotp/OtpLength.digitCount|{}digitCount[0]
+        final fun <get-digitCount>(): kotlin/Int // me.vprogrammers.a11yotp/OtpLength.digitCount.<get-digitCount>|<get-digitCount>(){}[0]
+    final val entries // me.vprogrammers.a11yotp/OtpLength.entries|#static{}entries[0]
+        final fun <get-entries>(): kotlin.enums/EnumEntries<me.vprogrammers.a11yotp/OtpLength> // me.vprogrammers.a11yotp/OtpLength.entries.<get-entries>|<get-entries>#static(){}[0]
+
+    final fun valueOf(kotlin/String): me.vprogrammers.a11yotp/OtpLength // me.vprogrammers.a11yotp/OtpLength.valueOf|valueOf#static(kotlin.String){}[0]
+    final fun values(): kotlin/Array<me.vprogrammers.a11yotp/OtpLength> // me.vprogrammers.a11yotp/OtpLength.values|values#static(){}[0]
+}
+
+sealed interface me.vprogrammers.a11yotp/OtpMask { // me.vprogrammers.a11yotp/OtpMask|null[0]
+    final class Character : me.vprogrammers.a11yotp/OtpMask { // me.vprogrammers.a11yotp/OtpMask.Character|null[0]
+        constructor <init>(kotlin/Char = ...) // me.vprogrammers.a11yotp/OtpMask.Character.<init>|<init>(kotlin.Char){}[0]
+
+        final val char // me.vprogrammers.a11yotp/OtpMask.Character.char|{}char[0]
+            final fun <get-char>(): kotlin/Char // me.vprogrammers.a11yotp/OtpMask.Character.char.<get-char>|<get-char>(){}[0]
+
+        final fun equals(kotlin/Any?): kotlin/Boolean // me.vprogrammers.a11yotp/OtpMask.Character.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // me.vprogrammers.a11yotp/OtpMask.Character.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // me.vprogrammers.a11yotp/OtpMask.Character.toString|toString(){}[0]
+    }
+
+    final object FilledCell : me.vprogrammers.a11yotp/OtpMask { // me.vprogrammers.a11yotp/OtpMask.FilledCell|null[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // me.vprogrammers.a11yotp/OtpMask.FilledCell.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // me.vprogrammers.a11yotp/OtpMask.FilledCell.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // me.vprogrammers.a11yotp/OtpMask.FilledCell.toString|toString(){}[0]
+    }
+
+    final object None : me.vprogrammers.a11yotp/OtpMask { // me.vprogrammers.a11yotp/OtpMask.None|null[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // me.vprogrammers.a11yotp/OtpMask.None.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // me.vprogrammers.a11yotp/OtpMask.None.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // me.vprogrammers.a11yotp/OtpMask.None.toString|toString(){}[0]
+    }
+}
+
+final class me.vprogrammers.a11yotp/OtpButtonColors { // me.vprogrammers.a11yotp/OtpButtonColors|null[0]
+    final val border // me.vprogrammers.a11yotp/OtpButtonColors.border|{}border[0]
+        final fun <get-border>(): platform.UIKit/UIColor // me.vprogrammers.a11yotp/OtpButtonColors.border.<get-border>|<get-border>(){}[0]
+    final val container // me.vprogrammers.a11yotp/OtpButtonColors.container|{}container[0]
+        final fun <get-container>(): platform.UIKit/UIColor // me.vprogrammers.a11yotp/OtpButtonColors.container.<get-container>|<get-container>(){}[0]
+    final val content // me.vprogrammers.a11yotp/OtpButtonColors.content|{}content[0]
+        final fun <get-content>(): platform.UIKit/UIColor // me.vprogrammers.a11yotp/OtpButtonColors.content.<get-content>|<get-content>(){}[0]
+    final val contrastWarnings // me.vprogrammers.a11yotp/OtpButtonColors.contrastWarnings|{}contrastWarnings[0]
+        final fun <get-contrastWarnings>(): kotlin.collections/List<kotlin/String> // me.vprogrammers.a11yotp/OtpButtonColors.contrastWarnings.<get-contrastWarnings>|<get-contrastWarnings>(){}[0]
+    final val disabledBorder // me.vprogrammers.a11yotp/OtpButtonColors.disabledBorder|{}disabledBorder[0]
+        final fun <get-disabledBorder>(): platform.UIKit/UIColor // me.vprogrammers.a11yotp/OtpButtonColors.disabledBorder.<get-disabledBorder>|<get-disabledBorder>(){}[0]
+    final val disabledContainer // me.vprogrammers.a11yotp/OtpButtonColors.disabledContainer|{}disabledContainer[0]
+        final fun <get-disabledContainer>(): platform.UIKit/UIColor // me.vprogrammers.a11yotp/OtpButtonColors.disabledContainer.<get-disabledContainer>|<get-disabledContainer>(){}[0]
+    final val disabledContent // me.vprogrammers.a11yotp/OtpButtonColors.disabledContent|{}disabledContent[0]
+        final fun <get-disabledContent>(): platform.UIKit/UIColor // me.vprogrammers.a11yotp/OtpButtonColors.disabledContent.<get-disabledContent>|<get-disabledContent>(){}[0]
+
+    final fun contrastWarningsIn(platform.UIKit/UITraitCollection): kotlin.collections/List<kotlin/String> // me.vprogrammers.a11yotp/OtpButtonColors.contrastWarningsIn|contrastWarningsIn(platform.UIKit.UITraitCollection){}[0]
+}
+
+final class me.vprogrammers.a11yotp/OtpButtonStyle { // me.vprogrammers.a11yotp/OtpButtonStyle|null[0]
+    final val borderWidth // me.vprogrammers.a11yotp/OtpButtonStyle.borderWidth|{}borderWidth[0]
+        final fun <get-borderWidth>(): kotlin/Double // me.vprogrammers.a11yotp/OtpButtonStyle.borderWidth.<get-borderWidth>|<get-borderWidth>(){}[0]
+    final val colors // me.vprogrammers.a11yotp/OtpButtonStyle.colors|{}colors[0]
+        final fun <get-colors>(): me.vprogrammers.a11yotp/OtpButtonColors // me.vprogrammers.a11yotp/OtpButtonStyle.colors.<get-colors>|<get-colors>(){}[0]
+    final val contrastWarnings // me.vprogrammers.a11yotp/OtpButtonStyle.contrastWarnings|{}contrastWarnings[0]
+        final fun <get-contrastWarnings>(): kotlin.collections/List<kotlin/String> // me.vprogrammers.a11yotp/OtpButtonStyle.contrastWarnings.<get-contrastWarnings>|<get-contrastWarnings>(){}[0]
+    final val cornerRadius // me.vprogrammers.a11yotp/OtpButtonStyle.cornerRadius|{}cornerRadius[0]
+        final fun <get-cornerRadius>(): kotlin/Double // me.vprogrammers.a11yotp/OtpButtonStyle.cornerRadius.<get-cornerRadius>|<get-cornerRadius>(){}[0]
+    final val font // me.vprogrammers.a11yotp/OtpButtonStyle.font|{}font[0]
+        final fun <get-font>(): platform.UIKit/UIFont // me.vprogrammers.a11yotp/OtpButtonStyle.font.<get-font>|<get-font>(){}[0]
+    final val fontTextStyle // me.vprogrammers.a11yotp/OtpButtonStyle.fontTextStyle|{}fontTextStyle[0]
+        final fun <get-fontTextStyle>(): kotlin/String? // me.vprogrammers.a11yotp/OtpButtonStyle.fontTextStyle.<get-fontTextStyle>|<get-fontTextStyle>(){}[0]
+    final val glass // me.vprogrammers.a11yotp/OtpButtonStyle.glass|{}glass[0]
+        final fun <get-glass>(): kotlin/Boolean // me.vprogrammers.a11yotp/OtpButtonStyle.glass.<get-glass>|<get-glass>(){}[0]
+    final val horizontalPadding // me.vprogrammers.a11yotp/OtpButtonStyle.horizontalPadding|{}horizontalPadding[0]
+        final fun <get-horizontalPadding>(): kotlin/Double // me.vprogrammers.a11yotp/OtpButtonStyle.horizontalPadding.<get-horizontalPadding>|<get-horizontalPadding>(){}[0]
+    final val minHeight // me.vprogrammers.a11yotp/OtpButtonStyle.minHeight|{}minHeight[0]
+        final fun <get-minHeight>(): kotlin/Double // me.vprogrammers.a11yotp/OtpButtonStyle.minHeight.<get-minHeight>|<get-minHeight>(){}[0]
+    final val verticalPadding // me.vprogrammers.a11yotp/OtpButtonStyle.verticalPadding|{}verticalPadding[0]
+        final fun <get-verticalPadding>(): kotlin/Double // me.vprogrammers.a11yotp/OtpButtonStyle.verticalPadding.<get-verticalPadding>|<get-verticalPadding>(){}[0]
+
+    final fun withGlass(kotlin/Boolean): me.vprogrammers.a11yotp/OtpButtonStyle // me.vprogrammers.a11yotp/OtpButtonStyle.withGlass|withGlass(kotlin.Boolean){}[0]
+}
+
+final class me.vprogrammers.a11yotp/OtpCountdown { // me.vprogrammers.a11yotp/OtpCountdown|null[0]
+    final val secondsRemaining // me.vprogrammers.a11yotp/OtpCountdown.secondsRemaining|{}secondsRemaining[0]
+        final fun <get-secondsRemaining>(): kotlin/Int // me.vprogrammers.a11yotp/OtpCountdown.secondsRemaining.<get-secondsRemaining>|<get-secondsRemaining>(){}[0]
+
+    final fun equals(kotlin/Any?): kotlin/Boolean // me.vprogrammers.a11yotp/OtpCountdown.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // me.vprogrammers.a11yotp/OtpCountdown.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // me.vprogrammers.a11yotp/OtpCountdown.toString|toString(){}[0]
+}
+
+final class me.vprogrammers.a11yotp/OtpField { // me.vprogrammers.a11yotp/OtpField|null[0]
+    constructor <init>(me.vprogrammers.a11yotp/OtpState, me.vprogrammers.a11yotp/OtpFieldAccessibility, kotlin/String) // me.vprogrammers.a11yotp/OtpField.<init>|<init>(me.vprogrammers.a11yotp.OtpState;me.vprogrammers.a11yotp.OtpFieldAccessibility;kotlin.String){}[0]
+
+    final val view // me.vprogrammers.a11yotp/OtpField.view|{}view[0]
+        final fun <get-view>(): platform.UIKit/UIView // me.vprogrammers.a11yotp/OtpField.view.<get-view>|<get-view>(){}[0]
+
+    final var accessibility // me.vprogrammers.a11yotp/OtpField.accessibility|{}accessibility[0]
+        final fun <get-accessibility>(): me.vprogrammers.a11yotp/OtpFieldAccessibility // me.vprogrammers.a11yotp/OtpField.accessibility.<get-accessibility>|<get-accessibility>(){}[0]
+        final fun <set-accessibility>(me.vprogrammers.a11yotp/OtpFieldAccessibility) // me.vprogrammers.a11yotp/OtpField.accessibility.<set-accessibility>|<set-accessibility>(me.vprogrammers.a11yotp.OtpFieldAccessibility){}[0]
+    final var alignment // me.vprogrammers.a11yotp/OtpField.alignment|{}alignment[0]
+        final fun <get-alignment>(): me.vprogrammers.a11yotp/OtpAlignment // me.vprogrammers.a11yotp/OtpField.alignment.<get-alignment>|<get-alignment>(){}[0]
+        final fun <set-alignment>(me.vprogrammers.a11yotp/OtpAlignment) // me.vprogrammers.a11yotp/OtpField.alignment.<set-alignment>|<set-alignment>(me.vprogrammers.a11yotp.OtpAlignment){}[0]
+    final var doneButtonTitle // me.vprogrammers.a11yotp/OtpField.doneButtonTitle|{}doneButtonTitle[0]
+        final fun <get-doneButtonTitle>(): kotlin/String // me.vprogrammers.a11yotp/OtpField.doneButtonTitle.<get-doneButtonTitle>|<get-doneButtonTitle>(){}[0]
+        final fun <set-doneButtonTitle>(kotlin/String) // me.vprogrammers.a11yotp/OtpField.doneButtonTitle.<set-doneButtonTitle>|<set-doneButtonTitle>(kotlin.String){}[0]
+    final var hapticFeedbackOnError // me.vprogrammers.a11yotp/OtpField.hapticFeedbackOnError|{}hapticFeedbackOnError[0]
+        final fun <get-hapticFeedbackOnError>(): kotlin/Boolean // me.vprogrammers.a11yotp/OtpField.hapticFeedbackOnError.<get-hapticFeedbackOnError>|<get-hapticFeedbackOnError>(){}[0]
+        final fun <set-hapticFeedbackOnError>(kotlin/Boolean) // me.vprogrammers.a11yotp/OtpField.hapticFeedbackOnError.<set-hapticFeedbackOnError>|<set-hapticFeedbackOnError>(kotlin.Boolean){}[0]
+    final var isEnabled // me.vprogrammers.a11yotp/OtpField.isEnabled|{}isEnabled[0]
+        final fun <get-isEnabled>(): kotlin/Boolean // me.vprogrammers.a11yotp/OtpField.isEnabled.<get-isEnabled>|<get-isEnabled>(){}[0]
+        final fun <set-isEnabled>(kotlin/Boolean) // me.vprogrammers.a11yotp/OtpField.isEnabled.<set-isEnabled>|<set-isEnabled>(kotlin.Boolean){}[0]
+    final var mask // me.vprogrammers.a11yotp/OtpField.mask|{}mask[0]
+        final fun <get-mask>(): me.vprogrammers.a11yotp/OtpMask // me.vprogrammers.a11yotp/OtpField.mask.<get-mask>|<get-mask>(){}[0]
+        final fun <set-mask>(me.vprogrammers.a11yotp/OtpMask) // me.vprogrammers.a11yotp/OtpField.mask.<set-mask>|<set-mask>(me.vprogrammers.a11yotp.OtpMask){}[0]
+    final var onComplete // me.vprogrammers.a11yotp/OtpField.onComplete|{}onComplete[0]
+        final fun <get-onComplete>(): kotlin/Function1<kotlin/String, kotlin/Unit>? // me.vprogrammers.a11yotp/OtpField.onComplete.<get-onComplete>|<get-onComplete>(){}[0]
+        final fun <set-onComplete>(kotlin/Function1<kotlin/String, kotlin/Unit>?) // me.vprogrammers.a11yotp/OtpField.onComplete.<set-onComplete>|<set-onComplete>(kotlin.Function1<kotlin.String,kotlin.Unit>?){}[0]
+    final var onInputRejected // me.vprogrammers.a11yotp/OtpField.onInputRejected|{}onInputRejected[0]
+        final fun <get-onInputRejected>(): kotlin/Function1<me.vprogrammers.a11yotp/OtpInputRejection, kotlin/Unit>? // me.vprogrammers.a11yotp/OtpField.onInputRejected.<get-onInputRejected>|<get-onInputRejected>(){}[0]
+        final fun <set-onInputRejected>(kotlin/Function1<me.vprogrammers.a11yotp/OtpInputRejection, kotlin/Unit>?) // me.vprogrammers.a11yotp/OtpField.onInputRejected.<set-onInputRejected>|<set-onInputRejected>(kotlin.Function1<me.vprogrammers.a11yotp.OtpInputRejection,kotlin.Unit>?){}[0]
+    final var onStateChange // me.vprogrammers.a11yotp/OtpField.onStateChange|{}onStateChange[0]
+        final fun <get-onStateChange>(): kotlin/Function1<me.vprogrammers.a11yotp/OtpState, kotlin/Unit>? // me.vprogrammers.a11yotp/OtpField.onStateChange.<get-onStateChange>|<get-onStateChange>(){}[0]
+        final fun <set-onStateChange>(kotlin/Function1<me.vprogrammers.a11yotp/OtpState, kotlin/Unit>?) // me.vprogrammers.a11yotp/OtpField.onStateChange.<set-onStateChange>|<set-onStateChange>(kotlin.Function1<me.vprogrammers.a11yotp.OtpState,kotlin.Unit>?){}[0]
+    final var state // me.vprogrammers.a11yotp/OtpField.state|{}state[0]
+        final fun <get-state>(): me.vprogrammers.a11yotp/OtpState // me.vprogrammers.a11yotp/OtpField.state.<get-state>|<get-state>(){}[0]
+        final fun <set-state>(me.vprogrammers.a11yotp/OtpState) // me.vprogrammers.a11yotp/OtpField.state.<set-state>|<set-state>(me.vprogrammers.a11yotp.OtpState){}[0]
+    final var style // me.vprogrammers.a11yotp/OtpField.style|{}style[0]
+        final fun <get-style>(): me.vprogrammers.a11yotp/OtpFieldStyle // me.vprogrammers.a11yotp/OtpField.style.<get-style>|<get-style>(){}[0]
+        final fun <set-style>(me.vprogrammers.a11yotp/OtpFieldStyle) // me.vprogrammers.a11yotp/OtpField.style.<set-style>|<set-style>(me.vprogrammers.a11yotp.OtpFieldStyle){}[0]
+
+    final fun blur() // me.vprogrammers.a11yotp/OtpField.blur|blur(){}[0]
+    final fun focus() // me.vprogrammers.a11yotp/OtpField.focus|focus(){}[0]
+}
+
+final class me.vprogrammers.a11yotp/OtpFieldAccessibility { // me.vprogrammers.a11yotp/OtpFieldAccessibility|null[0]
+    constructor <init>(kotlin/String, kotlin/String, kotlin/Function1<me.vprogrammers.a11yotp/OtpProgress, kotlin/String>, kotlin/Function1<me.vprogrammers.a11yotp/OtpInputRejection, kotlin/String>) // me.vprogrammers.a11yotp/OtpFieldAccessibility.<init>|<init>(kotlin.String;kotlin.String;kotlin.Function1<me.vprogrammers.a11yotp.OtpProgress,kotlin.String>;kotlin.Function1<me.vprogrammers.a11yotp.OtpInputRejection,kotlin.String>){}[0]
+
+    final val errorMessage // me.vprogrammers.a11yotp/OtpFieldAccessibility.errorMessage|{}errorMessage[0]
+        final fun <get-errorMessage>(): kotlin/String // me.vprogrammers.a11yotp/OtpFieldAccessibility.errorMessage.<get-errorMessage>|<get-errorMessage>(){}[0]
+    final val inputRejectedMessage // me.vprogrammers.a11yotp/OtpFieldAccessibility.inputRejectedMessage|{}inputRejectedMessage[0]
+        final fun <get-inputRejectedMessage>(): kotlin/Function1<me.vprogrammers.a11yotp/OtpInputRejection, kotlin/String> // me.vprogrammers.a11yotp/OtpFieldAccessibility.inputRejectedMessage.<get-inputRejectedMessage>|<get-inputRejectedMessage>(){}[0]
+    final val label // me.vprogrammers.a11yotp/OtpFieldAccessibility.label|{}label[0]
+        final fun <get-label>(): kotlin/String // me.vprogrammers.a11yotp/OtpFieldAccessibility.label.<get-label>|<get-label>(){}[0]
+    final val progressDescription // me.vprogrammers.a11yotp/OtpFieldAccessibility.progressDescription|{}progressDescription[0]
+        final fun <get-progressDescription>(): kotlin/Function1<me.vprogrammers.a11yotp/OtpProgress, kotlin/String> // me.vprogrammers.a11yotp/OtpFieldAccessibility.progressDescription.<get-progressDescription>|<get-progressDescription>(){}[0]
+}
+
+final class me.vprogrammers.a11yotp/OtpFieldColors { // me.vprogrammers.a11yotp/OtpFieldColors|null[0]
+    final val cellBackground // me.vprogrammers.a11yotp/OtpFieldColors.cellBackground|{}cellBackground[0]
+        final fun <get-cellBackground>(): platform.UIKit/UIColor // me.vprogrammers.a11yotp/OtpFieldColors.cellBackground.<get-cellBackground>|<get-cellBackground>(){}[0]
+    final val cellBorder // me.vprogrammers.a11yotp/OtpFieldColors.cellBorder|{}cellBorder[0]
+        final fun <get-cellBorder>(): platform.UIKit/UIColor // me.vprogrammers.a11yotp/OtpFieldColors.cellBorder.<get-cellBorder>|<get-cellBorder>(){}[0]
+    final val contrastWarnings // me.vprogrammers.a11yotp/OtpFieldColors.contrastWarnings|{}contrastWarnings[0]
+        final fun <get-contrastWarnings>(): kotlin.collections/List<kotlin/String> // me.vprogrammers.a11yotp/OtpFieldColors.contrastWarnings.<get-contrastWarnings>|<get-contrastWarnings>(){}[0]
+    final val disabledCellBackground // me.vprogrammers.a11yotp/OtpFieldColors.disabledCellBackground|{}disabledCellBackground[0]
+        final fun <get-disabledCellBackground>(): platform.UIKit/UIColor // me.vprogrammers.a11yotp/OtpFieldColors.disabledCellBackground.<get-disabledCellBackground>|<get-disabledCellBackground>(){}[0]
+    final val disabledCellBorder // me.vprogrammers.a11yotp/OtpFieldColors.disabledCellBorder|{}disabledCellBorder[0]
+        final fun <get-disabledCellBorder>(): platform.UIKit/UIColor // me.vprogrammers.a11yotp/OtpFieldColors.disabledCellBorder.<get-disabledCellBorder>|<get-disabledCellBorder>(){}[0]
+    final val disabledText // me.vprogrammers.a11yotp/OtpFieldColors.disabledText|{}disabledText[0]
+        final fun <get-disabledText>(): platform.UIKit/UIColor // me.vprogrammers.a11yotp/OtpFieldColors.disabledText.<get-disabledText>|<get-disabledText>(){}[0]
+    final val errorCellBorder // me.vprogrammers.a11yotp/OtpFieldColors.errorCellBorder|{}errorCellBorder[0]
+        final fun <get-errorCellBorder>(): platform.UIKit/UIColor // me.vprogrammers.a11yotp/OtpFieldColors.errorCellBorder.<get-errorCellBorder>|<get-errorCellBorder>(){}[0]
+    final val errorText // me.vprogrammers.a11yotp/OtpFieldColors.errorText|{}errorText[0]
+        final fun <get-errorText>(): platform.UIKit/UIColor // me.vprogrammers.a11yotp/OtpFieldColors.errorText.<get-errorText>|<get-errorText>(){}[0]
+    final val focusedCellBorder // me.vprogrammers.a11yotp/OtpFieldColors.focusedCellBorder|{}focusedCellBorder[0]
+        final fun <get-focusedCellBorder>(): platform.UIKit/UIColor // me.vprogrammers.a11yotp/OtpFieldColors.focusedCellBorder.<get-focusedCellBorder>|<get-focusedCellBorder>(){}[0]
+    final val placeholder // me.vprogrammers.a11yotp/OtpFieldColors.placeholder|{}placeholder[0]
+        final fun <get-placeholder>(): platform.UIKit/UIColor // me.vprogrammers.a11yotp/OtpFieldColors.placeholder.<get-placeholder>|<get-placeholder>(){}[0]
+    final val text // me.vprogrammers.a11yotp/OtpFieldColors.text|{}text[0]
+        final fun <get-text>(): platform.UIKit/UIColor // me.vprogrammers.a11yotp/OtpFieldColors.text.<get-text>|<get-text>(){}[0]
+
+    final fun contrastWarningsIn(platform.UIKit/UITraitCollection): kotlin.collections/List<kotlin/String> // me.vprogrammers.a11yotp/OtpFieldColors.contrastWarningsIn|contrastWarningsIn(platform.UIKit.UITraitCollection){}[0]
+}
+
+final class me.vprogrammers.a11yotp/OtpFieldStyle { // me.vprogrammers.a11yotp/OtpFieldStyle|null[0]
+    final val borderWidth // me.vprogrammers.a11yotp/OtpFieldStyle.borderWidth|{}borderWidth[0]
+        final fun <get-borderWidth>(): kotlin/Double // me.vprogrammers.a11yotp/OtpFieldStyle.borderWidth.<get-borderWidth>|<get-borderWidth>(){}[0]
+    final val cellSpacing // me.vprogrammers.a11yotp/OtpFieldStyle.cellSpacing|{}cellSpacing[0]
+        final fun <get-cellSpacing>(): kotlin/Double // me.vprogrammers.a11yotp/OtpFieldStyle.cellSpacing.<get-cellSpacing>|<get-cellSpacing>(){}[0]
+    final val colors // me.vprogrammers.a11yotp/OtpFieldStyle.colors|{}colors[0]
+        final fun <get-colors>(): me.vprogrammers.a11yotp/OtpFieldColors // me.vprogrammers.a11yotp/OtpFieldStyle.colors.<get-colors>|<get-colors>(){}[0]
+    final val contrastWarnings // me.vprogrammers.a11yotp/OtpFieldStyle.contrastWarnings|{}contrastWarnings[0]
+        final fun <get-contrastWarnings>(): kotlin.collections/List<kotlin/String> // me.vprogrammers.a11yotp/OtpFieldStyle.contrastWarnings.<get-contrastWarnings>|<get-contrastWarnings>(){}[0]
+    final val cornerRadius // me.vprogrammers.a11yotp/OtpFieldStyle.cornerRadius|{}cornerRadius[0]
+        final fun <get-cornerRadius>(): kotlin/Double // me.vprogrammers.a11yotp/OtpFieldStyle.cornerRadius.<get-cornerRadius>|<get-cornerRadius>(){}[0]
+    final val errorTextStyle // me.vprogrammers.a11yotp/OtpFieldStyle.errorTextStyle|{}errorTextStyle[0]
+        final fun <get-errorTextStyle>(): kotlin/String? // me.vprogrammers.a11yotp/OtpFieldStyle.errorTextStyle.<get-errorTextStyle>|<get-errorTextStyle>(){}[0]
+    final val focusedBorderWidth // me.vprogrammers.a11yotp/OtpFieldStyle.focusedBorderWidth|{}focusedBorderWidth[0]
+        final fun <get-focusedBorderWidth>(): kotlin/Double // me.vprogrammers.a11yotp/OtpFieldStyle.focusedBorderWidth.<get-focusedBorderWidth>|<get-focusedBorderWidth>(){}[0]
+    final val font // me.vprogrammers.a11yotp/OtpFieldStyle.font|{}font[0]
+        final fun <get-font>(): platform.UIKit/UIFont // me.vprogrammers.a11yotp/OtpFieldStyle.font.<get-font>|<get-font>(){}[0]
+    final val fontTextStyle // me.vprogrammers.a11yotp/OtpFieldStyle.fontTextStyle|{}fontTextStyle[0]
+        final fun <get-fontTextStyle>(): kotlin/String? // me.vprogrammers.a11yotp/OtpFieldStyle.fontTextStyle.<get-fontTextStyle>|<get-fontTextStyle>(){}[0]
+    final val glass // me.vprogrammers.a11yotp/OtpFieldStyle.glass|{}glass[0]
+        final fun <get-glass>(): kotlin/Boolean // me.vprogrammers.a11yotp/OtpFieldStyle.glass.<get-glass>|<get-glass>(){}[0]
+    final val groupSize // me.vprogrammers.a11yotp/OtpFieldStyle.groupSize|{}groupSize[0]
+        final fun <get-groupSize>(): kotlin/Int // me.vprogrammers.a11yotp/OtpFieldStyle.groupSize.<get-groupSize>|<get-groupSize>(){}[0]
+    final val liftFocusedCell // me.vprogrammers.a11yotp/OtpFieldStyle.liftFocusedCell|{}liftFocusedCell[0]
+        final fun <get-liftFocusedCell>(): kotlin/Boolean // me.vprogrammers.a11yotp/OtpFieldStyle.liftFocusedCell.<get-liftFocusedCell>|<get-liftFocusedCell>(){}[0]
+    final val minCellHeight // me.vprogrammers.a11yotp/OtpFieldStyle.minCellHeight|{}minCellHeight[0]
+        final fun <get-minCellHeight>(): kotlin/Double // me.vprogrammers.a11yotp/OtpFieldStyle.minCellHeight.<get-minCellHeight>|<get-minCellHeight>(){}[0]
+    final val minCellWidth // me.vprogrammers.a11yotp/OtpFieldStyle.minCellWidth|{}minCellWidth[0]
+        final fun <get-minCellWidth>(): kotlin/Double // me.vprogrammers.a11yotp/OtpFieldStyle.minCellWidth.<get-minCellWidth>|<get-minCellWidth>(){}[0]
+    final val placeholder // me.vprogrammers.a11yotp/OtpFieldStyle.placeholder|{}placeholder[0]
+        final fun <get-placeholder>(): kotlin/String? // me.vprogrammers.a11yotp/OtpFieldStyle.placeholder.<get-placeholder>|<get-placeholder>(){}[0]
+
+    final fun withCornerRadius(kotlin/Double): me.vprogrammers.a11yotp/OtpFieldStyle // me.vprogrammers.a11yotp/OtpFieldStyle.withCornerRadius|withCornerRadius(kotlin.Double){}[0]
+    final fun withFocusLift(kotlin/Boolean): me.vprogrammers.a11yotp/OtpFieldStyle // me.vprogrammers.a11yotp/OtpFieldStyle.withFocusLift|withFocusLift(kotlin.Boolean){}[0]
+    final fun withGlass(kotlin/Boolean): me.vprogrammers.a11yotp/OtpFieldStyle // me.vprogrammers.a11yotp/OtpFieldStyle.withGlass|withGlass(kotlin.Boolean){}[0]
+    final fun withGroupSize(kotlin/Int): me.vprogrammers.a11yotp/OtpFieldStyle // me.vprogrammers.a11yotp/OtpFieldStyle.withGroupSize|withGroupSize(kotlin.Int){}[0]
+    final fun withMinCellSize(kotlin/Double, kotlin/Double): me.vprogrammers.a11yotp/OtpFieldStyle // me.vprogrammers.a11yotp/OtpFieldStyle.withMinCellSize|withMinCellSize(kotlin.Double;kotlin.Double){}[0]
+}
+
+final class me.vprogrammers.a11yotp/OtpInputRejection { // me.vprogrammers.a11yotp/OtpInputRejection|null[0]
+    final val expectedDigitCount // me.vprogrammers.a11yotp/OtpInputRejection.expectedDigitCount|{}expectedDigitCount[0]
+        final fun <get-expectedDigitCount>(): kotlin/Int // me.vprogrammers.a11yotp/OtpInputRejection.expectedDigitCount.<get-expectedDigitCount>|<get-expectedDigitCount>(){}[0]
+    final val receivedDigitCount // me.vprogrammers.a11yotp/OtpInputRejection.receivedDigitCount|{}receivedDigitCount[0]
+        final fun <get-receivedDigitCount>(): kotlin/Int // me.vprogrammers.a11yotp/OtpInputRejection.receivedDigitCount.<get-receivedDigitCount>|<get-receivedDigitCount>(){}[0]
+
+    final fun equals(kotlin/Any?): kotlin/Boolean // me.vprogrammers.a11yotp/OtpInputRejection.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // me.vprogrammers.a11yotp/OtpInputRejection.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // me.vprogrammers.a11yotp/OtpInputRejection.toString|toString(){}[0]
+}
+
+final class me.vprogrammers.a11yotp/OtpInputResult { // me.vprogrammers.a11yotp/OtpInputResult|null[0]
+    final val didComplete // me.vprogrammers.a11yotp/OtpInputResult.didComplete|{}didComplete[0]
+        final fun <get-didComplete>(): kotlin/Boolean // me.vprogrammers.a11yotp/OtpInputResult.didComplete.<get-didComplete>|<get-didComplete>(){}[0]
+    final val rejection // me.vprogrammers.a11yotp/OtpInputResult.rejection|{}rejection[0]
+        final fun <get-rejection>(): me.vprogrammers.a11yotp/OtpInputRejection? // me.vprogrammers.a11yotp/OtpInputResult.rejection.<get-rejection>|<get-rejection>(){}[0]
+    final val state // me.vprogrammers.a11yotp/OtpInputResult.state|{}state[0]
+        final fun <get-state>(): me.vprogrammers.a11yotp/OtpState // me.vprogrammers.a11yotp/OtpInputResult.state.<get-state>|<get-state>(){}[0]
+}
+
+final class me.vprogrammers.a11yotp/OtpProgress { // me.vprogrammers.a11yotp/OtpProgress|null[0]
+    final val entered // me.vprogrammers.a11yotp/OtpProgress.entered|{}entered[0]
+        final fun <get-entered>(): kotlin/Int // me.vprogrammers.a11yotp/OtpProgress.entered.<get-entered>|<get-entered>(){}[0]
+    final val total // me.vprogrammers.a11yotp/OtpProgress.total|{}total[0]
+        final fun <get-total>(): kotlin/Int // me.vprogrammers.a11yotp/OtpProgress.total.<get-total>|<get-total>(){}[0]
+
+    final fun equals(kotlin/Any?): kotlin/Boolean // me.vprogrammers.a11yotp/OtpProgress.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // me.vprogrammers.a11yotp/OtpProgress.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // me.vprogrammers.a11yotp/OtpProgress.toString|toString(){}[0]
+}
+
+final class me.vprogrammers.a11yotp/OtpResendAccessibility { // me.vprogrammers.a11yotp/OtpResendAccessibility|null[0]
+    constructor <init>(kotlin/String, kotlin/Function1<me.vprogrammers.a11yotp/OtpCountdown, kotlin/String>) // me.vprogrammers.a11yotp/OtpResendAccessibility.<init>|<init>(kotlin.String;kotlin.Function1<me.vprogrammers.a11yotp.OtpCountdown,kotlin.String>){}[0]
+
+    final val countdownDescription // me.vprogrammers.a11yotp/OtpResendAccessibility.countdownDescription|{}countdownDescription[0]
+        final fun <get-countdownDescription>(): kotlin/Function1<me.vprogrammers.a11yotp/OtpCountdown, kotlin/String> // me.vprogrammers.a11yotp/OtpResendAccessibility.countdownDescription.<get-countdownDescription>|<get-countdownDescription>(){}[0]
+    final val label // me.vprogrammers.a11yotp/OtpResendAccessibility.label|{}label[0]
+        final fun <get-label>(): kotlin/String // me.vprogrammers.a11yotp/OtpResendAccessibility.label.<get-label>|<get-label>(){}[0]
+}
+
+final class me.vprogrammers.a11yotp/OtpResendButton { // me.vprogrammers.a11yotp/OtpResendButton|null[0]
+    constructor <init>(me.vprogrammers.a11yotp/OtpResendAccessibility) // me.vprogrammers.a11yotp/OtpResendButton.<init>|<init>(me.vprogrammers.a11yotp.OtpResendAccessibility){}[0]
+
+    final val view // me.vprogrammers.a11yotp/OtpResendButton.view|{}view[0]
+        final fun <get-view>(): platform.UIKit/UIView // me.vprogrammers.a11yotp/OtpResendButton.view.<get-view>|<get-view>(){}[0]
+
+    final var accessibility // me.vprogrammers.a11yotp/OtpResendButton.accessibility|{}accessibility[0]
+        final fun <get-accessibility>(): me.vprogrammers.a11yotp/OtpResendAccessibility // me.vprogrammers.a11yotp/OtpResendButton.accessibility.<get-accessibility>|<get-accessibility>(){}[0]
+        final fun <set-accessibility>(me.vprogrammers.a11yotp/OtpResendAccessibility) // me.vprogrammers.a11yotp/OtpResendButton.accessibility.<set-accessibility>|<set-accessibility>(me.vprogrammers.a11yotp.OtpResendAccessibility){}[0]
+    final var alignment // me.vprogrammers.a11yotp/OtpResendButton.alignment|{}alignment[0]
+        final fun <get-alignment>(): me.vprogrammers.a11yotp/OtpAlignment // me.vprogrammers.a11yotp/OtpResendButton.alignment.<get-alignment>|<get-alignment>(){}[0]
+        final fun <set-alignment>(me.vprogrammers.a11yotp/OtpAlignment) // me.vprogrammers.a11yotp/OtpResendButton.alignment.<set-alignment>|<set-alignment>(me.vprogrammers.a11yotp.OtpAlignment){}[0]
+    final var onResend // me.vprogrammers.a11yotp/OtpResendButton.onResend|{}onResend[0]
+        final fun <get-onResend>(): kotlin/Function0<kotlin/Unit>? // me.vprogrammers.a11yotp/OtpResendButton.onResend.<get-onResend>|<get-onResend>(){}[0]
+        final fun <set-onResend>(kotlin/Function0<kotlin/Unit>?) // me.vprogrammers.a11yotp/OtpResendButton.onResend.<set-onResend>|<set-onResend>(kotlin.Function0<kotlin.Unit>?){}[0]
+    final var secondsRemaining // me.vprogrammers.a11yotp/OtpResendButton.secondsRemaining|{}secondsRemaining[0]
+        final fun <get-secondsRemaining>(): kotlin/Int // me.vprogrammers.a11yotp/OtpResendButton.secondsRemaining.<get-secondsRemaining>|<get-secondsRemaining>(){}[0]
+        final fun <set-secondsRemaining>(kotlin/Int) // me.vprogrammers.a11yotp/OtpResendButton.secondsRemaining.<set-secondsRemaining>|<set-secondsRemaining>(kotlin.Int){}[0]
+    final var style // me.vprogrammers.a11yotp/OtpResendButton.style|{}style[0]
+        final fun <get-style>(): me.vprogrammers.a11yotp/OtpButtonStyle // me.vprogrammers.a11yotp/OtpResendButton.style.<get-style>|<get-style>(){}[0]
+        final fun <set-style>(me.vprogrammers.a11yotp/OtpButtonStyle) // me.vprogrammers.a11yotp/OtpResendButton.style.<set-style>|<set-style>(me.vprogrammers.a11yotp.OtpButtonStyle){}[0]
+}
+
+final class me.vprogrammers.a11yotp/OtpState { // me.vprogrammers.a11yotp/OtpState|null[0]
+    constructor <init>(me.vprogrammers.a11yotp/OtpLength) // me.vprogrammers.a11yotp/OtpState.<init>|<init>(me.vprogrammers.a11yotp.OtpLength){}[0]
+
+    final val code // me.vprogrammers.a11yotp/OtpState.code|{}code[0]
+        final fun <get-code>(): kotlin/String // me.vprogrammers.a11yotp/OtpState.code.<get-code>|<get-code>(){}[0]
+    final val enteredDigitCount // me.vprogrammers.a11yotp/OtpState.enteredDigitCount|{}enteredDigitCount[0]
+        final fun <get-enteredDigitCount>(): kotlin/Int // me.vprogrammers.a11yotp/OtpState.enteredDigitCount.<get-enteredDigitCount>|<get-enteredDigitCount>(){}[0]
+    final val isComplete // me.vprogrammers.a11yotp/OtpState.isComplete|{}isComplete[0]
+        final fun <get-isComplete>(): kotlin/Boolean // me.vprogrammers.a11yotp/OtpState.isComplete.<get-isComplete>|<get-isComplete>(){}[0]
+    final val isError // me.vprogrammers.a11yotp/OtpState.isError|{}isError[0]
+        final fun <get-isError>(): kotlin/Boolean // me.vprogrammers.a11yotp/OtpState.isError.<get-isError>|<get-isError>(){}[0]
+    final val length // me.vprogrammers.a11yotp/OtpState.length|{}length[0]
+        final fun <get-length>(): me.vprogrammers.a11yotp/OtpLength // me.vprogrammers.a11yotp/OtpState.length.<get-length>|<get-length>(){}[0]
+
+    final fun cleared(): me.vprogrammers.a11yotp/OtpState // me.vprogrammers.a11yotp/OtpState.cleared|cleared(){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // me.vprogrammers.a11yotp/OtpState.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // me.vprogrammers.a11yotp/OtpState.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // me.vprogrammers.a11yotp/OtpState.toString|toString(){}[0]
+    final fun withError(): me.vprogrammers.a11yotp/OtpState // me.vprogrammers.a11yotp/OtpState.withError|withError(){}[0]
+    final fun withInput(kotlin/String): me.vprogrammers.a11yotp/OtpInputResult // me.vprogrammers.a11yotp/OtpState.withInput|withInput(kotlin.String){}[0]
+    final fun withoutError(): me.vprogrammers.a11yotp/OtpState // me.vprogrammers.a11yotp/OtpState.withoutError|withoutError(){}[0]
+}
+
+final class me.vprogrammers.a11yotp/OtpVerifyAccessibility { // me.vprogrammers.a11yotp/OtpVerifyAccessibility|null[0]
+    constructor <init>(kotlin/String) // me.vprogrammers.a11yotp/OtpVerifyAccessibility.<init>|<init>(kotlin.String){}[0]
+
+    final val label // me.vprogrammers.a11yotp/OtpVerifyAccessibility.label|{}label[0]
+        final fun <get-label>(): kotlin/String // me.vprogrammers.a11yotp/OtpVerifyAccessibility.label.<get-label>|<get-label>(){}[0]
+}
+
+final class me.vprogrammers.a11yotp/OtpVerifyButton { // me.vprogrammers.a11yotp/OtpVerifyButton|null[0]
+    constructor <init>(me.vprogrammers.a11yotp/OtpVerifyAccessibility) // me.vprogrammers.a11yotp/OtpVerifyButton.<init>|<init>(me.vprogrammers.a11yotp.OtpVerifyAccessibility){}[0]
+
+    final val view // me.vprogrammers.a11yotp/OtpVerifyButton.view|{}view[0]
+        final fun <get-view>(): platform.UIKit/UIView // me.vprogrammers.a11yotp/OtpVerifyButton.view.<get-view>|<get-view>(){}[0]
+
+    final var accessibility // me.vprogrammers.a11yotp/OtpVerifyButton.accessibility|{}accessibility[0]
+        final fun <get-accessibility>(): me.vprogrammers.a11yotp/OtpVerifyAccessibility // me.vprogrammers.a11yotp/OtpVerifyButton.accessibility.<get-accessibility>|<get-accessibility>(){}[0]
+        final fun <set-accessibility>(me.vprogrammers.a11yotp/OtpVerifyAccessibility) // me.vprogrammers.a11yotp/OtpVerifyButton.accessibility.<set-accessibility>|<set-accessibility>(me.vprogrammers.a11yotp.OtpVerifyAccessibility){}[0]
+    final var alignment // me.vprogrammers.a11yotp/OtpVerifyButton.alignment|{}alignment[0]
+        final fun <get-alignment>(): me.vprogrammers.a11yotp/OtpAlignment // me.vprogrammers.a11yotp/OtpVerifyButton.alignment.<get-alignment>|<get-alignment>(){}[0]
+        final fun <set-alignment>(me.vprogrammers.a11yotp/OtpAlignment) // me.vprogrammers.a11yotp/OtpVerifyButton.alignment.<set-alignment>|<set-alignment>(me.vprogrammers.a11yotp.OtpAlignment){}[0]
+    final var isEnabled // me.vprogrammers.a11yotp/OtpVerifyButton.isEnabled|{}isEnabled[0]
+        final fun <get-isEnabled>(): kotlin/Boolean // me.vprogrammers.a11yotp/OtpVerifyButton.isEnabled.<get-isEnabled>|<get-isEnabled>(){}[0]
+        final fun <set-isEnabled>(kotlin/Boolean) // me.vprogrammers.a11yotp/OtpVerifyButton.isEnabled.<set-isEnabled>|<set-isEnabled>(kotlin.Boolean){}[0]
+    final var onVerify // me.vprogrammers.a11yotp/OtpVerifyButton.onVerify|{}onVerify[0]
+        final fun <get-onVerify>(): kotlin/Function1<kotlin/String, kotlin/Unit>? // me.vprogrammers.a11yotp/OtpVerifyButton.onVerify.<get-onVerify>|<get-onVerify>(){}[0]
+        final fun <set-onVerify>(kotlin/Function1<kotlin/String, kotlin/Unit>?) // me.vprogrammers.a11yotp/OtpVerifyButton.onVerify.<set-onVerify>|<set-onVerify>(kotlin.Function1<kotlin.String,kotlin.Unit>?){}[0]
+    final var state // me.vprogrammers.a11yotp/OtpVerifyButton.state|{}state[0]
+        final fun <get-state>(): me.vprogrammers.a11yotp/OtpState // me.vprogrammers.a11yotp/OtpVerifyButton.state.<get-state>|<get-state>(){}[0]
+        final fun <set-state>(me.vprogrammers.a11yotp/OtpState) // me.vprogrammers.a11yotp/OtpVerifyButton.state.<set-state>|<set-state>(me.vprogrammers.a11yotp.OtpState){}[0]
+    final var style // me.vprogrammers.a11yotp/OtpVerifyButton.style|{}style[0]
+        final fun <get-style>(): me.vprogrammers.a11yotp/OtpButtonStyle // me.vprogrammers.a11yotp/OtpVerifyButton.style.<get-style>|<get-style>(){}[0]
+        final fun <set-style>(me.vprogrammers.a11yotp/OtpButtonStyle) // me.vprogrammers.a11yotp/OtpVerifyButton.style.<set-style>|<set-style>(me.vprogrammers.a11yotp.OtpButtonStyle){}[0]
+}
+
+final object me.vprogrammers.a11yotp/OtpButtonDefaults { // me.vprogrammers.a11yotp/OtpButtonDefaults|null[0]
+    final fun colors(): me.vprogrammers.a11yotp/OtpButtonColors // me.vprogrammers.a11yotp/OtpButtonDefaults.colors|colors(){}[0]
+    final fun colors(platform.UIKit/UIColor = ..., platform.UIKit/UIColor = ..., platform.UIKit/UIColor = ..., platform.UIKit/UIColor = ..., platform.UIKit/UIColor = ..., platform.UIKit/UIColor = ...): me.vprogrammers.a11yotp/OtpButtonColors // me.vprogrammers.a11yotp/OtpButtonDefaults.colors|colors(platform.UIKit.UIColor;platform.UIKit.UIColor;platform.UIKit.UIColor;platform.UIKit.UIColor;platform.UIKit.UIColor;platform.UIKit.UIColor){}[0]
+    final fun style(): me.vprogrammers.a11yotp/OtpButtonStyle // me.vprogrammers.a11yotp/OtpButtonDefaults.style|style(){}[0]
+    final fun style(platform.UIKit/UIFont = ..., kotlin/String? = ..., kotlin/Double = ..., kotlin/Double = ..., kotlin/Double = ..., kotlin/Double = ..., kotlin/Double = ..., me.vprogrammers.a11yotp/OtpButtonColors = ...): me.vprogrammers.a11yotp/OtpButtonStyle // me.vprogrammers.a11yotp/OtpButtonDefaults.style|style(platform.UIKit.UIFont;kotlin.String?;kotlin.Double;kotlin.Double;kotlin.Double;kotlin.Double;kotlin.Double;me.vprogrammers.a11yotp.OtpButtonColors){}[0]
+}
+
+final object me.vprogrammers.a11yotp/OtpContrast { // me.vprogrammers.a11yotp/OtpContrast|null[0]
+    final fun ratio(kotlin/Int, kotlin/Int): kotlin/Double // me.vprogrammers.a11yotp/OtpContrast.ratio|ratio(kotlin.Int;kotlin.Int){}[0]
+    final fun warning(kotlin/String, kotlin/String, kotlin/Int, kotlin/String, kotlin/Int, me.vprogrammers.a11yotp/OtpContrastRequirement): kotlin/String? // me.vprogrammers.a11yotp/OtpContrast.warning|warning(kotlin.String;kotlin.String;kotlin.Int;kotlin.String;kotlin.Int;me.vprogrammers.a11yotp.OtpContrastRequirement){}[0]
+}
+
+final object me.vprogrammers.a11yotp/OtpFieldDefaults { // me.vprogrammers.a11yotp/OtpFieldDefaults|null[0]
+    final fun colors(): me.vprogrammers.a11yotp/OtpFieldColors // me.vprogrammers.a11yotp/OtpFieldDefaults.colors|colors(){}[0]
+    final fun colors(platform.UIKit/UIColor = ..., platform.UIKit/UIColor = ..., platform.UIKit/UIColor = ..., platform.UIKit/UIColor = ..., platform.UIKit/UIColor = ..., platform.UIKit/UIColor = ..., platform.UIKit/UIColor = ..., platform.UIKit/UIColor = ..., platform.UIKit/UIColor = ..., platform.UIKit/UIColor = ...): me.vprogrammers.a11yotp/OtpFieldColors // me.vprogrammers.a11yotp/OtpFieldDefaults.colors|colors(platform.UIKit.UIColor;platform.UIKit.UIColor;platform.UIKit.UIColor;platform.UIKit.UIColor;platform.UIKit.UIColor;platform.UIKit.UIColor;platform.UIKit.UIColor;platform.UIKit.UIColor;platform.UIKit.UIColor;platform.UIKit.UIColor){}[0]
+    final fun style(): me.vprogrammers.a11yotp/OtpFieldStyle // me.vprogrammers.a11yotp/OtpFieldDefaults.style|style(){}[0]
+    final fun style(platform.UIKit/UIFont = ..., kotlin/String? = ..., kotlin/String? = ..., kotlin/Double = ..., kotlin/Double = ..., kotlin/Double = ..., kotlin/Double = ..., kotlin/Double = ..., kotlin/Double = ..., me.vprogrammers.a11yotp/OtpFieldColors = ..., kotlin/Int = ..., kotlin/String? = ...): me.vprogrammers.a11yotp/OtpFieldStyle // me.vprogrammers.a11yotp/OtpFieldDefaults.style|style(platform.UIKit.UIFont;kotlin.String?;kotlin.String?;kotlin.Double;kotlin.Double;kotlin.Double;kotlin.Double;kotlin.Double;kotlin.Double;me.vprogrammers.a11yotp.OtpFieldColors;kotlin.Int;kotlin.String?){}[0]
+}

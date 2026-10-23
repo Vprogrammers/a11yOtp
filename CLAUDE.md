@@ -65,6 +65,7 @@ Run the narrowest applicable command first:
 ./gradlew :a11yotp:connectedAndroidDeviceTest     # needs emulator or device
 ./gradlew :androidApp:assembleDebug
 ./gradlew ktlintCheck
+./gradlew checkKotlinAbi          # public API vs. the api/ dumps (macOS); updateKotlinAbi after an intended change
 ./scripts/verify-publication.sh   # publishToMavenLocal + clean consumer build
 ./scripts/swiftlint.sh   # pinned SwiftLint; configured errors fail
 ```
