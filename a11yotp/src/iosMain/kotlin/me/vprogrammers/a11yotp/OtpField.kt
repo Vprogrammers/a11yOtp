@@ -6,6 +6,7 @@ import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.CValue
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.ObjCAction
+import kotlinx.cinterop.useContents
 import platform.Foundation.NSRange
 import platform.UIKit.UIAccessibilityAnnouncementNotification
 import platform.UIKit.UIAccessibilityPostNotification
@@ -23,6 +24,7 @@ import platform.UIKit.setIsAccessibilityElement
 import platform.darwin.DISPATCH_TIME_NOW
 import platform.darwin.NSObject
 import platform.darwin.dispatch_after
+import platform.darwin.dispatch_async
 import platform.darwin.dispatch_get_main_queue
 import platform.darwin.dispatch_time
 import kotlin.experimental.ExperimentalNativeApi
@@ -42,10 +44,19 @@ import kotlin.native.ref.WeakReference
  * and VoiceOver gets the label and progress only, never the digits.
  *
  * The field uses the one-time-code content type, so the system can offer codes from messages.
+ * An autofilled code is applied as one input, so a code whose length differs from the field is
+ * rejected like a paste instead of being cut or filling only some cells.
  * Setting [state] to an error state announces [OtpFieldAccessibility.errorMessage] once without moving
  * focus, and vibrates once when [hapticFeedbackOnError] is true. [alignment] only positions the
  * cells and error text; digits inside the row always read left to right. No animation is used, so
  * Reduce Motion needs no special handling.
+ *
+ * The number pad has no Return key, so the text field has a transparent input accessory holding a Done
+ * button (titled [doneButtonTitle]) that calls [blur]. The button is a system prominent button shaped
+ * like a number pad key and placed above the "3" key; the area around it passes touches through, so
+ * it does not cover the one-time-code suggestion. The system tint, dark mode, and Increase Contrast
+ * apply. VoiceOver users can also dismiss the keyboard with the two-finger scrub (escape) gesture
+ * on the field.
  *
  * No `accessibilityHint` is set by default, intentionally: progress and error state are already part
  * of the accessibility value, and a hint would be read on every focus.
@@ -80,7 +91,7 @@ class OtpField(
             }
         }
 
-    /** Title of the keyboard Done button. Localized by the host; may change at runtime. Must not be blank. */
+    /** Title of the Done button above the number pad. Localized by the host; may change at runtime. Must not be blank. */
     var doneButtonTitle: String = doneButtonTitle
         set(value) {
             require(value.isNotBlank()) { "doneButtonTitle must not be blank" }
@@ -140,12 +151,15 @@ class OtpField(
     private var isFocused = false
     private var isPinningCaret = false
     private val handler = Handler()
-    private var doneBar: OtpKeyboardAccessory? = null
+    private var doneAccessory: OtpDoneAccessory? = null
     private var errorGeneration = 0
 
     // Resolved host text of the rejection being shown; null when none (or the host text was blank).
     private var rejectionMessage: String? = null
     private var rejectionGeneration = 0
+
+    // Replacements received in the current run-loop turn, applied together by flushPendingInput.
+    private val pendingReplacements = mutableListOf<String>()
 
     private inner class Handler :
         NSObject(),
@@ -155,7 +169,10 @@ class OtpField(
             shouldChangeCharactersInRange: CValue<NSRange>,
             replacementString: String,
         ): Boolean {
-            handleReplacement(replacementString)
+            // An empty replacement of an empty range changes nothing; iOS sends it before autofill.
+            val deletesNothing = shouldChangeCharactersInRange.useContents { length == 0uL }
+            if (replacementString.isEmpty() && deletesNothing) return false
+            enqueueReplacement(replacementString)
             return false
         }
 
@@ -197,8 +214,7 @@ class OtpField(
         textField.tintColor = platform.UIKit.UIColor.clearColor
         textField.backgroundColor = platform.UIKit.UIColor.clearColor
         textField.setIsAccessibilityElement(true)
-        // Done bar detached for now: it gets in the way of the one-time-code suggestion (#10).
-        // textField.inputAccessoryView = doneBar()
+        textField.inputAccessoryView = doneAccessory()
 
         val weakSelf = WeakReference(this)
         container.onTraitsChanged = { weakSelf.get()?.render() }
@@ -213,6 +229,38 @@ class OtpField(
     /** Dismisses the keyboard. */
     fun blur() {
         container.textField.resignFirstResponder()
+    }
+
+    /**
+     * Queues a replacement and applies everything queued in the same run-loop turn together. iOS
+     * one-time-code autofill inserts a code one character at a time within a single turn, so without
+     * this a 4-digit code would fill 4 cells of a 6-digit field and an 8-digit code would be cut to
+     * 6, never reaching the length rule. On-screen keyboard typing delivers each key in its own turn
+     * (verified on device, also with XCUITest typing).
+     */
+    internal fun enqueueReplacement(replacement: String) {
+        pendingReplacements += replacement
+        if (pendingReplacements.size > 1) return
+        val weakSelf = WeakReference(this)
+        dispatch_async(dispatch_get_main_queue()) { weakSelf.get()?.flushPendingInput() }
+    }
+
+    /** Applies the queued replacements in order; consecutive insertions are applied as one input. */
+    internal fun flushPendingInput() {
+        if (pendingReplacements.isEmpty()) return
+        val replacements = pendingReplacements.toList()
+        pendingReplacements.clear()
+        val inserted = StringBuilder()
+        for (replacement in replacements) {
+            if (replacement.isNotEmpty()) {
+                inserted.append(replacement)
+                continue
+            }
+            if (inserted.isNotEmpty()) handleReplacement(inserted.toString())
+            inserted.clear()
+            handleReplacement(replacement)
+        }
+        if (inserted.isNotEmpty()) handleReplacement(inserted.toString())
     }
 
     /**
@@ -317,16 +365,13 @@ class OtpField(
         }
     }
 
-    // The number pad has no Return key, so the keyboard gets a Done button.
-    private fun doneBar(): OtpKeyboardAccessory =
-        OtpKeyboardAccessory(handler, "donePressed").also {
-            it.anchorView = container
-            it.setTitle(doneButtonTitle)
-            doneBar = it
-        }
+    // The number pad has no Return key, so the keyboard gets a Done key styled like a number pad key,
+    // above the "3" key. The accessory is transparent and passes touches through outside the key.
+    private fun doneAccessory(): OtpDoneAccessory =
+        OtpDoneAccessory(handler, "donePressed", doneButtonTitle).also { doneAccessory = it }
 
     private fun applyDoneTitle() {
-        doneBar?.setTitle(doneButtonTitle)
+        doneAccessory?.title = doneButtonTitle
     }
 
     private companion object {
