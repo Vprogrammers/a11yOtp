@@ -168,6 +168,9 @@ internal class OtpButtonContainer : UIView(frame = CGRectMake(0.0, 0.0, 0.0, 0.0
     init {
         setIsAccessibilityElement(false)
         addSubview(control)
+        observeTraits(listOf(contentSizeTrait(), legibilityWeightTrait()) + appearanceTraits()) {
+            it.onTraitsChanged?.invoke()
+        }
     }
 
     fun render(model: OtpButtonModel) {
@@ -218,11 +221,6 @@ internal class OtpButtonContainer : UIView(frame = CGRectMake(0.0, 0.0, 0.0, 0.0
                 UIUserInterfaceLayoutDirection.UIUserInterfaceLayoutDirectionRightToLeft
         val fraction = (model.alignment.absoluteBias(rtl) + 1.0) / 2.0
         control.setFrame(CGRectMake((width - buttonWidth) * fraction, 0.0, buttonWidth, buttonHeight))
-    }
-
-    override fun traitCollectionDidChange(previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-        onTraitsChanged?.invoke()
     }
 }
 
