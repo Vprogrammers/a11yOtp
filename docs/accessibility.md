@@ -23,7 +23,7 @@ The library sets no accessibility hint, because the progress and the error are a
 | Requirement | How the component meets it | WCAG |
 |---|---|---|
 | One labelled input | Single text input, decorative cells hidden from assistive technology | 1.3.1, 4.1.2 |
-| Errors not by color alone | Error color plus a thicker border, an icon and text | 1.4.1 |
+| Errors not by color alone | Error color plus a thicker border and the error text; on iOS also an error icon | 1.4.1 |
 | Contrast | Default colors ≥ 4.5:1 for text and ≥ 3:1 for borders and focus, in light and dark; your colors are checked and a warning is logged; the iOS Done key is darkened to ≥ 4.5:1 | 1.4.3, 1.4.11 |
 | Text size | No fixed heights; cells and error text grow with font scale and Dynamic Type | 1.4.4 |
 | Motion | The only animation, the focused cell lifting, is skipped under Reduce Motion / Remove animations | 2.3.3 |
