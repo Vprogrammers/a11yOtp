@@ -5,6 +5,7 @@ package me.vprogrammers.a11yotp
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.useContents
 import platform.CoreGraphics.CGRectMake
+import platform.UIKit.UIUserInterfaceLevelElevated
 import platform.UIKit.UIUserInterfaceSizeClassCompact
 import platform.UIKit.UIUserInterfaceStyle
 import platform.UIKit.UIView
@@ -43,6 +44,29 @@ class OtpTraitChangesIosTest {
         window.settle()
 
         assertTrue(changes >= 1, "changes=$changes")
+    }
+
+    /** Dark-mode system colors differ between base and elevated levels (sheets, popovers). */
+    @Test
+    fun fieldAndButtonRenderAgainWhenOnlyTheInterfaceLevelChanges() {
+        val field = OtpFieldContainer()
+        val button = OtpButtonContainer()
+        var fieldChanges = 0
+        var buttonChanges = 0
+        field.onTraitsChanged = { fieldChanges++ }
+        button.onTraitsChanged = { buttonChanges++ }
+        val window = window(field)
+        window.addSubview(button)
+        window.traitOverrides.setUserInterfaceStyle(UIUserInterfaceStyle.UIUserInterfaceStyleDark)
+        window.settle()
+        fieldChanges = 0
+        buttonChanges = 0
+
+        window.traitOverrides.setUserInterfaceLevel(UIUserInterfaceLevelElevated)
+        window.settle()
+
+        assertTrue(fieldChanges >= 1, "field changes=$fieldChanges")
+        assertTrue(buttonChanges >= 1, "button changes=$buttonChanges")
     }
 
     @Test
