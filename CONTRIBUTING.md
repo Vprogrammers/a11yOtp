@@ -75,7 +75,7 @@ Keep `commonMain` free of Android, Compose, UIKit and Foundation types. Platform
 - **Shared and Android (JVM)**, on Ubuntu: ktlint, host tests, the Android device test compile, the Android sample, and `./scripts/verify-publication.sh`.
   The verification publishes both modules to Maven Local and builds the clean consumer in `scripts/consumer-check`.
 - **iOS (Apple Silicon)**, on macOS: the public API check, the Kotlin/Native tests on the iOS simulator, the Shared framework, SwiftLint, and the iOS UI tests (including Apple's accessibility audit) on a simulator.
-- **Android device tests**: on an emulator, only when started by hand (Actions → Validation → Run workflow, with the emulator option), and in the release workflow.
+- **Android device tests**, on an emulator (API 35, a narrow screen of about 320 dp): on every pull request, when started by hand (Actions → Validation → Run workflow, with the emulator option), and in the release workflow. Pushes to `main` skip them, because the pull request already ran them. Device tests must not assume a wide screen.
 
 A manual run can also pick a single target: `all`, `kmp`, `android` or `ios`.
 

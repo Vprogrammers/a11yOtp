@@ -25,7 +25,7 @@ Read `.claude/skills/kmp-library-engineering/SKILL.md` for the authoritative mod
 - iOS deployment target: 18.2
 - Xcode UI test target: `iosAppUITests` (`iosApp/iosAppUITests`), in the shared `iosApp` scheme. Device signing reads `TEAM_ID` from the git-ignored `iosApp/Configuration/Local.xcconfig`; never commit a team ID.
 - Publishing: `com.vanniktech.maven.publish`, coordinates `me.vprogrammers:a11yotp` and `me.vprogrammers:a11yotp-sms-retriever`, version `VERSION_NAME` in `gradle.properties`. `./scripts/verify-publication.sh` publishes to Maven Local and builds the clean consumer in `scripts/consumer-check`. `.github/workflows/publish.yml` releases only on manual dispatch from `main`, after validation and approval in the `release` environment; never start it unless explicitly asked.
-- `.github/workflows/validation.yml` runs on pull requests and pushes to `main` (JVM checks and publication verification on Ubuntu; Kotlin/Native simulator tests, SwiftLint, and iOS UI tests on Apple Silicon macOS); Android emulator device tests run only on manual dispatch and in the release workflow.
+- `.github/workflows/validation.yml` runs on pull requests and pushes to `main` (JVM checks and publication verification on Ubuntu; Kotlin/Native simulator tests, SwiftLint, and iOS UI tests on Apple Silicon macOS); Android emulator device tests run on every pull request, on manual dispatch, and in the release workflow (not on pushes to `main`).
 - Gradle uses JDK 21. Library modules target JVM 11 and `androidApp` targets JVM 21; see `gradle-ci-quality/SKILL.md`.
 
 ## Project skills
