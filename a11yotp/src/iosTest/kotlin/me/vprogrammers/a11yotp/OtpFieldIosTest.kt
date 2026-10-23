@@ -1,5 +1,10 @@
+@file:OptIn(ExperimentalForeignApi::class)
+
 package me.vprogrammers.a11yotp
 
+import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.cinterop.useContents
+import platform.CoreGraphics.CGRectMake
 import platform.UIKit.accessibilityLabel
 import platform.UIKit.accessibilityValue
 import platform.UIKit.isAccessibilityElement
@@ -240,5 +245,57 @@ class OtpStyleIosTest {
     @Test
     fun blankDoneTitleIsRejected() {
         assertFailsWith<IllegalArgumentException> { OtpField(OtpState(OtpLength.SIX), fieldAccessibility(), " ") }
+    }
+
+    private fun accessory(field: OtpField): OtpDoneAccessory {
+        val view = (field.view as OtpFieldContainer).textField.inputAccessoryView
+        assertTrue(view is OtpDoneAccessory, "inputAccessoryView was $view")
+        return view
+    }
+
+    @Test
+    fun keyboardAccessoryHasOneDoneButtonWithTheTitle() {
+        val accessory = accessory(newField())
+
+        assertEquals(listOf(accessory.button), accessory.subviews)
+        assertEquals("Done", accessory.title)
+        assertEquals("Done", accessory.button.accessibilityLabel)
+        assertEquals(
+            9.0,
+            accessory.button.configuration
+                ?.background
+                ?.cornerRadius,
+        )
+    }
+
+    @Test
+    fun changingTheDoneTitleUpdatesTheButton() {
+        val field = newField()
+
+        field.doneButtonTitle = "Fertig"
+
+        assertEquals("Fertig", accessory(field).title)
+        assertEquals("Fertig", accessory(field).button.accessibilityLabel)
+    }
+
+    @Test
+    fun doneButtonSitsAboveTheThreeKey() {
+        val accessory = accessory(newField())
+        accessory.setFrame(CGRectMake(0.0, 0.0, 390.0, 60.0))
+        accessory.layoutIfNeeded()
+
+        accessory.button.frame.useContents {
+            assertEquals(262.0, origin.x)
+            assertEquals(6.0, origin.y)
+            assertEquals(122.0, size.width)
+            assertEquals(48.0, size.height)
+        }
+    }
+
+    @Test
+    fun escapeGestureReturnsFalseWhenTheFieldIsNotFocused() {
+        val textField = (newField().view as OtpFieldContainer).textField as OtpTextField
+
+        assertFalse(textField.performEscape())
     }
 }

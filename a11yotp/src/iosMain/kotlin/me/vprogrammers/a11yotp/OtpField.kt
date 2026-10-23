@@ -47,6 +47,13 @@ import kotlin.native.ref.WeakReference
  * cells and error text; digits inside the row always read left to right. No animation is used, so
  * Reduce Motion needs no special handling.
  *
+ * The number pad has no Return key, so the text field has a transparent input accessory holding a Done
+ * button (titled [doneButtonTitle]) that calls [blur]. The button is a system prominent button shaped
+ * like a number pad key and placed above the "3" key; the area around it passes touches through, so
+ * it does not cover the one-time-code suggestion. The system tint, dark mode, and Increase Contrast
+ * apply. VoiceOver users can also dismiss the keyboard with the two-finger scrub (escape) gesture
+ * on the field.
+ *
  * No `accessibilityHint` is set by default, intentionally: progress and error state are already part
  * of the accessibility value, and a hint would be read on every focus.
  */
@@ -80,7 +87,7 @@ class OtpField(
             }
         }
 
-    /** Title of the keyboard Done button. Localized by the host; may change at runtime. Must not be blank. */
+    /** Title of the Done button above the number pad. Localized by the host; may change at runtime. Must not be blank. */
     var doneButtonTitle: String = doneButtonTitle
         set(value) {
             require(value.isNotBlank()) { "doneButtonTitle must not be blank" }
@@ -140,7 +147,7 @@ class OtpField(
     private var isFocused = false
     private var isPinningCaret = false
     private val handler = Handler()
-    private var doneBar: OtpKeyboardAccessory? = null
+    private var doneAccessory: OtpDoneAccessory? = null
     private var errorGeneration = 0
 
     // Resolved host text of the rejection being shown; null when none (or the host text was blank).
@@ -197,8 +204,7 @@ class OtpField(
         textField.tintColor = platform.UIKit.UIColor.clearColor
         textField.backgroundColor = platform.UIKit.UIColor.clearColor
         textField.setIsAccessibilityElement(true)
-        // Done bar detached for now: it gets in the way of the one-time-code suggestion (#10).
-        // textField.inputAccessoryView = doneBar()
+        textField.inputAccessoryView = doneAccessory()
 
         val weakSelf = WeakReference(this)
         container.onTraitsChanged = { weakSelf.get()?.render() }
@@ -317,16 +323,13 @@ class OtpField(
         }
     }
 
-    // The number pad has no Return key, so the keyboard gets a Done button.
-    private fun doneBar(): OtpKeyboardAccessory =
-        OtpKeyboardAccessory(handler, "donePressed").also {
-            it.anchorView = container
-            it.setTitle(doneButtonTitle)
-            doneBar = it
-        }
+    // The number pad has no Return key, so the keyboard gets a Done key styled like a number pad key,
+    // above the "3" key. The accessory is transparent and passes touches through outside the key.
+    private fun doneAccessory(): OtpDoneAccessory =
+        OtpDoneAccessory(handler, "donePressed", doneButtonTitle).also { doneAccessory = it }
 
     private fun applyDoneTitle() {
-        doneBar?.setTitle(doneButtonTitle)
+        doneAccessory?.title = doneButtonTitle
     }
 
     private companion object {
