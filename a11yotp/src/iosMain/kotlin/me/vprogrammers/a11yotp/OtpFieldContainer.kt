@@ -44,6 +44,8 @@ internal class OtpFieldModel(
     val label: String,
     val value: String,
     val errorMessage: String,
+    /** Transient text for a rejected multi-digit input; replaces the error text in the slot while shown. */
+    val rejectedMessage: String?,
     val style: OtpFieldStyle,
     val mask: OtpMask,
     val isEnabled: Boolean,
@@ -172,18 +174,29 @@ internal class OtpFieldContainer : UIView(frame = CGRectMake(0.0, 0.0, 0.0, 0.0)
         val separatorColor = (if (enabled) colors.cellBorder else colors.disabledCellBorder)
         separators.forEach { it.backgroundColor = separatorColor.resolvedColorWithTraitCollection(traits) }
 
-        val showsError = state.isError
-        errorLabel.hidden = !showsError
+        // The cells keep their error styling; the label shows the newest message, without the error icon.
+        val showsError = state.isError && model.rejectedMessage == null
+        val message = model.rejectedMessage ?: if (state.isError) model.errorMessage else null
+        errorLabel.hidden = message == null
         errorIcon.hidden = !showsError
+        if (message != null) {
+            // The rejection text is neutral (normal text color, no icon); only a real error is red.
+            val errorColor =
+                (if (enabled) colors.errorText else colors.disabledText).resolvedColorWithTraitCollection(
+                    traits,
+                )
+            val textColor =
+                (if (enabled) colors.text else colors.disabledText).resolvedColorWithTraitCollection(traits)
+            errorLabel.text = message
+            errorLabel.font = UIFont.preferredFontForTextStyle(style.errorTextStyle)
+            errorLabel.textColor = if (showsError) errorColor else textColor
+            errorLabel.textAlignment = textAlignment(model.alignment)
+        }
         if (showsError) {
             val errorColor =
                 (if (enabled) colors.errorText else colors.disabledText).resolvedColorWithTraitCollection(
                     traits,
                 )
-            errorLabel.text = model.errorMessage
-            errorLabel.font = UIFont.preferredFontForTextStyle(style.errorTextStyle)
-            errorLabel.textColor = errorColor
-            errorLabel.textAlignment = textAlignment(model.alignment)
             val symbol = UIImageSymbolConfiguration.configurationWithTextStyle(style.errorTextStyle)
             errorIcon.image = UIImage.systemImageNamed("exclamationmark.circle.fill", withConfiguration = symbol)
             errorIcon.tintColor = errorColor
@@ -277,13 +290,18 @@ internal class OtpFieldContainer : UIView(frame = CGRectMake(0.0, 0.0, 0.0, 0.0)
         model: OtpFieldModel,
         width: Double,
     ): Triple<Double, Double, Double> {
-        // Returns icon width, label width, height.
-        if (!model.state.isError) return Triple(0.0, 0.0, 0.0)
+        // Returns icon width, label width, height. A rejection has text but no icon.
+        val message = model.rejectedMessage ?: if (model.state.isError) model.errorMessage else null
+        if (message == null) return Triple(0.0, 0.0, 0.0)
+        val hasIcon = model.state.isError && model.rejectedMessage == null
         // `this.` is required: a bare `width` would resolve to the parameter, not CGSize.width.
-        val iconWidth = errorIcon.intrinsicContentSize().useContents { this.width }
-        val labelWidth = (width - iconWidth - ERROR_ICON_GAP).coerceAtLeast(1.0)
+        val iconWidth = if (hasIcon) errorIcon.intrinsicContentSize().useContents { this.width } else 0.0
+        val gap = if (hasIcon) ERROR_ICON_GAP else 0.0
+        val labelWidth = (width - iconWidth - gap).coerceAtLeast(1.0)
+        // The label text is set in render(), but measure the current message in case sizing runs first.
+        if (errorLabel.text != message) errorLabel.text = message
         val labelHeight = errorLabel.sizeThatFits(CGSizeMake(labelWidth, UNBOUNDED)).useContents { this.height }
-        val iconHeight = errorIcon.intrinsicContentSize().useContents { this.height }
+        val iconHeight = if (hasIcon) errorIcon.intrinsicContentSize().useContents { this.height } else 0.0
         return Triple(iconWidth, labelWidth, maxOf(labelHeight, iconHeight))
     }
 
@@ -391,14 +409,18 @@ internal class OtpFieldContainer : UIView(frame = CGRectMake(0.0, 0.0, 0.0, 0.0)
             }
         }
 
-        if (model.state.isError) {
+        if (model.state.isError || model.rejectedMessage != null) {
+            val hasIcon = model.state.isError && model.rejectedMessage == null
             val (iconWidth, labelWidth, height) = errorSize(model, width)
-            val rowWidth = iconWidth + ERROR_ICON_GAP + labelWidth
+            val gap = if (hasIcon) ERROR_ICON_GAP else 0.0
+            val rowWidth = iconWidth + gap + labelWidth
             val x = ((width - rowWidth) * fraction).coerceAtLeast(0.0)
             val y = rowsHeight + 2 * inset + ERROR_GAP
-            val iconHeight = errorIcon.intrinsicContentSize().useContents { this.height }
-            errorIcon.setFrame(CGRectMake(x, y + (height - iconHeight) / 2, iconWidth, iconHeight))
-            errorLabel.setFrame(CGRectMake(x + iconWidth + ERROR_ICON_GAP, y, labelWidth, height))
+            if (hasIcon) {
+                val iconHeight = errorIcon.intrinsicContentSize().useContents { this.height }
+                errorIcon.setFrame(CGRectMake(x, y + (height - iconHeight) / 2, iconWidth, iconHeight))
+            }
+            errorLabel.setFrame(CGRectMake(x + iconWidth + gap, y, labelWidth, height))
         }
     }
 

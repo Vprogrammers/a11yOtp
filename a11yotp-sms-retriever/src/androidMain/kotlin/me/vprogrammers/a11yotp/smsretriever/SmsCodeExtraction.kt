@@ -24,6 +24,13 @@ internal sealed interface SmsResult {
 
 private val appHashToken = Regex("[A-Za-z0-9+/=]{11}")
 
+/** Shortest and longest digit runs that are plausible OTP codes, matching the supported field lengths. */
+private const val MIN_PLAUSIBLE_DIGITS = 4
+private const val MAX_PLAUSIBLE_DIGITS = 8
+
+/** A run of digits not adjacent to letters, digits, `+` or `/`, so longer numbers such as phone numbers never match. */
+private fun standaloneDigits(quantifier: String) = Regex("(?<![A-Za-z0-9+/])[0-9]$quantifier(?![A-Za-z0-9+/])")
+
 /**
  * Extracts the verification code from an SMS Retriever [message].
  *
@@ -37,11 +44,13 @@ internal fun extractSmsCode(
     length: OtpLength,
 ): String? {
     val body = stripAppHash(message)
-    val count = length.digitCount
-    val pattern = Regex("(?<![A-Za-z0-9+/])[0-9]{$count}(?![A-Za-z0-9+/])")
-    val matches = pattern.findAll(body).map { it.value }.toSet()
+    val matches = standaloneDigits("{${length.digitCount}}").findAll(body).map { it.value }.toSet()
     return matches.singleOrNull()
 }
+
+/** True when [message] has a standalone digit run of 4 to 8 digits, whatever the field length. */
+private fun hasPlausibleCodeOfAnyLength(message: String): Boolean =
+    standaloneDigits("{$MIN_PLAUSIBLE_DIGITS,$MAX_PLAUSIBLE_DIGITS}").containsMatchIn(stripAppHash(message))
 
 private fun stripAppHash(message: String): String {
     val trimmed = message.trimEnd()
@@ -50,6 +59,11 @@ private fun stripAppHash(message: String): String {
     return if (appHashToken.matches(last)) trimmed.substring(0, start) else trimmed
 }
 
+private fun hasExactLengthRun(
+    message: String,
+    length: OtpLength,
+): Boolean = standaloneDigits("{${length.digitCount}}").containsMatchIn(stripAppHash(message))
+
 /** Maps a retriever [statusCode] and [message] to a result, or null when there is nothing to deliver. */
 internal fun resolveSmsResult(
     statusCode: Int,
@@ -57,7 +71,29 @@ internal fun resolveSmsResult(
     length: OtpLength,
 ): SmsResult? =
     when (statusCode) {
-        STATUS_SUCCESS -> message?.let { extractSmsCode(it, length) }?.let { SmsResult.Code(it) }
-        STATUS_TIMEOUT -> SmsResult.Failure(SmsRetrieverFailure.TIMEOUT)
-        else -> null
+        STATUS_SUCCESS -> {
+            val code = message?.let { extractSmsCode(it, length) }
+            when {
+                code != null -> {
+                    SmsResult.Code(code)
+                }
+
+                // Two different codes of the right length are ambiguous, not a length mismatch.
+                message != null && !hasExactLengthRun(message, length) && hasPlausibleCodeOfAnyLength(message) -> {
+                    SmsResult.Failure(SmsRetrieverFailure.CODE_LENGTH_MISMATCH)
+                }
+
+                else -> {
+                    null
+                }
+            }
+        }
+
+        STATUS_TIMEOUT -> {
+            SmsResult.Failure(SmsRetrieverFailure.TIMEOUT)
+        }
+
+        else -> {
+            null
+        }
     }

@@ -21,8 +21,19 @@ struct ContentView: View {
     private static let fieldAccessibility = OtpFieldAccessibility(
         label: "Verification code",
         errorMessage: "Incorrect code. Try again.",
-        progressDescription: { "\($0.entered) of \($0.total) digits entered" }
+        progressDescription: { "\($0.entered) of \($0.total) digits entered" },
+        inputRejectedMessage: {
+            let received = digits(Int($0.receivedDigitCount))
+            let expected = digits(Int($0.expectedDigitCount))
+            return "The code has \(received), but \(expected) are expected."
+        }
     )
+
+    /// "1 digit" or "4 digits" through automatic grammar agreement.
+    private static func digits(_ count: Int) -> String {
+        String(AttributedString(localized: "^[\(count) digit](inflect: true)").characters)
+    }
+
     private static let verifyAccessibility = OtpVerifyAccessibility(label: "Verify")
     private static let resendAccessibility = OtpResendAccessibility(
         label: "Resend code",

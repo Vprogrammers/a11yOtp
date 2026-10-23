@@ -8,8 +8,8 @@ import kotlin.test.assertNotEquals
 class OtpConfigurationTest {
     @Test
     fun fieldAccessibilityTextMustNotBeBlank() {
-        assertFailsWith<IllegalArgumentException> { OtpFieldAccessibility(" ", "Error") { "x" } }
-        assertFailsWith<IllegalArgumentException> { OtpFieldAccessibility("Code", "") { "x" } }
+        assertFailsWith<IllegalArgumentException> { OtpFieldAccessibility(" ", "Error", { "x" }, { "x" }) }
+        assertFailsWith<IllegalArgumentException> { OtpFieldAccessibility("Code", "", { "x" }, { "x" }) }
     }
 
     @Test
@@ -20,8 +20,12 @@ class OtpConfigurationTest {
 
     @Test
     fun descriptionsReceiveValueObjects() {
-        val field = OtpFieldAccessibility("Code", "Wrong") { "${it.entered} of ${it.total}" }
+        val field =
+            OtpFieldAccessibility("Code", "Wrong", {
+                "${it.entered} of ${it.total}"
+            }, { "${it.receivedDigitCount}/${it.expectedDigitCount}" })
         assertEquals("3 of 6", field.progressDescription(OtpProgress(3, 6)))
+        assertEquals("4/6", field.inputRejectedMessage(OtpInputRejection(6, 4)))
         val resend = OtpResendAccessibility("Resend") { "Resend in ${it.secondsRemaining} s" }
         assertEquals("Resend in 25 s", resend.countdownDescription(OtpCountdown(25)))
     }

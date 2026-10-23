@@ -37,15 +37,16 @@ class OtpStateEdgeCasesTest {
 
         assertSame(complete, result.state)
         assertFalse(result.didComplete)
+        assertEquals(OtpInputRejection(6, 3), result.rejection)
     }
 
     @Test
-    fun appendedInputToIncompleteFieldIsPlainOverflow() {
-        val partial = OtpState(OtpLength.FOUR).withInput("12").state
+    fun appendedFullCodeToPartialFieldReplacesTheInput() {
+        val partial = OtpState(OtpLength.FOUR).typed("12")
 
         val result = partial.withInput("125678")
 
-        assertEquals("1256", result.state.code)
+        assertEquals("5678", result.state.code)
         assertTrue(result.didComplete)
     }
 
@@ -62,25 +63,28 @@ class OtpStateEdgeCasesTest {
     @Test
     fun inputIsRejectedForEveryLengthWithoutChangingPartialState() {
         for (length in OtpLength.entries) {
-            val partial = OtpState(length).withInput("12").state
+            val partial = OtpState(length).typed("12")
 
             assertSame(partial, partial.withInput("1a").state, "$length")
         }
     }
 
     @Test
-    fun overlongInputCompletesForEachLength() {
+    fun overlongInputIsRejectedForEachLength() {
         for (length in OtpLength.entries) {
-            val result = OtpState(length).withInput("1234567890123")
+            val empty = OtpState(length)
 
-            assertEquals("1234567890123".take(length.digitCount), result.state.code)
-            assertTrue(result.didComplete)
+            val result = empty.withInput("1234567890123")
+
+            assertSame(empty, result.state)
+            assertFalse(result.didComplete)
+            assertEquals(OtpInputRejection(length.digitCount, 13), result.rejection)
         }
     }
 
     @Test
     fun unchangedInputDoesNotClearErrorOrComplete() {
-        val partial = OtpState(OtpLength.SIX).withInput("123").state.withError()
+        val partial = OtpState(OtpLength.SIX).typed("123").withError()
 
         val result = partial.withInput("1 2 3")
 

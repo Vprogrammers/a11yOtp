@@ -17,6 +17,7 @@ private fun fieldAccessibility() =
         label = "Verification code",
         errorMessage = "Incorrect code",
         progressDescription = { "${it.entered} of ${it.total} digits entered" },
+        inputRejectedMessage = { "${it.receivedDigitCount} digits" },
     )
 
 private fun newField(length: OtpLength = OtpLength.SIX): OtpField =
@@ -27,14 +28,14 @@ private fun newField(length: OtpLength = OtpLength.SIX): OtpField =
 class OtpFieldIosTest {
     @Test
     fun valueSpellsDigitsAndProgressWhenUnmasked() {
-        val state = OtpState(OtpLength.SIX).withInput("123").state
+        val state = OtpState(OtpLength.SIX).typed("123")
 
         assertEquals("1 2 3, 3 of 6 digits entered", otpAccessibilityValue(state, fieldAccessibility(), masked = false))
     }
 
     @Test
     fun valueNeverContainsDigitsWhenMasked() {
-        val state = OtpState(OtpLength.SIX).withInput("123").state
+        val state = OtpState(OtpLength.SIX).typed("123")
 
         assertEquals("3 of 6 digits entered", otpAccessibilityValue(state, fieldAccessibility(), masked = true))
     }
@@ -114,7 +115,7 @@ class OtpFieldIosTest {
     @Test
     fun deletionRemovesTheLastDigit() {
         val field = newField()
-        field.handleReplacement("123")
+        "123".forEach { field.handleReplacement(it.toString()) }
 
         field.handleReplacement("")
 
@@ -136,13 +137,13 @@ class OtpFieldIosTest {
     }
 
     @Test
-    fun partialPasteIsAppended() {
+    fun partialPasteIsRejectedNotAppended() {
         val field = newField()
-        field.handleReplacement("12")
+        "12".forEach { field.handleReplacement(it.toString()) }
 
         field.handleReplacement("34")
 
-        assertEquals("1234", field.state.code)
+        assertEquals("12", field.state.code)
     }
 
     @Test
@@ -151,7 +152,7 @@ class OtpFieldIosTest {
         var changes = 0
         field.onStateChange = { changes++ }
 
-        field.state = OtpState(OtpLength.SIX).withInput("9").state.withError()
+        field.state = OtpState(OtpLength.SIX).typed("9").withError()
 
         assertEquals("9", textOf(field))
         assertContains(assertNotNull(valueOf(field)), "Incorrect code")
@@ -162,7 +163,7 @@ class OtpFieldIosTest {
     fun maskedFieldIsSecureAndValueHasNoDigits() {
         val field = newField()
         field.mask = OtpMask.FilledCell
-        field.handleReplacement("123")
+        "123".forEach { field.handleReplacement(it.toString()) }
 
         assertTrue(textFieldOf(field).secureTextEntry)
         assertEquals("3 of 6 digits entered", valueOf(field))

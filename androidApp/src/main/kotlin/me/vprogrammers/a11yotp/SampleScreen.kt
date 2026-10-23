@@ -1,5 +1,6 @@
 package me.vprogrammers.a11yotp
 
+import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
@@ -23,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
@@ -36,6 +38,7 @@ import kotlinx.coroutines.delay
 import me.vprogrammers.a11yotp.sample.SAMPLE_RESEND_SECONDS
 import me.vprogrammers.a11yotp.sample.isSampleCodeRejected
 import me.vprogrammers.a11yotp.smsretriever.SmsRetrieverEffect
+import me.vprogrammers.a11yotp.smsretriever.SmsRetrieverFailure
 
 /** Groups of 3 give "123 - 456"; 4 and 8 digits do not split evenly, so they get no separator. */
 private val fieldStyle = OtpFieldDefaults.style(groupSize = 3, cellHeight = 56.dp)
@@ -43,12 +46,22 @@ private val fieldStyle = OtpFieldDefaults.style(groupSize = 3, cellHeight = 56.d
 /** Square cells drawn as circles. */
 private val roundFieldStyle = OtpFieldDefaults.style(groupSize = 3, cellShape = CircleShape)
 
-private val fieldAccessibility =
+/** The rejection text is a plurals resource, quantity = digits received ("1 digit" vs "4 digits"). */
+private fun fieldAccessibility(context: Context) =
     OtpFieldAccessibility(
         label = "Verification code",
         errorMessage = "Incorrect code. Try again.",
         progressDescription = { "${it.entered} of ${it.total} digits entered" },
+        inputRejectedMessage = {
+            context.resources.getQuantityString(
+                R.plurals.otp_rejected,
+                it.receivedDigitCount,
+                it.receivedDigitCount,
+                it.expectedDigitCount,
+            )
+        },
     )
+
 private val verifyAccessibility = OtpVerifyAccessibility("Verify")
 private val resendAccessibility = OtpResendAccessibility("Resend code") { "Resend code in ${it.secondsRemaining} s" }
 
@@ -63,6 +76,7 @@ fun SampleScreen(initialOptions: SampleOptions = SampleOptions()) {
     var verified by remember { mutableStateOf(false) }
     var seconds by remember { mutableIntStateOf(SAMPLE_RESEND_SECONDS) }
     var resendCount by remember { mutableIntStateOf(0) }
+    var smsLengthMismatch by remember { mutableStateOf(false) }
     val fieldFocus = remember { FocusRequester() }
 
     // Focus the field once so the keyboard and its code suggestion appear without a tap.
@@ -89,7 +103,9 @@ fun SampleScreen(initialOptions: SampleOptions = SampleOptions()) {
         length = state.length,
         restartKey = resendCount,
         enabled = !verified && !options.isDisabled,
+        onFailure = { smsLengthMismatch = it == SmsRetrieverFailure.CODE_LENGTH_MISMATCH },
         onCode = { code ->
+            smsLengthMismatch = false
             val result = state.cleared().withInput(code)
             state = result.state
             if (result.didComplete) verify(result.state.code)
@@ -127,12 +143,19 @@ fun SampleScreen(initialOptions: SampleOptions = SampleOptions()) {
                 if (!it.isComplete) verified = false
             },
             onComplete = ::verify,
-            accessibility = fieldAccessibility,
+            accessibility = fieldAccessibility(LocalContext.current),
             modifier = Modifier.focusRequester(fieldFocus),
             enabled = !verified && !options.isDisabled,
             style = if (options.roundCells) roundFieldStyle else fieldStyle,
             mask = options.mask,
         )
+        if (smsLengthMismatch) {
+            BasicText(
+                text = "The text message has a code of a different length than this field.",
+                style = TextStyle(color = ink, fontSize = 14.sp, textAlign = TextAlign.Center),
+                modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+            )
+        }
         OtpVerifyButton(
             state = state,
             onVerify = ::verify,
@@ -154,6 +177,7 @@ fun SampleScreen(initialOptions: SampleOptions = SampleOptions()) {
                 verified = false
                 seconds = SAMPLE_RESEND_SECONDS
                 resendCount++
+                smsLengthMismatch = false
             },
             accessibility = resendAccessibility,
         )

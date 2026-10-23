@@ -54,7 +54,6 @@ class OtpStateTest {
                 "\u06F4\u06F8\u06F2\u06F9\u06F1\u06F3" to "482913",
                 "\u096A\u096E\u0968\u096F\u0967\u0969" to "482913",
                 "\uFF14\uFF18\uFF12\uFF19\uFF11\uFF13" to "482913",
-                "48" to "48",
                 "" to "",
                 " - " to "",
             )
@@ -66,7 +65,7 @@ class OtpStateTest {
 
     @Test
     fun rejectsUnsupportedCharactersWithoutChangingState() {
-        val state = OtpState(OtpLength.SIX).withInput("12").state.withError()
+        val state = OtpState(OtpLength.SIX).typed("12").withError()
 
         for (input in listOf("12a", "123x56", "12+3", "code 123456", "12\u00B2", "\uD835\uDFCF")) {
             val result = state.withInput(input)
@@ -77,19 +76,21 @@ class OtpStateTest {
     }
 
     @Test
-    fun overlongInputKeepsFirstDigits() {
-        val result = OtpState(OtpLength.FOUR).withInput("12-34-56")
+    fun overlongPasteIsRejectedNotTruncated() {
+        val empty = OtpState(OtpLength.FOUR)
 
-        assertEquals("1234", result.state.code)
-        assertTrue(result.didComplete)
+        val result = empty.withInput("12-34-56")
+
+        assertSame(empty, result.state)
+        assertFalse(result.didComplete)
+        assertEquals(OtpInputRejection(4, 6), result.rejection)
     }
 
     @Test
     fun eightDigitCodeCompletesOnEighthDigit() {
-        val partial = OtpState(OtpLength.EIGHT).withInput("1234 567")
-        assertFalse(partial.didComplete)
+        val partial = OtpState(OtpLength.EIGHT).typed("1234567")
 
-        val complete = partial.state.withInput("1234-5678-9")
+        val complete = partial.withInput("1234-5678")
         assertEquals("12345678", complete.state.code)
         assertTrue(complete.didComplete)
     }
@@ -128,7 +129,7 @@ class OtpStateTest {
 
         val replaced = complete.withInput("9876")
         assertEquals("9876", replaced.state.code)
-        assertFalse(replaced.didComplete)
+        assertTrue(replaced.didComplete)
 
         assertEquals("", complete.withInput("").state.code)
     }
@@ -144,17 +145,17 @@ class OtpStateTest {
             completions += result.didComplete
         }
 
-        assertEquals(listOf(true, false, false, false, false, true, false), completions)
+        assertEquals(listOf(true, false, false, true, false, true, false), completions)
     }
 
     @Test
-    fun pastingNewFullCodeOverRejectedCodeDoesNotCompleteUntilCleared() {
+    fun replacingARejectedCodeWithAnotherFullCodeClearsErrorAndCompletes() {
         val rejected = OtpState(OtpLength.FOUR).withInput("1234").state.withError()
 
         val replaced = rejected.withInput("5678")
         assertEquals("5678", replaced.state.code)
         assertFalse(replaced.state.isError)
-        assertFalse(replaced.didComplete)
+        assertTrue(replaced.didComplete)
 
         assertTrue(rejected.cleared().withInput("5678").didComplete)
     }
@@ -196,8 +197,8 @@ class OtpStateTest {
 
     @Test
     fun equalityUsesLengthCodeAndError() {
-        val a = OtpState(OtpLength.SIX).withInput("12").state
-        val b = OtpState(OtpLength.SIX).withInput("1-2").state
+        val a = OtpState(OtpLength.SIX).typed("12")
+        val b = OtpState(OtpLength.SIX).typed("1").withInput("1-2").state
 
         assertEquals(a, b)
         assertEquals(a.hashCode(), b.hashCode())

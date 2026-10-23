@@ -13,6 +13,8 @@ struct OtpFieldView: UIViewRepresentable {
     /// Focuses the field once when it appears, so the keyboard and its code suggestion show without a tap.
     var focusOnAppear = false
     var onComplete: (String) -> Void = { _ in }
+    /// Called once per rejected paste or autofill whose digit count differs from the field length.
+    var onInputRejected: (OtpInputRejection) -> Void = { _ in }
 
     /// Created once so SwiftUI updates do not look like style changes.
     static let defaultStyle = OtpFieldDefaults.shared.style()
@@ -21,6 +23,7 @@ struct OtpFieldView: UIViewRepresentable {
         var field: OtpField?
         var setState: (OtpState) -> Void = { _ in }
         var onComplete: (String) -> Void = { _ in }
+        var onInputRejected: (OtpInputRejection) -> Void = { _ in }
     }
 
     func makeCoordinator() -> Coordinator { Coordinator() }
@@ -31,6 +34,7 @@ struct OtpFieldView: UIViewRepresentable {
         coordinator.field = field
         field.onStateChange = { [weak coordinator] newState in coordinator?.setState(newState) }
         field.onComplete = { [weak coordinator] code in coordinator?.onComplete(code) }
+        field.onInputRejected = { [weak coordinator] rejection in coordinator?.onInputRejected(rejection) }
         configure(field, context: context)
         if focusOnAppear {
             // The view must be in a window before it can become first responder.
@@ -53,6 +57,7 @@ struct OtpFieldView: UIViewRepresentable {
     private func configure(_ field: OtpField, context: Context) {
         context.coordinator.setState = { newState in state = newState }
         context.coordinator.onComplete = onComplete
+        context.coordinator.onInputRejected = onInputRejected
         field.doneButtonTitle = doneButtonTitle
         field.accessibility = accessibility
         field.style = style
