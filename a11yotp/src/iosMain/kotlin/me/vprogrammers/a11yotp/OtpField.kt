@@ -6,6 +6,7 @@ import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.CValue
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.ObjCAction
+import kotlinx.cinterop.useContents
 import platform.Foundation.NSRange
 import platform.UIKit.UIAccessibilityAnnouncementNotification
 import platform.UIKit.UIAccessibilityPostNotification
@@ -23,6 +24,7 @@ import platform.UIKit.setIsAccessibilityElement
 import platform.darwin.DISPATCH_TIME_NOW
 import platform.darwin.NSObject
 import platform.darwin.dispatch_after
+import platform.darwin.dispatch_async
 import platform.darwin.dispatch_get_main_queue
 import platform.darwin.dispatch_time
 import kotlin.experimental.ExperimentalNativeApi
@@ -42,6 +44,8 @@ import kotlin.native.ref.WeakReference
  * and VoiceOver gets the label and progress only, never the digits.
  *
  * The field uses the one-time-code content type, so the system can offer codes from messages.
+ * An autofilled code is applied as one input, so a code whose length differs from the field is
+ * rejected like a paste instead of being cut or filling only some cells.
  * Setting [state] to an error state announces [OtpFieldAccessibility.errorMessage] once without moving
  * focus, and vibrates once when [hapticFeedbackOnError] is true. [alignment] only positions the
  * cells and error text; digits inside the row always read left to right. No animation is used, so
@@ -154,6 +158,9 @@ class OtpField(
     private var rejectionMessage: String? = null
     private var rejectionGeneration = 0
 
+    // Replacements received in the current run-loop turn, applied together by flushPendingInput.
+    private val pendingReplacements = mutableListOf<String>()
+
     private inner class Handler :
         NSObject(),
         UITextFieldDelegateProtocol {
@@ -162,7 +169,10 @@ class OtpField(
             shouldChangeCharactersInRange: CValue<NSRange>,
             replacementString: String,
         ): Boolean {
-            handleReplacement(replacementString)
+            // An empty replacement of an empty range changes nothing; iOS sends it before autofill.
+            val deletesNothing = shouldChangeCharactersInRange.useContents { length == 0uL }
+            if (replacementString.isEmpty() && deletesNothing) return false
+            enqueueReplacement(replacementString)
             return false
         }
 
@@ -219,6 +229,29 @@ class OtpField(
     /** Dismisses the keyboard. */
     fun blur() {
         container.textField.resignFirstResponder()
+    }
+
+    /**
+     * Queues a replacement and applies everything queued in the same run-loop turn together. iOS
+     * one-time-code autofill inserts a code one character at a time within a single turn, so without
+     * this a 4-digit code would fill 4 cells of a 6-digit field and an 8-digit code would be cut to
+     * 6, never reaching the length rule. Typing delivers each key in its own turn.
+     */
+    internal fun enqueueReplacement(replacement: String) {
+        pendingReplacements += replacement
+        if (pendingReplacements.size > 1) return
+        val weakSelf = WeakReference(this)
+        dispatch_async(dispatch_get_main_queue()) { weakSelf.get()?.flushPendingInput() }
+    }
+
+    /** Applies the queued replacements: deletions one by one, then all inserted text as one input. */
+    internal fun flushPendingInput() {
+        if (pendingReplacements.isEmpty()) return
+        val replacements = pendingReplacements.toList()
+        pendingReplacements.clear()
+        replacements.filter { it.isEmpty() }.forEach { handleReplacement(it) }
+        val inserted = replacements.joinToString("")
+        if (inserted.isNotEmpty()) handleReplacement(inserted)
     }
 
     /**
