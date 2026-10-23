@@ -293,6 +293,20 @@ class OtpStyleIosTest {
     }
 
     @Test
+    fun aTitleTooLongForOneLineMakesTheKeyTallerNotClipped() {
+        val field = newField()
+        field.doneButtonTitle = "Confirm the verification code now"
+        val accessory = accessory(field)
+        accessory.setFrame(CGRectMake(0.0, 0.0, 390.0, 60.0))
+        accessory.layoutIfNeeded()
+
+        accessory.button.frame.useContents {
+            assertEquals(122.0, size.width)
+            assertTrue(size.height > 48.0, "height ${size.height}")
+        }
+    }
+
+    @Test
     fun escapeGestureReturnsFalseWhenTheFieldIsNotFocused() {
         val textField = (newField().view as OtpFieldContainer).textField as OtpTextField
 

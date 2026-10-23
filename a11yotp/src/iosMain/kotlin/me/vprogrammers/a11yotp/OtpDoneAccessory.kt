@@ -84,19 +84,24 @@ internal class OtpDoneAccessory(
         setNeedsLayout()
     }
 
-    private fun keyHeight(): Double {
-        val needed = button.sizeThatFits(CGSizeMake(Double.MAX_VALUE / 4, Double.MAX_VALUE / 4)).useContents { height }
+    // Measured at the key's own width, so a long title or a large Dynamic Type size wraps and makes the
+    // key taller instead of being clipped.
+    private fun keyHeight(width: Double): Double {
+        val needed = button.sizeThatFits(CGSizeMake(keyWidth(width), Double.MAX_VALUE / 4)).useContents { height }
         return maxOf(MIN_KEY_HEIGHT, needed)
     }
 
-    private fun accessoryHeight(): Double = keyHeight() + 2 * KEY_SPACING
+    private fun accessoryHeight(width: Double): Double = keyHeight(width) + 2 * KEY_SPACING
 
-    override fun intrinsicContentSize(): CValue<CGSize> = CGSizeMake(UIViewNoIntrinsicMetric, accessoryHeight())
+    private fun currentWidth(): Double = bounds.useContents { size.width }
+
+    override fun intrinsicContentSize(): CValue<CGSize> =
+        CGSizeMake(UIViewNoIntrinsicMetric, accessoryHeight(currentWidth()))
 
     override fun layoutSubviews() {
         super.layoutSubviews()
-        val width = bounds.useContents { size.width }
-        val height = keyHeight()
+        val width = currentWidth()
+        val height = keyHeight(width)
         val keyWidth = keyWidth(width)
         button.setFrame(CGRectMake(width - KEY_SPACING - keyWidth, KEY_SPACING, keyWidth, height))
     }
@@ -113,8 +118,8 @@ internal class OtpDoneAccessory(
     override fun traitCollectionDidChange(previousTraitCollection: UITraitCollection?) {
         super.traitCollectionDidChange(previousTraitCollection)
         applyTitle()
-        val width = bounds.useContents { size.width }
-        setFrame(CGRectMake(0.0, 0.0, width, accessoryHeight()))
+        val width = currentWidth()
+        setFrame(CGRectMake(0.0, 0.0, width, accessoryHeight(width)))
     }
 }
 
