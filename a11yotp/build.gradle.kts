@@ -44,7 +44,6 @@ kotlin {
             implementation(libs.compose.runtime)
             implementation(libs.compose.foundation)
             implementation(libs.compose.ui)
-            implementation(libs.compose.uiToolingPreview)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
@@ -61,10 +60,6 @@ kotlin {
 // Compose is used only by the Android UI; iOS UI is UIKit.
 composeCompiler {
     targetKotlinPlatforms.set(setOf(KotlinPlatformType.androidJvm))
-}
-
-dependencies {
-    androidRuntimeClasspath(libs.compose.uiTooling)
 }
 
 // Coordinates and POM come from gradle.properties. Release builds pass the signing key as
