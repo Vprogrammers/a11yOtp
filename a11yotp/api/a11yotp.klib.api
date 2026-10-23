@@ -335,6 +335,10 @@ final class me.vprogrammers.a11yotp/OtpState { // me.vprogrammers.a11yotp/OtpSta
     final fun withError(): me.vprogrammers.a11yotp/OtpState // me.vprogrammers.a11yotp/OtpState.withError|withError(){}[0]
     final fun withInput(kotlin/String): me.vprogrammers.a11yotp/OtpInputResult // me.vprogrammers.a11yotp/OtpState.withInput|withInput(kotlin.String){}[0]
     final fun withoutError(): me.vprogrammers.a11yotp/OtpState // me.vprogrammers.a11yotp/OtpState.withoutError|withoutError(){}[0]
+
+    final object Companion { // me.vprogrammers.a11yotp/OtpState.Companion|null[0]
+        final fun restore(me.vprogrammers.a11yotp/OtpLength, kotlin/String, kotlin/Boolean): me.vprogrammers.a11yotp/OtpState? // me.vprogrammers.a11yotp/OtpState.Companion.restore|restore(me.vprogrammers.a11yotp.OtpLength;kotlin.String;kotlin.Boolean){}[0]
+    }
 }
 
 final class me.vprogrammers.a11yotp/OtpVerifyAccessibility { // me.vprogrammers.a11yotp/OtpVerifyAccessibility|null[0]

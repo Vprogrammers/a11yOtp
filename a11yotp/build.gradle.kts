@@ -46,6 +46,7 @@ kotlin {
     sourceSets {
         androidMain.dependencies {
             implementation(libs.compose.runtime)
+            implementation(libs.compose.runtimeSaveable)
             implementation(libs.compose.foundation)
             implementation(libs.compose.ui)
         }
