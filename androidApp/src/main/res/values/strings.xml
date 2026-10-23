@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">A11yOtp</string>
+    <plurals name="otp_rejected">
+        <item quantity="one">Code not entered: it has %1$d digit, but %2$d are expected.</item>
+        <item quantity="other">Code not entered: it has %1$d digits, but %2$d are expected.</item>
+    </plurals>
 </resources>

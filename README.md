@@ -114,7 +114,9 @@ OtpField(
             label = "Verification code",
             errorMessage = "Incorrect code. Try again.",
             progressDescription = { "${it.entered} of ${it.total} digits entered" },
+            inputRejectedMessage = { context.resources.getQuantityString(R.plurals.otp_rejected, it.receivedDigitCount, it.receivedDigitCount, it.expectedDigitCount) },
         ),
+    onInputRejected = { rejection -> analytics.log("otp_length_mismatch", rejection.expectedDigitCount, rejection.receivedDigitCount) },
 )
 OtpVerifyButton(state = state, onVerify = viewModel::verify, accessibility = OtpVerifyAccessibility("Verify"))
 OtpResendButton(
@@ -136,7 +138,8 @@ let field = OtpField(
     accessibility: OtpFieldAccessibility(
         label: "Verification code",
         errorMessage: "Incorrect code. Try again.",
-        progressDescription: { "\($0.entered) of \($0.total) digits entered" }
+        progressDescription: { "\($0.entered) of \($0.total) digits entered" },
+        inputRejectedMessage: { "Code not entered: \($0.receivedDigitCount) digits, \($0.expectedDigitCount) expected." }
     ),
     doneButtonTitle: "Done"
 )
@@ -147,6 +150,29 @@ field.onComplete = { code in verify(code) }
 ```
 
 Keep a strong reference to the Kotlin object (`OtpField`, `OtpVerifyButton`, `OtpResendButton`) for as long as its view is on screen. The sample wrappers keep it in their coordinator.
+
+### Paste, autofill and the field length
+
+Typing one digit at a time is unchanged; a digit typed into a full field is ignored. A single input that inserts several digits at once (paste, platform autofill, a keyboard suggestion) is accepted **only if it contains exactly as many digits as the field** (`OtpLength.FOUR`, `SIX` or `EIGHT`). It then replaces what is in the field, and `onComplete` fires. The input is also accepted when the resulting field text holds exactly that many digits, for example autofill replacing `12` with `123456`, or typing `12` and then pasting `3456`. Separators such as `123 456` or `123-456` do not count as digits.
+
+Any other multi-digit input is rejected, never truncated or filled in partially: the state stays as it was, nothing completes, and the host learns the expected and received digit counts (never the digits):
+
+- `OtpState.withInput(text)` returns `result.rejection` (`OtpInputRejection(expectedDigitCount, receivedDigitCount)`).
+- The Android `OtpField` calls `onInputRejected` once and shows `OtpFieldAccessibility.inputRejectedMessage(rejection)` below the field, in a polite live region that TalkBack announces on every rejection (also an identical repeat, not per keystroke), without moving focus. The rejection itself is not an error state (no error border or vibration) and `onStateChange` is not called when the state is unchanged. The message disappears on the next edit and when `state` changes. While `state.isError`, the newest message wins: the rejection text replaces the error text and the error styling and semantics stay; the error text returns once the rejection clears. A blank `inputRejectedMessage` shows nothing (a warning is logged) but `onInputRejected` still fires.
+- The iOS `OtpField` calls `onInputRejected` once and shows the message in the error-text slot (neutral text, no error icon), posts one VoiceOver announcement 300 ms later without moving focus, and appends the message to the field's `accessibilityValue` so VoiceOver users can re-read it (never with digits, also when unmasked). The message ends on any following input, including an ignored extra digit or an unsupported character, and when `state` changes. While `state.isError` the newest message wins: it replaces the error text in the label and in the value, the error cell styling stays, and the error text returns once the rejection clears. A rejection within 300 ms of entering the error state cancels the pending error announcement, so only the rejection is spoken. A blank `inputRejectedMessage` shows and announces nothing (a warning is logged) but `onInputRejected` still fires. In SwiftUI, pluralize with automatic grammar agreement, for example `AttributedString(localized: "^[\(count) digit](inflect: true)")`.
+
+`inputRejectedMessage` is required and must be localized by the host. Use plural rules for the counts; on Android the plural quantity is `receivedDigitCount`, for example `strings.xml`:
+
+```xml
+<plurals name="otp_rejected">
+    <item quantity="one">Code not entered: it has %1$d digit, but %2$d are expected.</item>
+    <item quantity="other">Code not entered: it has %1$d digits, but %2$d are expected.</item>
+</plurals>
+```
+
+or iOS `Localizable.stringsdict` entries with `NSStringLocalizedFormatKey`. Do not put the digits in the message.
+
+**The field length must match your backend.** A rejection means the configured length differs from the code length your backend sends. That is a configuration error to fix, not something users can work around. Typing one digit at a time cannot detect a wrong-length code: the field simply completes at its own length.
 
 ### Handling a wrong code
 
@@ -257,11 +283,11 @@ SmsRetrieverEffect(
         otp = result.state
         if (result.didComplete) viewModel.verify(result.state.code)
     },
-    onFailure = { /* TIMEOUT after 5 minutes, or UNAVAILABLE without Play services */ },
+    onFailure = { /* TIMEOUT after 5 minutes, UNAVAILABLE without Play services, or CODE_LENGTH_MISMATCH */ },
 )
 ```
 
-The retriever listens for one message for up to 5 minutes. Change `restartKey` to listen again, for example when the user requests a new code. A message with no code, or with two different codes, is ignored.
+The retriever listens for one message for up to 5 minutes. Change `restartKey` to listen again, for example when the user requests a new code. A message with no code, or with two different codes of the field's length, is ignored. If the message has no standalone run of the field's digit count but has one of another plausible length (4 to 8 digits), `onFailure` reports `CODE_LENGTH_MISMATCH` right away instead of waiting for `TIMEOUT`; no code is delivered, and the digits are never passed or logged. It means the field length differs from your backend's.
 
 **Accessibility.** The field's value and progress update like after typing, but the library makes no announcement. TalkBack usually speaks a state change only on the focused element, so a user whose focus is elsewhere hears nothing when the code arrives. Announce the fill or the verification result in your UI, for example with a polite live region (`Code filled automatically, verifying`). The library never logs the message or the code.
 

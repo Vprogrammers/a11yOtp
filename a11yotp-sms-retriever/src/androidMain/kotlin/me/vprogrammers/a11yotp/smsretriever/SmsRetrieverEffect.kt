@@ -22,6 +22,13 @@ enum class SmsRetrieverFailure {
 
     /** The retriever could not start, for example because Google Play services is missing or outdated. */
     UNAVAILABLE,
+
+    /**
+     * A message arrived with no standalone digit run of the field's length, but with one of another
+     * plausible code length (4 to 8 digits). The configured [OtpLength] probably differs from the
+     * backend's code length. No code is delivered, and the digits are never passed or logged.
+     */
+    CODE_LENGTH_MISMATCH,
 }
 
 /**
@@ -30,7 +37,9 @@ enum class SmsRetrieverFailure {
  * Uses the Google SMS Retriever API, which needs no SMS permission. The message must end with
  * the 11-character app hash. The retriever is one-shot: after a code, a timeout, a failure, or
  * a message without a matching code, it stops. Change [restartKey] (for example when the user
- * taps resend) to listen again. A message without a code delivers nothing and reports no failure.
+ * taps resend) to listen again. A message without any plausible code delivers nothing and reports no failure.
+ * A message whose only plausible code has a different length than [length] reports
+ * [SmsRetrieverFailure.CODE_LENGTH_MISMATCH] right away.
  *
  * The code is a whole code, so replace the current input with it:
  * `state.cleared().withInput(code)`. That clears any error and reports completion even when the
@@ -41,7 +50,8 @@ enum class SmsRetrieverFailure {
  * @param onCode called with the digits of the code.
  * @param enabled stops listening while false.
  * @param restartKey a change restarts the listener.
- * @param onFailure called on [SmsRetrieverFailure.TIMEOUT] or [SmsRetrieverFailure.UNAVAILABLE].
+ * @param onFailure called with the [SmsRetrieverFailure] reason: [SmsRetrieverFailure.TIMEOUT],
+ * [SmsRetrieverFailure.UNAVAILABLE], or [SmsRetrieverFailure.CODE_LENGTH_MISMATCH].
  */
 @Composable
 fun SmsRetrieverEffect(

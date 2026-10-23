@@ -8,6 +8,6 @@ import me.vprogrammers.a11yotp.OtpState
 fun makeField(): OtpField =
     OtpField(
         state = OtpState(OtpLength.SIX),
-        accessibility = OtpFieldAccessibility("Code", "Wrong code") { "${it.entered} of ${it.total}" },
+        accessibility = OtpFieldAccessibility("Code", "Wrong code", { "${it.entered} of ${it.total}" }, { "${it.receivedDigitCount} digits" }),
         doneButtonTitle = "Done",
     )

@@ -55,7 +55,7 @@ class OtpButtonsIosTest {
     @Test
     fun verifyIsEnabledOnlyForACompleteCodeWhileEnabled() {
         val button = OtpVerifyButton(OtpVerifyAccessibility("Verify"))
-        val partial = OtpState(OtpLength.SIX).withInput("123").state
+        val partial = OtpState(OtpLength.SIX).typed("123")
         val complete = OtpState(OtpLength.SIX).withInput("123456").state
 
         button.state = partial
