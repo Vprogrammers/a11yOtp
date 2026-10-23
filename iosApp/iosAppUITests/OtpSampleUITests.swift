@@ -37,6 +37,14 @@ final class OtpSampleUITests: XCTestCase {
         XCTAssertEqual(app.textFields.count + app.secureTextFields.count, 1)
     }
 
+    func testDoneButtonDismissesTheKeyboard() {
+        XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: timeout))
+        let done = app.buttons["Done"]
+        XCTAssertTrue(done.waitForExistence(timeout: timeout))
+        done.tap()
+        XCTAssertTrue(waitForKeyboardToHide())
+    }
+
     // MARK: - Typing and deleting
 
     func testTypingUpdatesProgressAndBackspaceRemovesDigit() {
@@ -166,6 +174,12 @@ final class OtpSampleUITests: XCTestCase {
 
     private func hasKeyboardFocus(_ element: XCUIElement) -> Bool {
         (element.value(forKey: "hasKeyboardFocus") as? Bool) ?? false
+    }
+
+    private func waitForKeyboardToHide() -> Bool {
+        let gone = NSPredicate(format: "exists == false")
+        let expectation = XCTNSPredicateExpectation(predicate: gone, object: app.keyboards.firstMatch)
+        return XCTWaiter().wait(for: [expectation], timeout: timeout) == .completed
     }
 
     private func dismissKeyboard() {

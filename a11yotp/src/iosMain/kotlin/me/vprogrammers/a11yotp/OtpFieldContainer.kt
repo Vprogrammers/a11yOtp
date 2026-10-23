@@ -3,8 +3,13 @@
 package me.vprogrammers.a11yotp
 
 import kotlinx.cinterop.BetaInteropApi
+import kotlinx.cinterop.COpaquePointer
 import kotlinx.cinterop.CValue
 import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.cinterop.interpretObjCPointerOrNull
+import kotlinx.cinterop.rawValue
+import kotlinx.cinterop.reinterpret
+import kotlinx.cinterop.staticCFunction
 import kotlinx.cinterop.useContents
 import platform.CoreGraphics.CGRectMake
 import platform.CoreGraphics.CGSize
@@ -36,7 +41,10 @@ import platform.UIKit.setAccessibilityLabel
 import platform.UIKit.setAccessibilityValue
 import platform.UIKit.setIsAccessibilityElement
 import platform.darwin.NSObject
+import platform.objc.class_addMethod
 import platform.objc.class_createInstance
+import platform.objc.object_getClass
+import platform.objc.sel_registerName
 
 /** Everything the container needs to draw one frame. */
 internal class OtpFieldModel(
@@ -74,12 +82,45 @@ internal fun otpCellBorderColor(
     }
 
 /**
+ * The single logical input. The VoiceOver escape gesture (two-finger scrub) dismisses the keyboard,
+ * because the number pad has no Return key.
+ *
+ * `accessibilityPerformEscape` is declared in an NSObject category, which Kotlin/Native exposes as
+ * an extension that cannot be overridden. The override is therefore added to this class with the
+ * Objective-C runtime; the implementation only touches this class.
+ */
+internal class OtpTextField : UITextField(frame = CGRectMake(0.0, 0.0, 0.0, 0.0)) {
+    init {
+        installEscapeOverride(this)
+    }
+
+    fun performEscape(): Boolean {
+        if (!isFirstResponder()) return false
+        return resignFirstResponder()
+    }
+}
+
+private fun installEscapeOverride(field: OtpTextField) {
+    val implementation =
+        staticCFunction { self: COpaquePointer?, _: COpaquePointer? ->
+            interpretObjCPointerOrNull<OtpTextField>(self.rawValue)?.performEscape() ?: false
+        }
+    // Returns false when this class already has the method, which is fine.
+    class_addMethod(
+        object_getClass(field),
+        sel_registerName("accessibilityPerformEscape"),
+        implementation.reinterpret(),
+        "B@:",
+    )
+}
+
+/**
  * The view hosted by [OtpField]. It lays out decorative cells and separators and one transparent
  * [textField] over them. Only the text field is an accessibility element. It has no strong
  * reference to the Kotlin owner; [onTraitsChanged] must capture the owner weakly.
  */
 internal class OtpFieldContainer : UIView(frame = CGRectMake(0.0, 0.0, 0.0, 0.0)) {
-    val textField = UITextField(frame = CGRectMake(0.0, 0.0, 0.0, 0.0))
+    val textField: UITextField = OtpTextField()
     var onTraitsChanged: (() -> Unit)? = null
 
     private val cells = mutableListOf<OtpCellView>()

@@ -518,3 +518,86 @@ class OtpOpaqueRgbIosTest {
         assertTrue(warning!!.contains("fg (#777777) on bg (#FFFFFF)"), warning)
     }
 }
+
+/** iOS one-time-code autofill inserts a code one character at a time within one run-loop turn. */
+class OtpFieldAutofillIosTest {
+    private fun autofill(
+        field: OtpField,
+        code: String,
+    ) {
+        code.forEach { field.enqueueReplacement(it.toString()) }
+        field.flushPendingInput()
+    }
+
+    @Test
+    fun aShortAutofilledCodeIsRejectedNotFilledIntoTheFirstCells() {
+        val field = field()
+        val rejections = mutableListOf<OtpInputRejection>()
+        field.onInputRejected = { rejections += it }
+
+        autofill(field, "4829")
+
+        assertEquals("", field.state.code)
+        assertEquals(listOf(OtpInputRejection(6, 4)), rejections)
+    }
+
+    @Test
+    fun aLongAutofilledCodeIsRejectedNotCut() {
+        val field = field()
+        val rejections = mutableListOf<OtpInputRejection>()
+        field.onInputRejected = { rejections += it }
+
+        autofill(field, "48291375")
+
+        assertEquals("", field.state.code)
+        assertEquals(listOf(OtpInputRejection(6, 8)), rejections)
+    }
+
+    @Test
+    fun anExactAutofilledCodeReplacesPartialInputAndCompletesOnce() {
+        val field = field()
+        "12".forEach { field.handleReplacement(it.toString()) }
+        val completed = mutableListOf<String>()
+        field.onComplete = { completed += it }
+
+        autofill(field, "482913")
+
+        assertEquals("482913", field.state.code)
+        assertEquals(listOf("482913"), completed)
+    }
+
+    @Test
+    fun aSingleQueuedDigitIsTyping() {
+        val field = field()
+
+        field.enqueueReplacement("7")
+        field.flushPendingInput()
+
+        assertEquals("7", field.state.code)
+    }
+
+    @Test
+    fun flushingTwiceAppliesTheQueueOnce() {
+        val field = field()
+
+        field.enqueueReplacement("7")
+        field.flushPendingInput()
+        field.flushPendingInput()
+
+        assertEquals("7", field.state.code)
+    }
+}
+
+class OtpFieldQueuedInputOrderIosTest {
+    @Test
+    fun aDeletionKeepsItsPlaceBetweenQueuedInsertions() {
+        val field = field()
+        "12".forEach { field.handleReplacement(it.toString()) }
+
+        field.enqueueReplacement("3")
+        field.enqueueReplacement("")
+        field.flushPendingInput()
+
+        assertEquals("12", field.state.code)
+    }
+}
