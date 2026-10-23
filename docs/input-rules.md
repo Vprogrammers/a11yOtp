@@ -9,7 +9,8 @@ What the field accepts, what it rejects, and when it reports completion. The sam
 | One digit typed | Appended. Ignored if the field is already full (no message). |
 | Backspace | Deletes the last digit |
 | Paste or autofill with exactly the field's digit count | Replaces the whole code; `onComplete` fires |
-| Paste or autofill with any other digit count | Rejected: nothing changes, `onInputRejected` fires, a message is shown and announced |
+| Paste or autofill of several digits with any other count | Rejected: nothing changes, `onInputRejected` fires, a message is shown and announced |
+| Paste of a single digit | Applied like a typed digit; it cannot be told apart from typing |
 | Text with letters or other symbols (`Code: 482913`) | Ignored: nothing changes, no message |
 | Text with spaces, dashes or dots (`482 913`, `482-913`) | The separators are dropped, then the rules above apply |
 
@@ -35,7 +36,7 @@ The field stores only the ASCII digits `0`–`9` (`OtpState.code`).
 
 ## Paste, autofill and keyboard suggestions
 
-Several digits that arrive in one input are accepted only if the result is a whole code:
+A single digit, also a pasted one, is applied like a typed digit. Several digits that arrive in one input are accepted only if the result is a whole code:
 
 1. **The input holds exactly the field's digit count.** It replaces what was typed. For example, `482913` pasted over `12` gives `482913`, also when the new code shares digits with the old one.
 2. **The digits added to what was typed make exactly the field's digit count.** For example, typing `12` and then pasting `3456` gives `123456`.

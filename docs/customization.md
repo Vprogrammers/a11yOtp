@@ -24,7 +24,8 @@ iOS also has copy helpers: `withGroupSize`, `withCornerRadius`, `withMinCellSize
 
 Rules the styles enforce:
 
-- **Cells never get smaller than the minimum touch target.** Cells grow with the font scale or Dynamic Type; sizes are minimums.
+- **Cell sizes are minimums, at least the minimum touch target.** Cells grow with the font scale or Dynamic Type.
+- **When the row does not fit the width it is given**, the field first drops the group separators, then wraps the cells into more rows (by group, then by cell), and shrinks the cells only as a last resort. Give the field the full width of the screen, so cells keep the minimum touch target size.
 - **`focusedBorderWidth` must be larger than `borderWidth`.** Focus and errors are shown by border width too, never by color alone.
 - **Grouping is decorative.** `groupSize = 3` draws `123 – 456` without changing the code. Separators are drawn only when the length splits into equal groups, so 3 groups a 6-digit code but leaves 4- and 8-digit codes ungrouped.
 

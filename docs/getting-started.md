@@ -128,7 +128,7 @@ Localize the counts with plural rules. In SwiftUI, automatic grammar agreement w
 | Server answer | What to do |
 |---|---|
 | Correct | Leave the screen, or disable the field (`enabled = false` / `isEnabled = false`) and show your success state |
-| Wrong code | `otp = otp.withError()`. The field shows `errorMessage` with an icon, announces it once without moving focus, and vibrates once (unless `hapticFeedbackOnError` is false). The next edit clears the error. |
+| Wrong code | `otp = otp.withError()`. The field shows `errorMessage` below the cells (on iOS with an error icon), announces it once without moving focus, and vibrates once (unless `hapticFeedbackOnError` is false). The next edit clears the error. |
 | New code sent (resend) | `otp = otp.cleared()`, then restart your countdown |
 | Too many attempts, expired | Show your own message; the field has no rate limiting |
 
