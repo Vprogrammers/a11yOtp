@@ -151,6 +151,8 @@ field.onComplete = { code in verify(code) }
 
 Keep a strong reference to the Kotlin object (`OtpField`, `OtpVerifyButton`, `OtpResendButton`) for as long as its view is on screen. The sample wrappers keep it in their coordinator.
 
+On iOS the number pad has no Return key, so the field adds a Done key above it (`doneButtonTitle`; the hardware Return and Escape keys also dismiss the keyboard). The key's fill is your tint color, darkened if needed so the white title reaches 4.5:1 contrast (7:1 with Increase Contrast). The transparent accessory that holds it adds the key height plus 12 pt (about 60 pt) above the keyboard: the same spacing as between the number pad rows, and the one-time-code suggestion stays tappable through it. Account for that height in layouts that avoid the keyboard.
+
 ### Paste, autofill and the field length
 
 Typing one digit at a time is unchanged; a digit typed into a full field is ignored. A single input that inserts several digits at once (paste, platform autofill, a keyboard suggestion) is accepted **only if it contains exactly as many digits as the field** (`OtpLength.FOUR`, `SIX` or `EIGHT`). It then replaces what is in the field, and `onComplete` fires. The input is also accepted when the resulting field text holds exactly that many digits, for example autofill replacing `12` with `123456`, or typing `12` and then pasting `3456`. Separators such as `123 456` or `123-456` do not count as digits.

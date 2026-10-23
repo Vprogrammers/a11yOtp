@@ -525,6 +525,9 @@ class OtpFieldAutofillIosTest {
         field: OtpField,
         code: String,
     ) {
+        // The signature iOS sends before autofill: two empty replacements of an empty range.
+        field.enqueueReplacement("", emptyRange = true)
+        field.enqueueReplacement("", emptyRange = true)
         code.forEach { field.enqueueReplacement(it.toString()) }
         field.flushPendingInput()
     }
@@ -567,6 +570,76 @@ class OtpFieldAutofillIosTest {
     }
 
     @Test
+    fun autofillOfFourSixAndEightDigitsIsRejectedCompletedRejected() {
+        val field = field()
+        val rejections = mutableListOf<OtpInputRejection>()
+        val completed = mutableListOf<String>()
+        field.onInputRejected = { rejections += it }
+        field.onComplete = { completed += it }
+
+        autofill(field, "4829")
+        autofill(field, "482913")
+        autofill(field, "48291375")
+
+        assertEquals("482913", field.state.code)
+        assertEquals(listOf(OtpInputRejection(6, 4), OtpInputRejection(6, 8)), rejections)
+        assertEquals(listOf("482913"), completed)
+    }
+
+    @Test
+    fun theSignatureAloneIsNotADeletion() {
+        val field = field()
+        "12".forEach { field.handleReplacement(it.toString()) }
+
+        field.enqueueReplacement("", emptyRange = true)
+        field.flushPendingInput()
+
+        assertEquals("12", field.state.code)
+    }
+
+    @Test
+    fun anEmptyRangeReplacementAfterTypedKeysIsNotTheSignature() {
+        val field = field()
+        val rejections = mutableListOf<OtpInputRejection>()
+        field.onInputRejected = { rejections += it }
+
+        field.enqueueReplacement("1")
+        field.enqueueReplacement("", emptyRange = true)
+        field.enqueueReplacement("2")
+        field.flushPendingInput()
+
+        assertEquals("12", field.state.code)
+        assertTrue(rejections.isEmpty())
+    }
+
+    @Test
+    fun theSignatureDoesNotLeakIntoTheNextTurn() {
+        val field = field()
+        field.enqueueReplacement("", emptyRange = true)
+        field.flushPendingInput()
+
+        field.enqueueReplacement("1")
+        field.enqueueReplacement("2")
+        field.flushPendingInput()
+
+        assertEquals("12", field.state.code)
+    }
+
+    @Test
+    fun twoDigitsInOneTurnWithoutTheSignatureAreTypedIndividually() {
+        val field = field()
+        val rejections = mutableListOf<OtpInputRejection>()
+        field.onInputRejected = { rejections += it }
+
+        field.enqueueReplacement("1")
+        field.enqueueReplacement("2")
+        field.flushPendingInput()
+
+        assertEquals("12", field.state.code)
+        assertTrue(rejections.isEmpty())
+    }
+
+    @Test
     fun aSingleQueuedDigitIsTyping() {
         val field = field()
 
@@ -594,6 +667,33 @@ class OtpFieldQueuedInputOrderIosTest {
         val field = field()
         "12".forEach { field.handleReplacement(it.toString()) }
 
+        field.enqueueReplacement("3")
+        field.enqueueReplacement("")
+        field.flushPendingInput()
+
+        assertEquals("12", field.state.code)
+    }
+
+    @Test
+    fun typedDeletionsAndDigitsInOneTurnApplyInOrder() {
+        val field = field()
+        "12".forEach { field.handleReplacement(it.toString()) }
+
+        field.enqueueReplacement("")
+        field.enqueueReplacement("5")
+        field.enqueueReplacement("")
+        field.enqueueReplacement("6")
+        field.flushPendingInput()
+
+        assertEquals("16", field.state.code)
+    }
+
+    @Test
+    fun autofillKeepsADeletionBetweenInsertions() {
+        val field = field()
+        "12".forEach { field.handleReplacement(it.toString()) }
+
+        field.enqueueReplacement("", emptyRange = true)
         field.enqueueReplacement("3")
         field.enqueueReplacement("")
         field.flushPendingInput()
