@@ -91,6 +91,8 @@ run_kmp() {
     step "shared and Android host tests" ./gradlew :a11yotp:testAndroidHostTest
     step "SMS Retriever host tests" ./gradlew :a11yotp-sms-retriever:testAndroidHostTest
     if [[ "$(uname)" == "Darwin" ]]; then
+        # The ABI dump covers the iOS targets, which only build on macOS.
+        step "public API (ABI) check" ./gradlew :a11yotp:checkKotlinAbi :a11yotp-sms-retriever:checkKotlinAbi
         step "compile Kotlin/Native tests" ./gradlew :a11yotp:compileTestKotlinIosSimulatorArm64
         step "link the Shared framework" ./gradlew :sampleShared:linkDebugFrameworkIosSimulatorArm64
         if is_apple_silicon; then

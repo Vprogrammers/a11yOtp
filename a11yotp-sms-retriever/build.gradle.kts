@@ -10,6 +10,10 @@ plugins {
 
 // Optional Android-only module: Play Services stays off the classpath of a11yotp consumers.
 kotlin {
+    // Public API baseline (api/ dump); CI fails when the API changes without an updated dump.
+    @OptIn(org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation::class)
+    abiValidation()
+
     android {
         namespace = "me.vprogrammers.a11yotp.smsretriever"
         compileSdk =

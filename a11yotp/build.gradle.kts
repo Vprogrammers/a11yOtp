@@ -9,6 +9,10 @@ plugins {
 }
 
 kotlin {
+    // Public API baseline (api/ dump); CI fails when the API changes without an updated dump.
+    @OptIn(org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation::class)
+    abiValidation()
+
     iosArm64()
     iosSimulatorArm64()
 
