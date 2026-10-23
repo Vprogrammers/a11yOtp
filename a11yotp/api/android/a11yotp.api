@@ -216,6 +216,7 @@ public final class me/vprogrammers/a11yotp/OtpResendButtonKt {
 
 public final class me/vprogrammers/a11yotp/OtpState {
 	public static final field $stable I
+	public static final field Companion Lme/vprogrammers/a11yotp/OtpState$Companion;
 	public fun <init> (Lme/vprogrammers/a11yotp/OtpLength;)V
 	public final fun cleared ()Lme/vprogrammers/a11yotp/OtpState;
 	public fun equals (Ljava/lang/Object;)Z
@@ -229,6 +230,14 @@ public final class me/vprogrammers/a11yotp/OtpState {
 	public final fun withError ()Lme/vprogrammers/a11yotp/OtpState;
 	public final fun withInput (Ljava/lang/String;)Lme/vprogrammers/a11yotp/OtpInputResult;
 	public final fun withoutError ()Lme/vprogrammers/a11yotp/OtpState;
+}
+
+public final class me/vprogrammers/a11yotp/OtpState$Companion {
+	public final fun restore (Lme/vprogrammers/a11yotp/OtpLength;Ljava/lang/String;Z)Lme/vprogrammers/a11yotp/OtpState;
+}
+
+public final class me/vprogrammers/a11yotp/OtpStateSaverKt {
+	public static final fun getOtpStateSaver ()Landroidx/compose/runtime/saveable/Saver;
 }
 
 public final class me/vprogrammers/a11yotp/OtpVerifyAccessibility {

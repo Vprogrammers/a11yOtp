@@ -90,6 +90,29 @@ class OtpState private constructor(
 
     // Omits the digits so the code does not end up in logs or crash reports.
     override fun toString(): String = "OtpState(length=$length, enteredDigitCount=$enteredDigitCount, isError=$isError)"
+
+    companion object {
+        /**
+         * Rebuilds a state from values saved earlier from [length], [code] and [isError], for example
+         * across Android configuration changes or process death, or iOS scene restoration.
+         *
+         * Returns null unless [code] holds only the ASCII digits `0`-`9` and is no longer than
+         * [length]: the values a state can hold. Nothing is normalized, because saved values come from
+         * a state, not from user input. Restoring is not input: no callback fires and completion is
+         * not reported again, so a restored complete code is not submitted twice.
+         *
+         * Saved state can be written to disk by the platform. If the code must not outlive the
+         * screen, do not save it, or clear it when the screen is left.
+         */
+        fun restore(
+            length: OtpLength,
+            code: String,
+            isError: Boolean,
+        ): OtpState? {
+            if (code.length > length.digitCount || !code.all { it in '0'..'9' }) return null
+            return OtpState(length, code, isError)
+        }
+    }
 }
 
 /**
