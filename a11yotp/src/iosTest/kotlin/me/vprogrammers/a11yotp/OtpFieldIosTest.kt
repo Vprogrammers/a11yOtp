@@ -5,6 +5,10 @@ package me.vprogrammers.a11yotp
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.useContents
 import platform.CoreGraphics.CGRectMake
+import platform.Foundation.NSArray
+import platform.Foundation.NSSelectorFromString
+import platform.UIKit.UIKeyCommand
+import platform.UIKit.UIKeyInputEscape
 import platform.UIKit.accessibilityLabel
 import platform.UIKit.accessibilityValue
 import platform.UIKit.isAccessibilityElement
@@ -290,6 +294,38 @@ class OtpStyleIosTest {
             assertEquals(122.0, size.width)
             assertEquals(48.0, size.height)
         }
+    }
+
+    @Test
+    fun doneKeyFrameKeepsPortraitAndRespectsTheSafeArea() {
+        assertEquals(OtpKeyFrame(262.0, 6.0, 122.0, 48.0), doneKeyFrame(390.0, 0.0, 0.0, false, 48.0))
+        // Landscape iPhone with a notch: 852 pt wide, 62 pt inset left and right.
+        val landscape = doneKeyFrame(852.0, 62.0, 62.0, false, 48.0)
+        assertEquals((852.0 - 124.0 - 24.0) / 3.0, landscape.width)
+        assertEquals(852.0 - 62.0 - 6.0 - landscape.width, landscape.x)
+    }
+
+    @Test
+    fun doneKeyOnIpadKeepsTheIphoneKeyWidthRightAlignedInTheSafeArea() {
+        val wide = doneKeyFrame(1024.0, 0.0, 20.0, true, 48.0)
+        assertEquals(122.0, wide.width)
+        assertEquals(1024.0 - 20.0 - 6.0 - 122.0, wide.x)
+        // Narrower than three iPhone columns: clamped to the column formula.
+        assertEquals(((300.0 - 24.0) / 3.0), doneKeyFrame(300.0, 0.0, 0.0, true, 48.0).width)
+    }
+
+    @Test
+    fun theTextFieldOffersAnEscapeKeyCommandWithPriority() {
+        val textField = (newField().view as OtpFieldContainer).textField as OtpTextField
+
+        val commands = textField.performSelector(NSSelectorFromString("keyCommands")) as? NSArray
+        val command = commands?.objectAtIndex(0uL) as? UIKeyCommand
+
+        assertEquals(1uL, commands?.count)
+        assertEquals(UIKeyInputEscape, command?.input)
+        assertEquals(NSSelectorFromString("escapeKeyPressed"), command?.action)
+        assertTrue(command?.wantsPriorityOverSystemBehavior == true)
+        assertTrue(textField.respondsToSelector(NSSelectorFromString("escapeKeyPressed")))
     }
 
     @Test

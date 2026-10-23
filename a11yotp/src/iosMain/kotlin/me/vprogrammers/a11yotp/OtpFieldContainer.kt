@@ -3,10 +3,14 @@
 package me.vprogrammers.a11yotp
 
 import kotlinx.cinterop.BetaInteropApi
+import kotlinx.cinterop.COpaque
 import kotlinx.cinterop.COpaquePointer
 import kotlinx.cinterop.CValue
 import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.cinterop.ObjCAction
+import kotlinx.cinterop.interpretCPointer
 import kotlinx.cinterop.interpretObjCPointerOrNull
+import kotlinx.cinterop.objcPtr
 import kotlinx.cinterop.rawValue
 import kotlinx.cinterop.reinterpret
 import kotlinx.cinterop.staticCFunction
@@ -14,7 +18,9 @@ import kotlinx.cinterop.useContents
 import platform.CoreGraphics.CGRectMake
 import platform.CoreGraphics.CGSize
 import platform.CoreGraphics.CGSizeMake
+import platform.Foundation.NSArray
 import platform.Foundation.NSClassFromString
+import platform.Foundation.NSMutableArray
 import platform.Foundation.NSSelectorFromString
 import platform.UIKit.NSTextAlignmentCenter
 import platform.UIKit.NSTextAlignmentLeft
@@ -26,6 +32,8 @@ import platform.UIKit.UIFontTextStyle
 import platform.UIKit.UIImage
 import platform.UIKit.UIImageSymbolConfiguration
 import platform.UIKit.UIImageView
+import platform.UIKit.UIKeyCommand
+import platform.UIKit.UIKeyInputEscape
 import platform.UIKit.UILabel
 import platform.UIKit.UISemanticContentAttributeForceLeftToRight
 import platform.UIKit.UITextField
@@ -82,8 +90,8 @@ internal fun otpCellBorderColor(
     }
 
 /**
- * The single logical input. The VoiceOver escape gesture (two-finger scrub) dismisses the keyboard,
- * because the number pad has no Return key.
+ * The single logical input. The VoiceOver escape gesture (two-finger scrub) and the hardware Escape
+ * key dismiss the keyboard, because the number pad has no Return key.
  *
  * `accessibilityPerformEscape` is declared in an NSObject category, which Kotlin/Native exposes as
  * an extension that cannot be overridden. The override is therefore added to this class with the
@@ -92,12 +100,45 @@ internal fun otpCellBorderColor(
 internal class OtpTextField : UITextField(frame = CGRectMake(0.0, 0.0, 0.0, 0.0)) {
     init {
         installEscapeOverride(this)
+        installKeyCommandsOverride(this)
+    }
+
+    /** Action of the hardware Escape key command: dismisses the keyboard like the VoiceOver escape gesture. */
+    @ObjCAction
+    fun escapeKeyPressed() {
+        performEscape()
     }
 
     fun performEscape(): Boolean {
         if (!isFirstResponder()) return false
         return resignFirstResponder()
     }
+}
+
+// One shared, stateless list: the runtime getter below can be called during any field's init, before
+// that instance's own properties exist, so it must not read instance state.
+private val escapeKeyCommands: NSArray by lazy {
+    val command =
+        UIKeyCommand.keyCommandWithInput(
+            UIKeyInputEscape,
+            modifierFlags = 0L,
+            action = NSSelectorFromString("escapeKeyPressed"),
+        )
+    // Without priority the text input system consumes Escape before the command runs.
+    command.wantsPriorityOverSystemBehavior = true
+    NSMutableArray().also { it.addObject(command) }
+}
+
+/**
+ * `keyCommands` is declared in a UIResponder category, so like [installEscapeOverride] it is added
+ * with the runtime. It returns only the Escape command (a UITextField has no key commands of its own).
+ */
+private fun installKeyCommandsOverride(field: OtpTextField) {
+    val implementation =
+        staticCFunction { _: COpaquePointer?, _: COpaquePointer? ->
+            interpretCPointer<COpaque>(escapeKeyCommands.objcPtr())
+        }
+    class_addMethod(object_getClass(field), sel_registerName("keyCommands"), implementation.reinterpret(), "@@:")
 }
 
 private fun installEscapeOverride(field: OtpTextField) {
@@ -172,6 +213,10 @@ internal class OtpFieldContainer : UIView(frame = CGRectMake(0.0, 0.0, 0.0, 0.0)
         ensureCells(total, planner.separatorCount)
 
         val font = scaledFont(style, traits)
+        // The text field draws nothing (clear text), but it is the element the system and the
+        // accessibility audit inspect, so it carries the same Dynamic Type font as the cells.
+        textField.font = font
+        textField.adjustsFontForContentSizeCategory = true
         val activeIndex = state.enteredDigitCount.coerceAtMost(total - 1)
         cells.forEachIndexed { index, cell ->
             val digit = state.code.getOrNull(index)
