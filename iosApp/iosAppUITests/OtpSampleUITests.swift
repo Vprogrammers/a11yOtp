@@ -19,6 +19,54 @@ final class OtpSampleUITests: XCTestCase {
         launch(manualVerify: false)
     }
 
+    // MARK: - Accessibility audit
+
+    /// Apple's accessibility audit (contrast, Dynamic Type, clipped text, hit regions, element
+    /// descriptions, traits). With the keyboard and Done key showing, every element above the keyboard
+    /// counts, Done included; then the whole screen in the error state with the keyboard dismissed.
+    func testAccessibilityAuditPasses() throws {
+        try auditKeyboardAndErrorStates()
+    }
+
+    func testAccessibilityAuditPassesInDarkMode() throws {
+        XCUIDevice.shared.appearance = .dark
+        defer { XCUIDevice.shared.appearance = .light }
+        relaunch(manualVerify: false)
+        try auditKeyboardAndErrorStates()
+    }
+
+    func testAccessibilityAuditPassesAtTheLargestAccessibilityTextSize() throws {
+        app.terminate()
+        let largest = ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"]
+        launch(manualVerify: false, extraArguments: largest)
+        try auditKeyboardAndErrorStates()
+    }
+
+    private func auditKeyboardAndErrorStates() throws {
+        let done = app.buttons["Done"]
+        XCTAssertTrue(done.waitForExistence(timeout: timeout))
+        // The Done row starts one key gap (6 pt) above the key.
+        try auditIgnoringContentBehindKeyboard(keyboardTop: done.frame.minY - 6)
+        type("000000")
+        XCTAssertTrue(app.staticTexts["Incorrect code. Try again."].waitForExistence(timeout: timeout))
+        dismissKeyboard()
+        XCTAssertTrue(waitForKeyboardToHide())
+        try app.performAccessibilityAudit()
+    }
+
+    /// App content scrolled under the keyboard and the Done row is partly covered, which the audit
+    /// reports as failed contrast or as text without an element (the covered area belongs to the
+    /// keyboard, so it finds no element there; such issues carry no element or frame). Only those two
+    /// audit types are ignored, and only for content reaching under the keyboard; the same content is
+    /// audited without exceptions once the keyboard is dismissed.
+    private func auditIgnoringContentBehindKeyboard(keyboardTop: CGFloat) throws {
+        try app.performAccessibilityAudit { issue in
+            guard issue.auditType == .contrast || issue.auditType == .elementDetection else { return false }
+            guard let element = issue.element else { return issue.auditType == .elementDetection }
+            return element.label != "Done" && element.frame.maxY > keyboardTop
+        }
+    }
+
     // MARK: - Focus and structure
 
     func testFieldIsFocusedAndKeyboardShownOnLaunch() {
@@ -43,6 +91,23 @@ final class OtpSampleUITests: XCTestCase {
         XCTAssertTrue(done.waitForExistence(timeout: timeout))
         done.tap()
         XCTAssertTrue(waitForKeyboardToHide())
+    }
+
+    // MARK: - Key-by-key input
+
+    /// Keys typed in quick succession arrive one per run-loop turn and must stay separate digits; only
+    /// one-time-code autofill (which iOS sends with its own signature) is applied as one input.
+    /// XCUITest cannot send a real hardware Escape on iOS, so Escape stays a manual check.
+    func testQuicklyTypedKeysAreNeitherMergedNorRejected() throws {
+        try skipUnlessSimulator()
+        for key in ["4", "8", "2"] { field.typeKey(key, modifierFlags: []) }
+        XCTAssertEqual(valueText, "4 8 2, 3 of 6 digits entered")
+    }
+
+    private func skipUnlessSimulator() throws {
+        #if !targetEnvironment(simulator)
+        throw XCTSkip("typeKey needs the simulator or a connected hardware keyboard.")
+        #endif
     }
 
     // MARK: - Typing and deleting
@@ -148,8 +213,9 @@ final class OtpSampleUITests: XCTestCase {
 
     // MARK: - Helpers
 
-    private func launch(manualVerify: Bool) {
+    private func launch(manualVerify: Bool, extraArguments: [String] = []) {
         app = XCUIApplication()
+        app.launchArguments += extraArguments
         // A short countdown keeps the resend test fast; other tests never wait for it.
         app.launchArguments += ["-resendSeconds", "8"]
         if manualVerify { app.launchArguments += ["-manualVerify", "YES"] }

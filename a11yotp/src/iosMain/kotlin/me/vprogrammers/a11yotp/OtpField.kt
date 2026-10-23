@@ -45,7 +45,9 @@ import kotlin.native.ref.WeakReference
  *
  * The field uses the one-time-code content type, so the system can offer codes from messages.
  * An autofilled code is applied as one input, so a code whose length differs from the field is
- * rejected like a paste instead of being cut or filling only some cells.
+ * rejected like a paste instead of being cut or filling only some cells. Autofill is recognized by
+ * the empty replacement of an empty range iOS sends first; typed keys (also several in one run-loop
+ * turn, from a hardware keyboard or Voice Control) are always applied one by one.
  * Setting [state] to an error state announces [OtpFieldAccessibility.errorMessage] once without moving
  * focus, and vibrates once when [hapticFeedbackOnError] is true. [alignment] only positions the
  * cells and error text; digits inside the row always read left to right. No animation is used, so
@@ -54,9 +56,12 @@ import kotlin.native.ref.WeakReference
  * The number pad has no Return key, so the text field has a transparent input accessory holding a Done
  * button (titled [doneButtonTitle]) that calls [blur]. The button is a system prominent button shaped
  * like a number pad key and placed above the "3" key; the area around it passes touches through, so
- * it does not cover the one-time-code suggestion. The system tint, dark mode, and Increase Contrast
- * apply. VoiceOver users can also dismiss the keyboard with the two-finger scrub (escape) gesture
- * on the field.
+ * it does not cover the one-time-code suggestion. The fill is the system tint (dark mode and Increase
+ * Contrast apply), darkened as needed so the white title has at least 4.5:1 contrast (7:1 with
+ * Increase Contrast). The accessory adds the key height plus 12 pt (about 60 pt) above the keyboard
+ * that host layouts avoid: 6 pt above and below the key, like the spacing between number pad rows, and
+ * transparent so the suggestion stays tappable. On a hardware keyboard Return and Escape, and for
+ * VoiceOver users the two-finger scrub (escape) gesture, also dismiss the keyboard.
  *
  * No `accessibilityHint` is set by default, intentionally: progress and error state are already part
  * of the accessibility value, and a hint would be read on every focus.
@@ -158,8 +163,10 @@ class OtpField(
     private var rejectionMessage: String? = null
     private var rejectionGeneration = 0
 
-    // Replacements received in the current run-loop turn, applied together by flushPendingInput.
+    // Replacements received in the current run-loop turn, applied by flushPendingInput.
     private val pendingReplacements = mutableListOf<String>()
+    private var sawAutofillSignature = false
+    private var flushScheduled = false
 
     private inner class Handler :
         NSObject(),
@@ -169,10 +176,9 @@ class OtpField(
             shouldChangeCharactersInRange: CValue<NSRange>,
             replacementString: String,
         ): Boolean {
-            // An empty replacement of an empty range changes nothing; iOS sends it before autofill.
-            val deletesNothing = shouldChangeCharactersInRange.useContents { length == 0uL }
-            if (replacementString.isEmpty() && deletesNothing) return false
-            enqueueReplacement(replacementString)
+            // An empty replacement of an empty range changes nothing, but iOS sends it before autofill.
+            val emptyRange = shouldChangeCharactersInRange.useContents { length == 0uL }
+            enqueueReplacement(replacementString, emptyRange)
             return false
         }
 
@@ -232,24 +238,47 @@ class OtpField(
     }
 
     /**
-     * Queues a replacement and applies everything queued in the same run-loop turn together. iOS
-     * one-time-code autofill inserts a code one character at a time within a single turn, so without
-     * this a 4-digit code would fill 4 cells of a 6-digit field and an 8-digit code would be cut to
-     * 6, never reaching the length rule. On-screen keyboard typing delivers each key in its own turn
-     * (verified on device, also with XCUITest typing).
+     * Queues a replacement for the end of the run-loop turn. An empty replacement of an empty range
+     * ([emptyRange]) changes nothing and is not a deletion; it is the signature iOS sends before
+     * one-time-code autofill. Autofill inserts a code one character at a time within one turn, so
+     * when a turn had the signature its insertions are applied as one input (see
+     * [flushPendingInput]); otherwise a 4-digit code would fill 4 cells of a 6-digit field and an
+     * 8-digit code would be cut to 6, never reaching the length rule. Without the signature every
+     * replacement is applied on its own, as typed, so keys from a hardware keyboard or Voice Control
+     * that arrive in one turn are never merged or rejected.
      */
-    internal fun enqueueReplacement(replacement: String) {
-        pendingReplacements += replacement
-        if (pendingReplacements.size > 1) return
+    internal fun enqueueReplacement(
+        replacement: String,
+        emptyRange: Boolean = false,
+    ) {
+        if (emptyRange && replacement.isEmpty()) {
+            // Only before any character of the turn, as iOS sends it; later it is no change at all.
+            if (pendingReplacements.isEmpty()) sawAutofillSignature = true
+        } else {
+            pendingReplacements += replacement
+        }
+        if (flushScheduled) return
+        flushScheduled = true
         val weakSelf = WeakReference(this)
         dispatch_async(dispatch_get_main_queue()) { weakSelf.get()?.flushPendingInput() }
     }
 
-    /** Applies the queued replacements in order; consecutive insertions are applied as one input. */
+    /**
+     * Applies the queued replacements in order. With the autofill signature, consecutive insertions
+     * are applied as one input (a deletion keeps its place between them); without it, each
+     * replacement is applied individually.
+     */
     internal fun flushPendingInput() {
+        flushScheduled = false
+        val autofill = sawAutofillSignature
+        sawAutofillSignature = false
         if (pendingReplacements.isEmpty()) return
         val replacements = pendingReplacements.toList()
         pendingReplacements.clear()
+        if (!autofill) {
+            replacements.forEach { handleReplacement(it) }
+            return
+        }
         val inserted = StringBuilder()
         for (replacement in replacements) {
             if (replacement.isNotEmpty()) {
