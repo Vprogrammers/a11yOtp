@@ -51,6 +51,7 @@ kotlin {
         }
         getByName("androidDeviceTest").dependencies {
             implementation(libs.compose.uiTest)
+            implementation(libs.compose.uiTestAccessibility)
             implementation(libs.androidx.test.espresso.core)
             implementation(libs.compose.uiTestManifest)
         }
