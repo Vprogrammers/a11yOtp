@@ -40,7 +40,7 @@ The primary consumer is a KMP app with native Android UI and native iOS UI. Cons
 - Do not expose internal focus, animation, or rendering mechanics.
 - Make defaults safe for accessibility and privacy.
 - Document host responsibilities, including server verification and lifecycle clearing.
-- Once an API is published, add Kotlin binary-compatibility validation before changing it.
+- Kotlin ABI validation (`abiValidation()` in both published modules) guards the public API; the reference dumps are in each module's `api/`. A public API change fails `checkKotlinAbi` until `./gradlew updateKotlinAbi` is run and the dump is committed; review the dump diff as the API change, and after a release keep changes source and binary compatible unless the version says otherwise.
 
 ## Swift interoperability
 
