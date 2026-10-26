@@ -162,14 +162,21 @@ How restoring works:
 
 ## 7. Recommended message text
 
-So that autofill offers the right number:
+So that autofill offers the right code:
 
-- Keep the code the only number in the message. A brand name with digits, a phone number or an amount can be suggested instead.
+```text
+Your Example code is 482913. Do not share it with anyone.
+```
+
+- Send the code as one unbroken token of exactly the field's length, and keep it the only code-like token in the message.
 - Send it from a registered SMS provider (application-to-person). Carriers can drop code-like messages from personal numbers.
 - On Android, the [SMS Retriever](sms-retriever.md) can fill the code without a tap if the message ends with your app's hash.
+
+[The OTP message](otp-message.md) has the templates for numeric and alphanumeric codes and all the rules.
 
 ## Next
 
 - [Input rules](input-rules.md): exactly what is accepted, rejected and normalized.
+- [The OTP message](otp-message.md): how to write the SMS so the code is offered or filled.
 - [Customization](customization.md): styles, dark mode, masks.
 - [Accessibility](accessibility.md): what users hear, and what to check before you ship.

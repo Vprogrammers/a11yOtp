@@ -50,7 +50,7 @@ Your Example code is 123456
 FA+9qCX9VSu
 ```
 
-Keep the code the only number in the message; the hash is never mistaken for the code.
+Keep the code the only code-like token in the message; the hash is never mistaken for the code. For alphanumeric codes and the full rules, see [The OTP message](otp-message.md).
 
 ## The app hash
 
