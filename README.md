@@ -7,7 +7,7 @@ One real text field, drawn as boxes. Native on each platform: Jetpack Compose on
 [![Platforms](https://img.shields.io/badge/platforms-Android%20%7C%20iOS-lightgrey)](#requirements)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
-> **Status: 0.2.0.** While the version is 0.x, minor versions may still change the API; every change is listed in the [changelog](CHANGELOG.md). Behavior is claimed as supported only after it is verified (see [Accessibility](docs/accessibility.md)).
+> **Status: 0.3.0.** While the version is 0.x, minor versions may still change the API; every change is listed in the [changelog](CHANGELOG.md). Behavior is claimed as supported only after it is verified (see [Accessibility](docs/accessibility.md)).
 
 ## Why
 
@@ -49,11 +49,11 @@ kotlin {
     listOf(iosArm64(), iosSimulatorArm64()).forEach {
         it.binaries.framework {
             baseName = "Shared"
-            export("me.vprogrammers:a11yotp:0.2.0") // makes the iOS components visible to Swift
+            export("me.vprogrammers:a11yotp:0.3.0") // makes the iOS components visible to Swift
         }
     }
     sourceSets.commonMain.dependencies {
-        api("me.vprogrammers:a11yotp:0.2.0") // api, so androidApp sees the Compose components
+        api("me.vprogrammers:a11yotp:0.3.0") // api, so androidApp sees the Compose components
     }
 }
 ```
@@ -140,7 +140,7 @@ The `androidApp` and `iosApp` sample apps (with `sample/shared` as their shared 
 - [x] Masked mode
 - [x] Optional SMS Retriever module for Android
 - [x] Real-device verification with TalkBack and VoiceOver
-- [x] Maven Central publication (0.1.0, 0.2.0)
+- [x] Maven Central publication (0.1.0, 0.2.0, 0.3.0)
 - [x] Real-device verification with Voice Control, Switch Access, Switch Control, hardware keyboards, RTL and iPad
 - [x] Alphanumeric codes
 - [ ] Optional Compose Multiplatform UI module
