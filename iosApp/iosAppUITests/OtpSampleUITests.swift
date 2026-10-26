@@ -218,6 +218,8 @@ final class OtpSampleUITests: XCTestCase {
         app.launchArguments += extraArguments
         // A short countdown keeps the resend test fast; other tests never wait for it.
         app.launchArguments += ["-resendSeconds", "8"]
+        // Scene restoration would bring back a code from an earlier test.
+        app.launchArguments += ["-skipRestore", "YES"]
         if manualVerify { app.launchArguments += ["-manualVerify", "YES"] }
         app.launch()
         XCTAssertTrue(field.waitForExistence(timeout: timeout), "The OTP field is missing")

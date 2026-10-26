@@ -115,6 +115,8 @@ class OtpState private constructor(
          * a state, not from user input. Restoring is not input: no callback fires and completion is
          * not reported again, so a restored complete code is not submitted twice.
          *
+         * Turn saved names back into values with [OtpLength.fromName] and [OtpCharset.fromName].
+         *
          * Saved state can be written to disk by the platform. If the code must not outlive the
          * screen, do not save it, or clear it when the screen is left.
          */
