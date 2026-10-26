@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.androidMultiplatformLibrary)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.mavenPublish)
+    alias(libs.plugins.dokka)
 }
 
 // Optional Android-only module: Play Services stays off the classpath of a11yotp consumers.

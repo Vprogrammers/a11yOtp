@@ -111,6 +111,7 @@ When verification fails, set `otp = otp.withError()` (Android) or `field.state =
 
 | Document | Read it for |
 |---|---|
+| [API reference](https://vprogrammers.github.io/a11yOtp/) | Every public type and function, for shared code, Android and iOS (Dokka) |
 | [Getting started](docs/getting-started.md) | The complete integration on both platforms, SwiftUI, the buttons, the error flow |
 | [Input rules](docs/input-rules.md) | What the field accepts: typing, paste, autofill, normalization, lengths, rejection, completion |
 | [Customization](docs/customization.md) | Styles, colors, dark mode, masks, alignment, grouping, the iOS Done key |
