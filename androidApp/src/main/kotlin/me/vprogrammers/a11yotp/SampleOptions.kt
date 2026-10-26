@@ -28,6 +28,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+/** Which optional SMS integration the sample uses; never both at once. */
+enum class SampleSmsMode { RETRIEVER, USER_CONSENT, OFF }
+
 /** Demo options below the sample flow, the same as in the iOS sample. */
 data class SampleOptions(
     val length: OtpLength = OtpLength.SIX,
@@ -35,12 +38,19 @@ data class SampleOptions(
     val mask: OtpMask = OtpMask.None,
     val roundCells: Boolean = false,
     val isDisabled: Boolean = false,
+    val smsMode: SampleSmsMode = SampleSmsMode.RETRIEVER,
 )
 
 private val charsets =
     listOf(
         "Digits" to OtpCharset.NUMERIC,
         "Letters and digits" to OtpCharset.ALPHANUMERIC,
+    )
+private val smsModes =
+    listOf(
+        "Retriever" to SampleSmsMode.RETRIEVER,
+        "User Consent" to SampleSmsMode.USER_CONSENT,
+        "Off" to SampleSmsMode.OFF,
     )
 private val masks =
     listOf(
@@ -77,6 +87,7 @@ fun SampleOptionsPanel(
         }
         Segmented("Characters", charsets, options.charset) { onChange(options.copy(charset = it)) }
         Segmented("Masking", masks, options.mask) { onChange(options.copy(mask = it)) }
+        Segmented("SMS", smsModes, options.smsMode) { onChange(options.copy(smsMode = it)) }
         Checkbox("Round cells", options.roundCells) { onChange(options.copy(roundCells = it)) }
         Checkbox("Disable field", options.isDisabled) { onChange(options.copy(isDisabled = it)) }
     }

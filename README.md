@@ -63,7 +63,7 @@ The artifacts are on Maven Central (`mavenCentral()`):
 | Artifact | Contents |
 |---|---|
 | `me.vprogrammers:a11yotp` | `OtpState` and the Android and iOS components |
-| `me.vprogrammers:a11yotp-sms-retriever` | optional, Android only: [SMS Retriever](docs/sms-retriever.md) |
+| `me.vprogrammers:a11yotp-sms-retriever` | optional, Android only: [SMS Retriever](docs/sms-retriever.md) and [SMS User Consent](docs/sms-user-consent.md) |
 
 ## Quick start
 
@@ -118,6 +118,7 @@ When verification fails, set `otp = otp.withError()` (Android) or `field.state =
 | [Accessibility](docs/accessibility.md) | What screen readers announce, WCAG coverage, what is verified, a checklist for your app |
 | [The OTP message](docs/otp-message.md) | How to write the SMS so iOS and Android offer the code, for numeric and alphanumeric codes |
 | [SMS Retriever](docs/sms-retriever.md) | Optional automatic SMS delivery on Android, the app hash and the message format |
+| [SMS User Consent](docs/sms-user-consent.md) | Optional on Android: fill the code from any SMS after the user allows a system prompt |
 | [Contributing](CONTRIBUTING.md) | Building, local checks, CI, the public API baseline, releasing |
 | [Changelog](CHANGELOG.md) | Changes per version |
 
@@ -143,7 +144,7 @@ The `androidApp` and `iosApp` sample apps (with `sample/shared` as their shared 
 - [x] Real-device verification with Voice Control, Switch Access, Switch Control, hardware keyboards, RTL and iPad
 - [x] Alphanumeric codes
 - [ ] Optional Compose Multiplatform UI module
-- [ ] Optional SMS User Consent support for Android
+- [x] Optional SMS User Consent support for Android
 
 ## Contributing
 

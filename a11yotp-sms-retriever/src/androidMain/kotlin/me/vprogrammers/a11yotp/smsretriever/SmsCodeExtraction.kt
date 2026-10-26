@@ -58,7 +58,8 @@ private fun candidates(
 /**
  * Extracts the verification code from an SMS Retriever [message].
  *
- * Drops the trailing 11-character app hash, then looks for a standalone run of exactly
+ * Drops a trailing 11-character app hash if the message has one (messages from SMS User Consent
+ * carry none; stripping is then a no-op), then looks for a standalone run of exactly
  * [OtpLength.digitCount] digits. A run counts as standalone when it is not adjacent to
  * letters, digits, `+` or `/`, so longer numbers such as phone numbers are ignored.
  * Returns null when there is no match or when two different codes match.
@@ -96,6 +97,45 @@ private fun hasExactLengthRun(
     charset: OtpCharset,
 ): Boolean = candidates(stripAppHash(message), "{${length.digitCount}}", charset).any()
 
+/** Outcome of classifying one SMS body, shared by SMS Retriever and SMS User Consent. */
+internal sealed interface MessageOutcome {
+    class Code(
+        val code: String,
+    ) : MessageOutcome {
+        // Omits the code so it does not end up in logs.
+        override fun toString(): String = "Code"
+    }
+
+    data object LengthMismatch : MessageOutcome
+}
+
+/**
+ * Classifies [message]: a [MessageOutcome.Code], a [MessageOutcome.LengthMismatch], or null when there
+ * is nothing to deliver (no message, no plausible code, or two different codes of the right length).
+ */
+internal fun classifyMessage(
+    message: String?,
+    length: OtpLength,
+    charset: OtpCharset,
+): MessageOutcome? {
+    if (message == null) return null
+    val code = extractSmsCode(message, length, charset)
+    return when {
+        code != null -> {
+            MessageOutcome.Code(code)
+        }
+
+        // Two different codes of the right length are ambiguous, not a length mismatch.
+        !hasExactLengthRun(message, length, charset) && hasPlausibleCodeOfAnyLength(message, charset) -> {
+            MessageOutcome.LengthMismatch
+        }
+
+        else -> {
+            null
+        }
+    }
+}
+
 /** Maps a retriever [statusCode] and [message] to a result, or null when there is nothing to deliver. */
 internal fun resolveSmsResult(
     statusCode: Int,
@@ -105,21 +145,10 @@ internal fun resolveSmsResult(
 ): SmsResult? =
     when (statusCode) {
         STATUS_SUCCESS -> {
-            val code = message?.let { extractSmsCode(it, length, charset) }
-            when {
-                code != null -> {
-                    SmsResult.Code(code)
-                }
-
-                // Two different codes of the right length are ambiguous, not a length mismatch.
-                message != null && !hasExactLengthRun(message, length, charset) &&
-                    hasPlausibleCodeOfAnyLength(message, charset) -> {
-                    SmsResult.Failure(SmsRetrieverFailure.CODE_LENGTH_MISMATCH)
-                }
-
-                else -> {
-                    null
-                }
+            when (val outcome = classifyMessage(message, length, charset)) {
+                is MessageOutcome.Code -> SmsResult.Code(outcome.code)
+                MessageOutcome.LengthMismatch -> SmsResult.Failure(SmsRetrieverFailure.CODE_LENGTH_MISMATCH)
+                null -> null
             }
         }
 

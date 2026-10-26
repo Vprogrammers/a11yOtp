@@ -38,6 +38,7 @@ kotlin {
             implementation(libs.compose.runtime)
             implementation(libs.compose.ui)
             implementation(libs.androidx.core)
+            implementation(libs.androidx.activity.compose)
             implementation(libs.play.services.auth.api.phone)
         }
         getByName("androidHostTest").dependencies {

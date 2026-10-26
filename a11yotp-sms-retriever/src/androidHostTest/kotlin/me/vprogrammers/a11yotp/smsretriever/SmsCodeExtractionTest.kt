@@ -188,4 +188,11 @@ class SmsCodeExtractionTest {
         assertEquals("482913", extractSmsCode("Code 482913", OtpLength.SIX, OtpCharset.NUMERIC))
         assertNull(resolveSmsResult(STATUS_SUCCESS, "Code K7Q2\n$hash", OtpLength.SIX))
     }
+
+    @Test
+    fun hashLessMessagesAreUnchangedByHashStripping() {
+        assertEquals("123456", extractSmsCode("Your code is 123456", OtpLength.SIX))
+        assertEquals("123456", extractSmsCode("Your code is 123456\n", OtpLength.SIX))
+        assertEquals("K7Q2MX", extractSmsCode("Code: K7Q2MX", OtpLength.SIX, alnum))
+    }
 }

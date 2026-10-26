@@ -1,6 +1,6 @@
 # Android SMS Retriever (optional)
 
-Platform autofill needs no setup: the keyboard or the autofill service offers the code, and the user taps it (see [Input rules](input-rules.md#autofill-on-android)). If your backend can change the SMS text, Android can also deliver the code automatically, without a tap and without SMS permissions, through Google's [SMS Retriever API](https://developers.google.com/identity/sms-retriever/overview).
+Platform autofill needs no setup: the keyboard or the autofill service offers the code, and the user taps it (see [Input rules](input-rules.md#autofill-on-android)). If your backend can change the SMS text, Android can also deliver the code automatically, without a tap and without SMS permissions, through Google's [SMS Retriever API](https://developers.google.com/identity/sms-retriever/overview). If you cannot change the SMS text, use [SMS User Consent](sms-user-consent.md) from the same module instead.
 
 ## Add the module
 

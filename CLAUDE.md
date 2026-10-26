@@ -10,7 +10,7 @@ Read `.claude/skills/kmp-library-engineering/SKILL.md` for the authoritative mod
 
 - Kotlin package root: `me.vprogrammers.a11yotp`
 - Library module: `a11yotp` (consumers add it only through Gradle in their KMP shared module)
-- Optional Android-only module: `a11yotp-sms-retriever` (Google SMS Retriever; host tests in `a11yotp-sms-retriever/src/androidHostTest`)
+- Optional Android-only module: `a11yotp-sms-retriever` (Google SMS Retriever and SMS User Consent; host tests in `a11yotp-sms-retriever/src/androidHostTest`)
 - Shared production code: `a11yotp/src/commonMain/kotlin/me/vprogrammers/a11yotp`
 - Android Compose production code: `a11yotp/src/androidMain/kotlin/me/vprogrammers/a11yotp`
 - iOS UIKit production code (Kotlin/Native): `a11yotp/src/iosMain/kotlin/me/vprogrammers/a11yotp`
