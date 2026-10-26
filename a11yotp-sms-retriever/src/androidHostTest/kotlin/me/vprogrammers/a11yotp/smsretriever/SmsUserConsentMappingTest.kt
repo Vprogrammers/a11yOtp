@@ -7,6 +7,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class SmsUserConsentMappingTest {
     private val six = OtpLength.SIX
@@ -87,5 +88,33 @@ class SmsUserConsentMappingTest {
         assertFalse(result.toString().contains("482913"))
         assertEquals("Code", result.toString())
         assertEquals("Code", classifyMessage("Code 482913", six, numeric).toString())
+    }
+
+    @Test
+    fun matchingSessionDelivers() {
+        assertTrue(shouldDeliverConsentResult("a", "a", enabled = true))
+    }
+
+    @Test
+    fun disabledEffectIgnoresResult() {
+        assertFalse(shouldDeliverConsentResult("a", "a", enabled = false))
+    }
+
+    @Test
+    fun supersededSessionIgnoresResult() {
+        assertFalse(shouldDeliverConsentResult("old", "new", enabled = true))
+    }
+
+    @Test
+    fun missingPromptSessionIgnoresResult() {
+        assertFalse(shouldDeliverConsentResult(null, "a", enabled = true))
+    }
+
+    @Test
+    fun listensOnlyWhenEnabledAndStillListening() {
+        assertTrue(shouldListen(true, ConsentPhase.LISTENING))
+        assertFalse(shouldListen(true, ConsentPhase.PROMPTING))
+        assertFalse(shouldListen(true, ConsentPhase.DONE))
+        assertFalse(shouldListen(false, ConsentPhase.LISTENING))
     }
 }
