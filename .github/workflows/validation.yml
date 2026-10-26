@@ -102,6 +102,11 @@ jobs:
       - name: Public API (ABI) check
         run: ./gradlew :a11yotp:checkKotlinAbi :a11yotp-sms-retriever:checkKotlinAbi
 
+      # Dokka analyzes the iOS source sets only on macOS. Fails on any warning, such as a broken KDoc link.
+      - name: API reference (Dokka)
+        if: ${{ !cancelled() }}
+        run: ./gradlew :dokkaGenerate -PdokkaStrict=true
+
       - name: Kotlin/Native tests on the iOS simulator
         if: ${{ !cancelled() }}
         run: ./gradlew :a11yotp:iosSimulatorArm64Test

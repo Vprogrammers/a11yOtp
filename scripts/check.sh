@@ -93,6 +93,7 @@ run_kmp() {
     if [[ "$(uname)" == "Darwin" ]]; then
         # The ABI dump covers the iOS targets, which only build on macOS.
         step "public API (ABI) check" ./gradlew :a11yotp:checkKotlinAbi :a11yotp-sms-retriever:checkKotlinAbi
+        step "API reference (Dokka)" ./gradlew :dokkaGenerate -PdokkaStrict=true
         step "compile Kotlin/Native tests" ./gradlew :a11yotp:compileTestKotlinIosSimulatorArm64
         step "link the Shared framework" ./gradlew :sampleShared:linkDebugFrameworkIosSimulatorArm64
         if is_apple_silicon; then

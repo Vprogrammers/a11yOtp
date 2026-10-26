@@ -8,6 +8,8 @@ androidx-core = "1.19.1"
 androidxCompose = "1.12.1"
 # Pinned above the Compose test default: older Espresso crashes on API 37 (InputManager.getInstance removed)
 androidx-test-espresso = "3.7.0"
+# API reference (HTML on GitHub Pages and the javadoc jars); a build-time plugin only, never a consumer dependency
+dokka = "2.2.0"
 kotlin = "2.4.21"
 ktlintPlugin = "14.2.0"
 ktlintVersion = "1.8.0"
@@ -34,6 +36,7 @@ play-services-auth-api-phone = { module = "com.google.android.gms:play-services-
 androidApplication = { id = "com.android.application", version.ref = "agp" }
 androidMultiplatformLibrary = { id = "com.android.kotlin.multiplatform.library", version.ref = "agp" }
 composeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlintPlugin" }
 mavenPublish = { id = "com.vanniktech.maven.publish", version.ref = "mavenPublish" }

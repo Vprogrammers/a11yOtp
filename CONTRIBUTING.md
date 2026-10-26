@@ -133,7 +133,13 @@ and set `ENABLE_USER_SCRIPT_SANDBOXING = NO`, or Xcode can prevent the script fr
    - verifies the publication with a clean consumer;
    - signs and uploads.
 5. Check the deployment in the [Central Portal](https://central.sonatype.com/publishing/deployments) and publish it there. Uploads are not released automatically.
-6. Publish the draft GitHub release `v<version>` that the workflow created.
+6. Publish the draft GitHub release `v<version>` that the workflow created. Publishing it starts `.github/workflows/api-reference.yml`, which deploys the API reference of that release to GitHub Pages.
+
+## API reference
+
+Dokka generates the API reference for `a11yotp` and `a11yotp-sms-retriever`: `./gradlew :dokkaGenerate` writes `build/dokka/html`. Run it with `-PdokkaStrict=true` (as CI does on macOS) to fail on any warning, such as a KDoc link that does not resolve. Write links that Dokka can resolve: on Android `OtpField` is a function, so link `[OtpField]` and name the parameter in backticks. The javadoc jars of both artifacts contain the same HTML. A cold run takes about 1.5 minutes; it is cached afterwards.
+
+GitHub Pages must use **GitHub Actions** as its source (Settings → Pages). `api-reference.yml` can also be started by hand; it then publishes the current `main`.
 
 The `release` environment holds the secrets. They never go into the repository:
 

@@ -126,7 +126,7 @@ class OtpButtonStyle internal constructor(
 /**
  * Button that verifies a complete code. It is enabled only while [state] is complete and
  * [enabled] is true. The host owns verification: [onVerify] receives the code and should not
- * also be triggered by [OtpField.onComplete] for the same code unless it de-duplicates.
+ * also be triggered by `onComplete` of [OtpField] for the same code unless it de-duplicates.
  * Pass the same [alignment] as [OtpField] to keep them aligned.
  */
 @Composable
