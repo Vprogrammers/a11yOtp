@@ -701,3 +701,126 @@ class OtpFieldQueuedInputOrderIosTest {
         assertEquals("12", field.state.code)
     }
 }
+
+/** Alphanumeric one-time codes (for example "K7Q2MX") take the same autofill path as numeric ones. */
+class OtpFieldAlphanumericAutofillIosTest {
+    private fun alphanumericField(length: OtpLength = OtpLength.SIX) =
+        OtpField(OtpState(length, OtpCharset.ALPHANUMERIC), accessibility(), doneButtonTitle = "Done")
+            .also { it.hapticFeedbackOnError = false }
+
+    private fun autofill(
+        field: OtpField,
+        code: String,
+    ) {
+        // The signature iOS sends before autofill: two empty replacements of an empty range.
+        field.enqueueReplacement("", emptyRange = true)
+        field.enqueueReplacement("", emptyRange = true)
+        code.forEach { field.enqueueReplacement(it.toString()) }
+        field.flushPendingInput()
+    }
+
+    @Test
+    fun anExactAutofilledCodeFillsAndCompletesOnce() {
+        val field = alphanumericField()
+        val completed = mutableListOf<String>()
+        field.onComplete = { completed += it }
+
+        autofill(field, "K7Q2MX")
+
+        assertEquals("K7Q2MX", field.state.code)
+        assertEquals(listOf("K7Q2MX"), completed)
+        assertEquals("K7Q2MX", field.textField().text)
+    }
+
+    @Test
+    fun aLowercaseAutofilledCodeIsStoredAndShownInUppercase() {
+        val field = alphanumericField()
+        val completed = mutableListOf<String>()
+        field.onComplete = { completed += it }
+
+        autofill(field, "k7q2Mx")
+
+        assertEquals("K7Q2MX", field.state.code)
+        assertEquals("K7Q2MX", field.textField().text)
+        assertEquals(listOf("K7Q2MX"), completed)
+    }
+
+    @Test
+    fun shortAndLongAutofilledCodesAreRejectedNotCutOrPartiallyFilled() {
+        val field = alphanumericField()
+        val rejections = mutableListOf<OtpInputRejection>()
+        val completed = mutableListOf<String>()
+        field.onInputRejected = { rejections += it }
+        field.onComplete = { completed += it }
+
+        autofill(field, "K7Q2")
+        autofill(field, "K7Q2MX9A")
+
+        assertEquals("", field.state.code)
+        assertEquals("", field.textField().text)
+        assertEquals(listOf(OtpInputRejection(6, 4), OtpInputRejection(6, 8)), rejections)
+        assertTrue(completed.isEmpty())
+    }
+
+    @Test
+    fun autofillReplacesPartiallyTypedLetters() {
+        val field = alphanumericField()
+        "ab".forEach { field.handleReplacement(it.toString()) }
+        assertEquals("AB", field.textField().text)
+        val completed = mutableListOf<String>()
+        field.onComplete = { completed += it }
+
+        autofill(field, "K7Q2MX")
+
+        assertEquals("K7Q2MX", field.state.code)
+        assertEquals("K7Q2MX", field.textField().text)
+        assertEquals(listOf("K7Q2MX"), completed)
+    }
+
+    @Test
+    fun typedLowercaseLettersAreAppliedOneByOneAndUppercased() {
+        val field = alphanumericField()
+        val rejections = mutableListOf<OtpInputRejection>()
+        field.onInputRejected = { rejections += it }
+
+        // Several keys in one turn without the autofill signature are typing, not an autofilled code.
+        "k7q".forEach { field.enqueueReplacement(it.toString()) }
+        field.flushPendingInput()
+
+        assertEquals("K7Q", field.state.code)
+        assertEquals("K7Q", field.textField().text)
+        assertTrue(rejections.isEmpty())
+
+        field.handleReplacement("m")
+
+        assertEquals("K7QM", field.state.code)
+        assertEquals("K7QM", field.textField().text)
+    }
+
+    @Test
+    fun anAutofilledSeparatorIsIgnoredAndTheCodeAccepted() {
+        val field = alphanumericField()
+
+        autofill(field, "K7Q-2MX")
+
+        assertEquals("K7Q2MX", field.state.code)
+        assertEquals("K7Q2MX", field.textField().text)
+    }
+
+    @Test
+    fun anAutofilledCodeWithAnUnsupportedCharacterLeavesTheStateUnchanged() {
+        val field = alphanumericField()
+        "K7".forEach { field.handleReplacement(it.toString()) }
+        var changes = 0
+        val rejections = mutableListOf<OtpInputRejection>()
+        field.onStateChange = { changes++ }
+        field.onInputRejected = { rejections += it }
+
+        autofill(field, "K7Q:MX")
+
+        assertEquals("K7", field.state.code)
+        assertEquals("K7", field.textField().text)
+        assertEquals(0, changes)
+        assertTrue(rejections.isEmpty())
+    }
+}

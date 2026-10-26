@@ -44,7 +44,7 @@ import kotlin.native.ref.WeakReference
  * [onStateChange] with the new state, which the component renders immediately. [onComplete]
  * fires once per incomplete-to-complete transition. [accessibility] and [doneButtonTitle] must be
  * localized by the host. With a [mask] other than [OtpMask.None] the field is a secure text field
- * and VoiceOver gets the label and progress only, never the digits.
+ * and VoiceOver gets the label and progress only, never the code.
  *
  * The field uses the one-time-code content type, so the system can offer codes from messages.
  * An autofilled code is applied as one input, so a code whose length differs from the field is
@@ -53,7 +53,7 @@ import kotlin.native.ref.WeakReference
  * turn, from a hardware keyboard or Voice Control) are always applied one by one.
  * Setting [state] to an error state announces [OtpFieldAccessibility.errorMessage] once without moving
  * focus, and vibrates once when [hapticFeedbackOnError] is true. [alignment] only positions the
- * cells and error text; digits inside the row always read left to right. No animation is used, so
+ * cells and error text; characters inside the row always read left to right. No animation is used, so
  * Reduce Motion needs no special handling.
  *
  * The keyboard follows [OtpState.charset], and changes when a state with another charset is assigned.
@@ -158,9 +158,9 @@ class OtpField(
     var onComplete: ((String) -> Unit)? = null
 
     /**
-     * Called once per rejected multi-digit input (paste, autofill, keyboard suggestion) whose digit
+     * Called once per rejected multi-character input (paste, autofill, keyboard suggestion) whose character
      * count differs from the field length. The state is unchanged. The counts usually mean the
-     * configured [OtpLength] differs from the host's backend. The digits are never passed.
+     * configured [OtpLength] differs from the host's backend. The code is never passed.
      */
     var onInputRejected: ((OtpInputRejection) -> Unit)? = null
 
@@ -305,8 +305,8 @@ class OtpField(
     /**
      * Applies text the user typed, pasted, or autofilled at the end of the field. Because the
      * caret is pinned to the end, a non-empty [replacement] is appended and an empty one deletes the
-     * last digit. The rules of [OtpState.withInput] apply: a multi-digit insertion is accepted only
-     * with exactly the field's digit count (it then replaces the input); otherwise the state stays
+     * last digit. The rules of [OtpState.withInput] apply: a multi-character insertion is accepted only
+     * with exactly the field's length (it then replaces the input); otherwise the state stays
      * unchanged, [onInputRejected] is called, and the rejection message is shown, announced once, and added to the accessibility value until the next
      * input or state change (it replaces the error text while the field is in error).
      * Unsupported characters leave the state unchanged.

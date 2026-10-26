@@ -75,9 +75,9 @@ import kotlin.math.roundToInt
  * true. [alignment] (default centered) only positions the cells and error text; the digits
  * inside the row always read left to right. The field spans the available width.
  *
- * A single input that inserts several digits at once (paste, autofill, keyboard suggestion) is
- * accepted only with exactly the field's digit count; see [OtpState.withInput]. Otherwise the state
- * stays unchanged, [onInputRejected] is called once with the digit counts, and
+ * A single input that inserts several characters at once (paste, autofill, keyboard suggestion) is
+ * accepted only with exactly the field's length; see [OtpState.withInput]. Otherwise the state
+ * stays unchanged, [onInputRejected] is called once with the character counts, and
  * [OtpFieldAccessibility.inputRejectedMessage] appears below the field in the slot of the error
  * message in a polite live region, announced on every rejection (also an identical one). While
  * [OtpState.isError] the newest message wins: the rejection replaces the error text, the error
