@@ -49,6 +49,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.TextFieldValue
@@ -177,10 +178,7 @@ fun OtpField(
             enabled = enabled,
             textStyle = style.textStyle.copy(color = Color.Transparent),
             keyboardOptions =
-                KeyboardOptions(
-                    keyboardType = if (masked) KeyboardType.NumberPassword else KeyboardType.Number,
-                    imeAction = ImeAction.Done,
-                ),
+                otpKeyboardOptions(state.charset, masked),
             singleLine = true,
             visualTransformation = if (masked) PasswordVisualTransformation() else VisualTransformation.None,
             cursorBrush = SolidColor(Color.Transparent),
@@ -221,6 +219,34 @@ fun OtpField(
 }
 
 private val ErrorTextKey = Any()
+
+/**
+ * Keyboard for the logical field. Numeric codes use the number keyboard, and the number password
+ * keyboard only when masked. Alphanumeric codes use a text keyboard that shows capitals, without
+ * suggestions or autocorrect; the password type is used only when masked, because it suppresses
+ * TalkBack key echo unless the user enables "Speak passwords".
+ */
+internal fun otpKeyboardOptions(
+    charset: OtpCharset,
+    masked: Boolean,
+): KeyboardOptions =
+    when (charset) {
+        OtpCharset.NUMERIC -> {
+            KeyboardOptions(
+                keyboardType = if (masked) KeyboardType.NumberPassword else KeyboardType.Number,
+                imeAction = ImeAction.Done,
+            )
+        }
+
+        else -> {
+            KeyboardOptions(
+                capitalization = KeyboardCapitalization.Characters,
+                autoCorrectEnabled = false,
+                keyboardType = if (masked) KeyboardType.Password else KeyboardType.Ascii,
+                imeAction = ImeAction.Done,
+            )
+        }
+    }
 
 /** A rejection to display. No equality, so each rejection is a new value for Compose. */
 private class RejectedInput(
@@ -269,6 +295,7 @@ private fun OtpCells(
                     style = style,
                     colors = colors,
                     mask = mask,
+                    stableWidth = state.charset != OtpCharset.NUMERIC,
                 )
             }
             repeat(separatorCount) {
@@ -333,6 +360,7 @@ private fun OtpCell(
     style: OtpFieldStyle,
     colors: OtpFieldColors,
     mask: OtpMask,
+    stableWidth: Boolean,
 ) {
     val borderColor =
         when {
@@ -377,6 +405,11 @@ private fun OtpCell(
         contentAlignment = Alignment.Center,
     ) {
         val textColor = if (enabled) colors.text else colors.disabledText
+        if (stableWidth) {
+            // Letters differ in width ("W" vs "I"). An invisible widest glyph keeps every cell, and so the
+            // wrapping, the same while typing. It is not drawn and the cells are cleared of semantics.
+            BasicText(WIDEST_GLYPH, style = style.textStyle.copy(color = Color.Transparent))
+        }
         when {
             digit != null && mask is OtpMask.Character -> {
                 BasicText(mask.char.toString(), style = style.textStyle.copy(color = textColor))
@@ -396,6 +429,7 @@ private fun OtpCell(
     }
 }
 
+private const val WIDEST_GLYPH = "W"
 private val FilledRingWidth = 2.dp
 private val FocusLift = 4.dp
 

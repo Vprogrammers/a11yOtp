@@ -12,12 +12,14 @@ struct SampleOptions {
 
     var length = OtpLength.six
     var maskIndex = 0
+    var alphanumeric = false
     var roundCells = false
     var isDisabled = false
     var glassField = false
     var glassButtons = false
 
     var mask: OtpMask { Self.masks[maskIndex].mask }
+    var charset: OtpCharset { alphanumeric ? .alphanumeric : .numeric }
 }
 
 struct SampleOptionsView: View {
@@ -37,6 +39,7 @@ struct SampleOptionsView: View {
                 ForEach(SampleOptions.masks.indices, id: \.self) { Text(SampleOptions.masks[$0].name).tag($0) }
             }
             .pickerStyle(.segmented)
+            Toggle("Letters and digits", isOn: $options.alphanumeric)
             Toggle("Round cells", isOn: $options.roundCells)
             Toggle("Disable field", isOn: $options.isDisabled)
             // Before iOS 26 the field draws no backdrop and the buttons keep the solid style.
