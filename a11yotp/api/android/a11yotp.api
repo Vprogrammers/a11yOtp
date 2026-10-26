@@ -49,6 +49,14 @@ public final class me/vprogrammers/a11yotp/OtpButtonStyle {
 	public fun hashCode ()I
 }
 
+public final class me/vprogrammers/a11yotp/OtpCharset : java/lang/Enum {
+	public static final field ALPHANUMERIC Lme/vprogrammers/a11yotp/OtpCharset;
+	public static final field NUMERIC Lme/vprogrammers/a11yotp/OtpCharset;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lme/vprogrammers/a11yotp/OtpCharset;
+	public static fun values ()[Lme/vprogrammers/a11yotp/OtpCharset;
+}
+
 public final class me/vprogrammers/a11yotp/OtpContrast {
 	public static final field $stable I
 	public static final field INSTANCE Lme/vprogrammers/a11yotp/OtpContrast;
@@ -218,8 +226,10 @@ public final class me/vprogrammers/a11yotp/OtpState {
 	public static final field $stable I
 	public static final field Companion Lme/vprogrammers/a11yotp/OtpState$Companion;
 	public fun <init> (Lme/vprogrammers/a11yotp/OtpLength;)V
+	public fun <init> (Lme/vprogrammers/a11yotp/OtpLength;Lme/vprogrammers/a11yotp/OtpCharset;)V
 	public final fun cleared ()Lme/vprogrammers/a11yotp/OtpState;
 	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCharset ()Lme/vprogrammers/a11yotp/OtpCharset;
 	public final fun getCode ()Ljava/lang/String;
 	public final fun getEnteredDigitCount ()I
 	public final fun getLength ()Lme/vprogrammers/a11yotp/OtpLength;
@@ -234,6 +244,7 @@ public final class me/vprogrammers/a11yotp/OtpState {
 
 public final class me/vprogrammers/a11yotp/OtpState$Companion {
 	public final fun restore (Lme/vprogrammers/a11yotp/OtpLength;Ljava/lang/String;Z)Lme/vprogrammers/a11yotp/OtpState;
+	public final fun restore (Lme/vprogrammers/a11yotp/OtpLength;Lme/vprogrammers/a11yotp/OtpCharset;Ljava/lang/String;Z)Lme/vprogrammers/a11yotp/OtpState;
 }
 
 public final class me/vprogrammers/a11yotp/OtpStateSaverKt {

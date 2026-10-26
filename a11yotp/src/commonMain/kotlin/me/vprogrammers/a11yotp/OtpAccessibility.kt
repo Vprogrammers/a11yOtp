@@ -37,7 +37,8 @@ class OtpCountdown internal constructor(
  * @property label accessible name of the field; should match any visible label.
  * @property errorMessage shown below the cells and exposed as the semantics error while
  * [OtpState.isError] is true.
- * @property progressDescription state description such as "3 of 6 digits entered".
+ * @property progressDescription state description such as "3 of 6 digits entered". Say
+ * "characters" rather than "digits" for [OtpCharset.ALPHANUMERIC]; the counts include letters.
  * @property inputRejectedMessage text for a rejected multi-digit input (see [OtpInputRejection]),
  * for example "Code has 4 digits, but 6 are expected". Localize it with plural rules from the
  * counts. It is shown below the field and announced once, like the error message, but it does not

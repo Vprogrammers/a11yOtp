@@ -39,3 +39,62 @@ class OtpStateSaverTest {
         assertNull(restore(listOf("SIX")))
     }
 }
+
+class OtpStateSaverAlphanumericTest {
+    private val scope = SaverScope { true }
+
+    private fun save(state: OtpState): Any = with(OtpStateSaver) { scope.save(state) }!!
+
+    private fun restore(saved: Any): OtpState? = OtpStateSaver.restore(saved)
+
+    @Test
+    fun numericStatesAreSavedInTheUnchanged0_1_0Format() {
+        assertEquals(listOf("SIX", "12", true), save(OtpState.restore(OtpLength.SIX, "12", isError = true)!!))
+        assertEquals(listOf("FOUR", "", false), save(OtpState(OtpLength.FOUR, OtpCharset.NUMERIC)))
+    }
+
+    @Test
+    fun alphanumericStatesSaveTheCharsetAsAFourthEntry() {
+        val state = OtpState.restore(OtpLength.SIX, OtpCharset.ALPHANUMERIC, "K7Q", isError = false)!!
+        assertEquals(listOf("SIX", "K7Q", false, "ALPHANUMERIC"), save(state))
+    }
+
+    @Test
+    fun alphanumericStatesRoundTrip() {
+        val partial = OtpState(OtpLength.EIGHT, OtpCharset.ALPHANUMERIC).withInput("k7q").state
+        val complete = OtpState(OtpLength.SIX, OtpCharset.ALPHANUMERIC).withInput("K7Q2MX").state
+        val empty = OtpState(OtpLength.FOUR, OtpCharset.ALPHANUMERIC)
+        for (state in listOf(empty, partial, complete, complete.withError(), empty.withError())) {
+            assertEquals(state, restore(save(state)))
+        }
+    }
+
+    @Test
+    fun aLegacyThreeEntryListRestoresAsNumeric() {
+        val restored = restore(listOf("SIX", "123", false))!!
+        assertEquals(OtpCharset.NUMERIC, restored.charset)
+        assertEquals("123", restored.code)
+    }
+
+    @Test
+    fun invalidCharsetDataIsDropped() {
+        assertNull(restore(listOf("SIX", "K7", false, "HEX")))
+        assertNull(restore(listOf("SIX", "K7", false, "alphanumeric")))
+        assertNull(restore(listOf("SIX", "K7", false, 4)))
+        assertNull(restore(listOf("SIX", "K7", false, null)))
+    }
+
+    @Test
+    fun invalidCodesAreDropped() {
+        assertNull(restore(listOf("SIX", "k7q", false, "ALPHANUMERIC")))
+        assertNull(restore(listOf("SIX", "K7Q2MXZ", false, "ALPHANUMERIC")))
+        assertNull(restore(listOf("SIX", "K7-", false, "ALPHANUMERIC")))
+        assertNull(restore(listOf("SIX", "K7Q", false)))
+        assertNull(restore(listOf("SIX", "K7Q", false, "NUMERIC")))
+    }
+
+    @Test
+    fun aNumericCodeUnderTheAlphanumericCharsetRestores() {
+        assertEquals("123", restore(listOf("SIX", "123", false, "ALPHANUMERIC"))!!.code)
+    }
+}

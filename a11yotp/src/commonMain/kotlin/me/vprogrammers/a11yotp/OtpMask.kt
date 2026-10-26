@@ -1,8 +1,8 @@
 package me.vprogrammers.a11yotp
 
 /**
- * Visual masking of entered digits. Masking also switches the keyboard to
- * `NumberPassword`, marks the field as a password for screen readers, and blocks copy,
+ * Visual masking of entered characters. Masking also switches the Android keyboard to a password
+ * keyboard, marks the field as a password for screen readers, and blocks copy,
  * so visual and assistive-technology privacy stay consistent.
  * Entries may be added in future versions; handle unknown values with an `else` branch.
  */
