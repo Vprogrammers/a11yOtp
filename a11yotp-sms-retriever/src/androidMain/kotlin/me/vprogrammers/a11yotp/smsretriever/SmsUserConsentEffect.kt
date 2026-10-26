@@ -12,9 +12,10 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import androidx.core.os.BundleCompat
@@ -22,8 +23,10 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.withStarted
 import com.google.android.gms.auth.api.phone.SmsRetriever
 import com.google.android.gms.common.api.Status
+import kotlinx.coroutines.flow.first
 import me.vprogrammers.a11yotp.OtpCharset
 import me.vprogrammers.a11yotp.OtpLength
+import java.util.UUID
 
 /** Why SMS User Consent did not deliver a code. */
 enum class SmsUserConsentFailure {
@@ -71,6 +74,34 @@ internal fun resolveConsentBroadcast(
         else -> ConsentBroadcastOutcome.Failure(SmsUserConsentFailure.UNAVAILABLE)
     }
 
+/** Where one listening session is. Saved, so a recreated activity never starts the same session again. */
+internal enum class ConsentPhase {
+    /** Waiting for a message; the only phase in which the receiver is registered. */
+    LISTENING,
+
+    /** The consent Intent arrived; the prompt is pending or open. */
+    PROMPTING,
+
+    /** The session reported its one outcome (code, failure, or a handled prompt result). */
+    DONE,
+}
+
+/** The receiver and `startSmsUserConsent` run only while enabled and the session is still listening. */
+internal fun shouldListen(
+    enabled: Boolean,
+    phase: ConsentPhase,
+): Boolean = enabled && phase == ConsentPhase.LISTENING
+
+/**
+ * A prompt result is delivered only when it belongs to the current session and the effect is still
+ * enabled; a result from a disabled or superseded session is ignored silently.
+ */
+internal fun shouldDeliverConsentResult(
+    promptSession: String?,
+    currentSession: String,
+    enabled: Boolean,
+): Boolean = promptSession != null && promptSession == currentSession && enabled
+
 /** Outcome of the consent prompt result. */
 internal sealed interface ConsentResult {
     class Code(
@@ -116,7 +147,9 @@ internal fun resolveConsentResult(
  * Uses the Google SMS User Consent API, which needs no SMS permission and no app hash in the message.
  * When a matching message arrives, Google shows a consent prompt (a system dialog); the effect then
  * receives only that one message if the user taps Allow. The effect is one-shot: after a code, a
- * failure, or a message without a matching code, it stops. Change [restartKey] (for example when
+ * failure, or a message without a matching code, it stops. A result from a superseded session (any
+ * input or [enabled] changed while the prompt was open) or a disabled effect is ignored. Recreating
+ * the activity keeps the session, so it neither listens again nor reports a second outcome. Change [restartKey] (for example when
  * the user taps resend) to listen again. A message without any plausible code delivers nothing and
  * reports no failure. A message whose only plausible code has a different length than [length]
  * reports [SmsUserConsentFailure.CODE_LENGTH_MISMATCH].
@@ -161,11 +194,31 @@ fun SmsUserConsentEffect(
     val currentLength by rememberUpdatedState(length)
     val currentCharset by rememberUpdatedState(charset)
 
+    // The session identity survives recreation (rememberSaveable restores without checking inputs) and
+    // is replaced when an input changes, which also resets every state keyed on it below.
+    val session =
+        rememberSaveable(enabled, length, charset, restartKey, senderPhoneNumber) {
+            UUID.randomUUID().toString()
+        }
+    val currentSession by rememberUpdatedState(session)
+    val currentEnabled by rememberUpdatedState(enabled)
+    var phase by rememberSaveable(session) { mutableStateOf(ConsentPhase.LISTENING) }
+
     // The consent Intent waits here until the host is at least STARTED, then is launched once.
-    var pendingConsent by remember { mutableStateOf<Intent?>(null) }
+    var pendingConsent by rememberSaveable(session) { mutableStateOf<Intent?>(null) }
+
+    // The session that launched the prompt; not keyed, so a result arriving after the session changed
+    // or the activity was recreated can still be matched against the current session.
+    var promptSession by rememberSaveable { mutableStateOf<String?>(null) }
 
     val launcher =
         rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            val owner = promptSession
+            promptSession = null
+            if (owner == currentSession) phase = ConsentPhase.DONE
+            if (!shouldDeliverConsentResult(owner, currentSession, currentEnabled)) {
+                return@rememberLauncherForActivityResult
+            }
             val message = result.data?.getStringExtra(SmsRetriever.EXTRA_SMS_MESSAGE)
             when (val outcome = resolveConsentResult(result.resultCode, message, currentLength, currentCharset)) {
                 is ConsentResult.Code -> currentOnCode(outcome.code)
@@ -174,16 +227,21 @@ fun SmsUserConsentEffect(
             }
         }
 
-    LaunchedEffect(pendingConsent) {
+    LaunchedEffect(session, pendingConsent) {
         val intent = pendingConsent ?: return@LaunchedEffect
-        // Suspends while the host is stopped; cancelled (and so dropped) if the effect is disposed.
+        // Suspends while the host is stopped; cancelled (dropped) if the session changes or the effect leaves.
         lifecycle.withStarted { }
+        // One prompt at a time: a result carries no session, so a prompt of an earlier session that is still
+        // open must return (and be ignored) before this one opens, or its result would count for this session.
+        snapshotFlow { promptSession }.first { it == null }
         pendingConsent = null
+        promptSession = session
         launcher.launch(intent)
     }
 
-    DisposableEffect(enabled, length, charset, restartKey, senderPhoneNumber) {
-        if (!enabled) return@DisposableEffect onDispose {}
+    val listening = shouldListen(enabled, phase)
+    DisposableEffect(session, listening) {
+        if (!listening) return@DisposableEffect onDispose {}
 
         var registered = false
 
@@ -214,8 +272,15 @@ fun SmsUserConsentEffect(
                         BundleCompat.getParcelable(extras, SmsRetriever.EXTRA_CONSENT_INTENT, Intent::class.java)
                     unregister(appContext, this)
                     when (val outcome = resolveConsentBroadcast(status.statusCode, consentIntent != null)) {
-                        ConsentBroadcastOutcome.Launch -> pendingConsent = consentIntent
-                        is ConsentBroadcastOutcome.Failure -> currentOnFailure(outcome.reason)
+                        ConsentBroadcastOutcome.Launch -> {
+                            pendingConsent = consentIntent
+                            phase = ConsentPhase.PROMPTING
+                        }
+
+                        is ConsentBroadcastOutcome.Failure -> {
+                            phase = ConsentPhase.DONE
+                            currentOnFailure(outcome.reason)
+                        }
                     }
                 }
             }
@@ -238,17 +303,16 @@ fun SmsUserConsentEffect(
                 .addOnFailureListener {
                     if (registered) {
                         unregister(appContext, receiver)
+                        phase = ConsentPhase.DONE
                         currentOnFailure(SmsUserConsentFailure.UNAVAILABLE)
                     }
                 }
         } catch (_: RuntimeException) {
             unregister(appContext, receiver)
+            phase = ConsentPhase.DONE
             currentOnFailure(SmsUserConsentFailure.UNAVAILABLE)
         }
 
-        onDispose {
-            unregister(appContext, receiver)
-            pendingConsent = null
-        }
+        onDispose { unregister(appContext, receiver) }
     }
 }
