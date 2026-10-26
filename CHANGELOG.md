@@ -7,6 +7,7 @@ All notable changes to this project are documented here. The format follows [Kee
 ### Added
 
 - **API reference** ([#36](https://github.com/Vprogrammers/a11yOtp/issues/36)): Dokka generates it for both modules (shared, Android and iOS), [published on GitHub Pages](https://vprogrammers.github.io/a11yOtp/) for every release. The javadoc jars on Maven Central now contain it instead of being empty.
+- **SMS User Consent** ([#35](https://github.com/Vprogrammers/a11yOtp/issues/35)) in `a11yotp-sms-retriever`: `SmsUserConsentEffect` and `SmsUserConsentFailure` fill the code from any SMS after the user allows a system prompt, with the same code rules as the retriever. The module now depends on `androidx.activity:activity-compose`; the retriever API is unchanged.
 - **Restoring from saved values** ([#37](https://github.com/Vprogrammers/a11yOtp/issues/37)): `OtpLength.fromName` and `OtpCharset.fromName`, also usable from Swift. The iOS sample restores the field with `@SceneStorage`.
 
 ## [0.2.0]

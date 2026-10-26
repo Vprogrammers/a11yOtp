@@ -68,7 +68,7 @@ Autofill suggestions need a real device; they do not appear in the iOS simulator
 
 ### Autofill on Android
 
-The keyboard (for example Gboard) or the autofill service offers the code. It offers only a code that fits the field, so a code of the wrong length is usually not suggested at all; the user can still paste it, and it is then rejected. To fill the code without a tap, use the optional [SMS Retriever](sms-retriever.md).
+The keyboard (for example Gboard) or the autofill service offers the code. It offers only a code that fits the field, so a code of the wrong length is usually not suggested at all; the user can still paste it, and it is then rejected. To fill the code without a tap, use the optional [SMS Retriever](sms-retriever.md); if you cannot change the SMS text, [SMS User Consent](sms-user-consent.md) fills it after the user allows a system prompt.
 
 ## Completion
 

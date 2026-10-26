@@ -32,6 +32,7 @@ Verify:
 - Android OTP autofill behavior; on API 24–25, where the Autofill Framework is unavailable, degrade gracefully to typing, paste, and keyboard-provided suggestions. Do not add SMS permissions or Play Services as an implicit fallback;
 - iOS one-time-code autofill with `textContentType = UITextContentTypeOneTimeCode`;
 - the optional Android SMS Retriever (`a11yotp-sms-retriever`) hands the whole code to the host, which replaces the input with `state.cleared().withInput(code)` so completion is reported even over a full typed code. The field's progress semantics apply and the library forces no announcement; the host announces the fill or verification result (polite live region), because TalkBack may not speak a value change on an unfocused field. With `OtpCharset.ALPHANUMERIC` (the `charset` overload) a code is a standalone token of uppercase `A`-`Z` and digits with at least one digit. If a message has a plausible code (4 to 8 characters) of another length, `SmsRetrieverFailure.CODE_LENGTH_MISMATCH` is reported at once. The message and code are never logged;
+- the optional SMS User Consent effect (same module) launches Google's system prompt only while the host is at least STARTED, shows no UI, makes no announcement and moves no focus. `DENIED` is not an error. The host prepares users for the prompt and announces the fill;
 - Voice Control visible labels match the accessible name;
 - restoration without duplicate callbacks or announcements;
 - configurable 4, 6, and, once implemented, 8 digit codes.

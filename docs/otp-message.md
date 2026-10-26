@@ -42,6 +42,7 @@ FA+9qCX9VSu
 
 - **iOS:** apps cannot read SMS. Messages offers the code above the keyboard while the field is empty; the user taps it, and the field accepts it like a paste (lowercase letters become uppercase). Suggestions need a real device. Whether a code with letters is offered depends on iOS recognizing it; see [Autofill on iOS](input-rules.md#autofill-on-ios).
 - **Android without the retriever:** the keyboard (for example Gboard) or the autofill service offers the code. Codes with letters depend on the keyboard; see [Autofill on Android](input-rules.md#autofill-on-android).
+- **Android with SMS User Consent:** any message text works; the user allows a system prompt and the code is filled. See [SMS User Consent](sms-user-consent.md).
 - **Android with the retriever:** the code is filled without a tap. Pass the field's `charset` to `SmsRetrieverEffect` for alphanumeric codes; see [SMS Retriever](sms-retriever.md).
 
 Typing and paste always work, whatever the message looks like.

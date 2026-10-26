@@ -40,6 +40,8 @@ import me.vprogrammers.a11yotp.sample.SAMPLE_RESEND_SECONDS
 import me.vprogrammers.a11yotp.sample.isSampleCodeRejected
 import me.vprogrammers.a11yotp.smsretriever.SmsRetrieverEffect
 import me.vprogrammers.a11yotp.smsretriever.SmsRetrieverFailure
+import me.vprogrammers.a11yotp.smsretriever.SmsUserConsentEffect
+import me.vprogrammers.a11yotp.smsretriever.SmsUserConsentFailure
 
 /** Groups of 3 give "123 - 456"; 4 and 8 digits do not split evenly, so they get no separator. */
 private val fieldStyle = OtpFieldDefaults.style(groupSize = 3, cellHeight = 56.dp)
@@ -109,20 +111,30 @@ fun SampleScreen(initialOptions: SampleOptions = SampleOptions()) {
         if (isSampleCodeRejected(code)) state = state.withError() else verified = true
     }
 
-    // Optional SMS Retriever: the SMS carries the whole code, so it replaces what was typed and
-    // still goes through withInput, which reports completion once.
+    // Optional SMS integrations (one at a time): the SMS carries the whole code, so it replaces what
+    // was typed and still goes through withInput, which reports completion once.
+    val smsActive = !verified && !options.isDisabled
+    val onSmsCode = { code: String ->
+        smsLengthMismatch = false
+        val result = state.cleared().withInput(code)
+        state = result.state
+        if (result.didComplete) verify(result.state.code)
+    }
     SmsRetrieverEffect(
         length = state.length,
         charset = state.charset,
         restartKey = resendCount,
-        enabled = !verified && !options.isDisabled,
+        enabled = smsActive && options.smsMode == SampleSmsMode.RETRIEVER,
         onFailure = { smsLengthMismatch = it == SmsRetrieverFailure.CODE_LENGTH_MISMATCH },
-        onCode = { code ->
-            smsLengthMismatch = false
-            val result = state.cleared().withInput(code)
-            state = result.state
-            if (result.didComplete) verify(result.state.code)
-        },
+        onCode = onSmsCode,
+    )
+    SmsUserConsentEffect(
+        length = state.length,
+        charset = state.charset,
+        restartKey = resendCount,
+        enabled = smsActive && options.smsMode == SampleSmsMode.USER_CONSENT,
+        onFailure = { smsLengthMismatch = it == SmsUserConsentFailure.CODE_LENGTH_MISMATCH },
+        onCode = onSmsCode,
     )
 
     val dark = isSystemInDarkTheme()
