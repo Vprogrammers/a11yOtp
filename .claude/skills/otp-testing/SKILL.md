@@ -55,7 +55,7 @@ Use `./gradlew :<module>:tasks --all` when a module task name must be confirmed.
 
 For implemented behavior, cover empty state, supported lengths, typing, partial/full/overlong paste, deletion, replacement, unsupported characters, configured normalization, completion exactly once per transition, error clearing, and restoration. Use table-driven tests where cases share behavior.
 
-For Android Compose, find the logical input through semantics and assert decorative cells are not independently exposed. Test label, progress/error state, paste, keyboard input, normalization, completion, and restoration. Assert the keyboard type is `Number` when unmasked and, once masked mode exists, `NumberPassword` only when masked.
+For Android Compose, find the logical input through semantics and assert decorative cells are not independently exposed. Test label, progress/error state, paste, keyboard input, normalization, completion, and restoration. Assert the keyboard type is `Number` when unmasked and `NumberPassword` only when masked, and for `OtpCharset.ALPHANUMERIC` `Ascii` with capital letters when unmasked and `Password` only when masked. For alphanumeric codes also test lowercase and fullwidth letters, rejected look-alikes (`ı`, `ſ`, Cyrillic `А`), stable cell width with a proportional font, and that the invisible width glyph never reaches semantics.
 
 Use screenshots only for visual regressions such as font scale, themes, RTL, focus, and errors—not interaction behavior.
 

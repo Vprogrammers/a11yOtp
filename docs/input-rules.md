@@ -11,12 +11,12 @@ What the field accepts, what it rejects, and when it reports completion. The sam
 | Paste or autofill with exactly the field's digit count | Replaces the whole code; `onComplete` fires |
 | Paste or autofill of several digits with any other count | Rejected: nothing changes, `onInputRejected` fires, a message is shown and announced |
 | Paste of a single digit | Applied like a typed digit; it cannot be told apart from typing |
-| Text with letters or other symbols (`Code: 482913`) | Ignored: nothing changes, no message |
+| Text with letters or other symbols (`Code: 482913`) | Ignored: nothing changes, no message (letters are accepted in [alphanumeric fields](#alphanumeric-codes)) |
 | Text with spaces, dashes or dots (`482 913`, `482-913`) | The separators are dropped, then the rules above apply |
 
 ## Characters
 
-The field stores only the ASCII digits `0`–`9` (`OtpState.code`).
+The field stores only the ASCII digits `0`–`9` (`OtpState.code`), or with `OtpCharset.ALPHANUMERIC` also the uppercase ASCII letters `A`–`Z` (see [Alphanumeric codes](#alphanumeric-codes)).
 
 - **Digits** in other scripts (Unicode decimal digits in the Basic Multilingual Plane, such as Arabic-Indic `٤٨٢٩١٣`) are converted to ASCII.
 - **Ignored separators:** whitespace, the hyphen and the other dashes (including the minus sign, the soft hyphen and the fullwidth hyphen), dots (including the fullwidth dot), and invisible formatting characters (zero-width spaces and joiners, direction marks, the byte order mark).
@@ -24,9 +24,22 @@ The field stores only the ASCII digits `0`–`9` (`OtpState.code`).
 
 ## Lengths
 
-`OtpLength.FOUR`, `OtpLength.SIX` or `OtpLength.EIGHT`. Numeric codes only.
+`OtpLength.FOUR`, `OtpLength.SIX` or `OtpLength.EIGHT`, counted in characters. In an alphanumeric field, letters count like digits, and so do the counts in `OtpProgress` and `OtpInputRejection`.
 
 **The field length must match your backend.** A code of a different length cannot be entered: typing stops at the field length, and paste or autofill of a different length is rejected. A rejection therefore almost always means the configured length is wrong. It is a configuration error for you to fix, not something users can work around. Log `onInputRejected` to find out (it gives the counts, never the digits).
+
+## Alphanumeric codes
+
+Create the state with `OtpState(OtpLength.SIX, OtpCharset.ALPHANUMERIC)` for codes such as `K7Q-2MX`. All the other rules on this page stay the same.
+
+- **Letters** `a`–`z` and `A`–`Z`, also fullwidth (`Ｋ`, `ｋ`), are stored in uppercase ASCII: typing `k7q2mx` gives `K7Q2MX`. Compare codes on your server case-insensitively, or send uppercase codes.
+- **Look-alikes are kept apart:** `O` and `0`, or `I` and `1`, are different characters. Letters outside `A`–`Z`, such as `é` or the Cyrillic `А`, make the whole input invalid, like any other symbol.
+- **Text around a code is no longer filtered out by its letters.** `Your code is K7Q2MX` pasted into a 6-character field is read as `YOURCODEISK7Q2MX`, 16 characters, so it is rejected with a message instead of being ignored. Symbols such as `:` still make the input invalid.
+- **Keyboard:** a text keyboard with capital letters instead of the number pad. On iOS it has its own Return key, so there is no Done key above it. Android uses a password keyboard only while the field is masked, because TalkBack does not read back keys typed on it.
+- **Accessibility text:** say "characters" rather than "digits" in `progressDescription` and `inputRejectedMessage`.
+- **Autofill:** whether the keyboard or the system suggests a code with letters depends on the platform, the keyboard and the message format, and is not verified yet. Typing and paste always work.
+- **Dictation and Voice Control:** a dictated chunk such as `K7Q` is several characters at once, so it is rejected unless it is the whole code. Dictate the whole code in one go, or one character at a time (for example with Voice Control's spelling mode).
+- **SMS Retriever:** the `a11yotp-sms-retriever` module reads numeric codes only.
 
 ## Typing and deleting
 

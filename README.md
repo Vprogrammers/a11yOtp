@@ -127,7 +127,7 @@ The `androidApp` and `iosApp` sample apps (with `sample/shared` as their shared 
 - No resend timer: the resend button shows the seconds you pass in
 - No SMS reading in the core library and no SMS permissions
 - No rate limiting: your server must limit attempts
-- Numeric codes only (4, 6 or 8 digits)
+- Codes of 4, 6 or 8 characters: digits, or digits and the letters A–Z (autofill suggestions for codes with letters depend on the platform and keyboard)
 
 ## Roadmap
 
@@ -139,7 +139,7 @@ The `androidApp` and `iosApp` sample apps (with `sample/shared` as their shared 
 - [x] Real-device verification with TalkBack and VoiceOver
 - [x] Maven Central publication (0.1.0)
 - [ ] Real-device verification with Voice Control, Switch Access and Switch Control
-- [ ] Alphanumeric codes
+- [x] Alphanumeric codes
 - [ ] Optional Compose Multiplatform UI module
 - [ ] Optional SMS User Consent support for Android
 
