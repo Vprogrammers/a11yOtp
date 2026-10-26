@@ -4,6 +4,15 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+### Added
+
+- **Alphanumeric codes** ([#41](https://github.com/Vprogrammers/a11yOtp/issues/41)): `OtpCharset` (`NUMERIC`, `ALPHANUMERIC`), `OtpState(length, charset)`, `OtpState.charset` and `OtpState.restore(length, charset, code, isError)`.
+  - Letters `A`–`Z` are case-insensitive and stored in uppercase; fullwidth letters are converted.
+  - A capital-letter text keyboard on both platforms; the iOS Done key is shown only above the number pad.
+  - `OtpStateSaver` saves the charset; numeric states keep the 0.1.0 format.
+  - `a11yotp-sms-retriever`: `SmsRetrieverEffect(length, charset, …)` reads codes of uppercase letters and digits with at least one digit.
+  - Existing APIs are unchanged and default to numeric.
+
 ## [0.1.0]
 
 First release.

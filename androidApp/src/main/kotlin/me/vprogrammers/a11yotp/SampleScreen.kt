@@ -48,20 +48,28 @@ private val fieldStyle = OtpFieldDefaults.style(groupSize = 3, cellHeight = 56.d
 private val roundFieldStyle = OtpFieldDefaults.style(groupSize = 3, cellShape = CircleShape)
 
 /** The rejection text is a plurals resource, quantity = digits received ("1 digit" vs "4 digits"). */
-private fun fieldAccessibility(context: Context) =
-    OtpFieldAccessibility(
-        label = "Verification code",
-        errorMessage = "Incorrect code. Try again.",
-        progressDescription = { "${it.entered} of ${it.total} digits entered" },
-        inputRejectedMessage = {
-            context.resources.getQuantityString(
-                R.plurals.otp_rejected,
-                it.receivedDigitCount,
-                it.receivedDigitCount,
-                it.expectedDigitCount,
-            )
-        },
-    )
+private fun fieldAccessibility(
+    context: Context,
+    charset: OtpCharset,
+) = OtpFieldAccessibility(
+    label = "Verification code",
+    errorMessage = "Incorrect code. Try again.",
+    progressDescription = {
+        if (charset == OtpCharset.NUMERIC) {
+            "${it.entered} of ${it.total} digits entered"
+        } else {
+            "${it.entered} of ${it.total} characters entered"
+        }
+    },
+    inputRejectedMessage = {
+        context.resources.getQuantityString(
+            if (charset == OtpCharset.NUMERIC) R.plurals.otp_rejected else R.plurals.otp_rejected_characters,
+            it.receivedDigitCount,
+            it.receivedDigitCount,
+            it.expectedDigitCount,
+        )
+    },
+)
 
 private val verifyAccessibility = OtpVerifyAccessibility("Verify")
 private val resendAccessibility = OtpResendAccessibility("Resend code") { "Resend code in ${it.secondsRemaining} s" }
@@ -74,7 +82,9 @@ private val resendAccessibility = OtpResendAccessibility("Resend code") { "Resen
 fun SampleScreen(initialOptions: SampleOptions = SampleOptions()) {
     var options by remember { mutableStateOf(initialOptions) }
     // rememberSaveable with OtpStateSaver keeps a partly entered code across rotation and process death.
-    var state by rememberSaveable(stateSaver = OtpStateSaver) { mutableStateOf(OtpState(options.length)) }
+    var state by rememberSaveable(
+        stateSaver = OtpStateSaver,
+    ) { mutableStateOf(OtpState(options.length, options.charset)) }
     var verified by remember { mutableStateOf(false) }
     var seconds by remember { mutableIntStateOf(SAMPLE_RESEND_SECONDS) }
     var resendCount by remember { mutableIntStateOf(0) }
@@ -103,6 +113,7 @@ fun SampleScreen(initialOptions: SampleOptions = SampleOptions()) {
     // still goes through withInput, which reports completion once.
     SmsRetrieverEffect(
         length = state.length,
+        charset = state.charset,
         restartKey = resendCount,
         enabled = !verified && !options.isDisabled,
         onFailure = { smsLengthMismatch = it == SmsRetrieverFailure.CODE_LENGTH_MISMATCH },
@@ -128,7 +139,12 @@ fun SampleScreen(initialOptions: SampleOptions = SampleOptions()) {
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         BasicText(
-            text = "Enter the ${state.length.digitCount}-digit code we sent you",
+            text =
+                if (state.charset == OtpCharset.NUMERIC) {
+                    "Enter the ${state.length.digitCount}-digit code we sent you"
+                } else {
+                    "Enter the ${state.length.digitCount}-character code we sent you"
+                },
             style =
                 TextStyle(
                     color = ink,
@@ -145,7 +161,7 @@ fun SampleScreen(initialOptions: SampleOptions = SampleOptions()) {
                 if (!it.isComplete) verified = false
             },
             onComplete = ::verify,
-            accessibility = fieldAccessibility(LocalContext.current),
+            accessibility = fieldAccessibility(LocalContext.current, state.charset),
             modifier = Modifier.focusRequester(fieldFocus),
             enabled = !verified && !options.isDisabled,
             style = if (options.roundCells) roundFieldStyle else fieldStyle,
@@ -186,8 +202,8 @@ fun SampleScreen(initialOptions: SampleOptions = SampleOptions()) {
         SampleOptionsPanel(
             options = options,
             onChange = { new ->
-                if (new.length != options.length) {
-                    state = OtpState(new.length)
+                if (new.length != options.length || new.charset != options.charset) {
+                    state = OtpState(new.length, new.charset)
                     verified = false
                 }
                 options = new

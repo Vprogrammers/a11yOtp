@@ -10,9 +10,11 @@ import kotlinx.cinterop.useContents
 import platform.Foundation.NSRange
 import platform.UIKit.UIAccessibilityAnnouncementNotification
 import platform.UIKit.UIAccessibilityPostNotification
+import platform.UIKit.UIKeyboardTypeASCIICapable
 import platform.UIKit.UIKeyboardTypeNumberPad
 import platform.UIKit.UINotificationFeedbackGenerator
 import platform.UIKit.UINotificationFeedbackType
+import platform.UIKit.UIReturnKeyType
 import platform.UIKit.UITextAutocapitalizationType
 import platform.UIKit.UITextAutocorrectionType
 import platform.UIKit.UITextContentTypeOneTimeCode
@@ -20,6 +22,7 @@ import platform.UIKit.UITextField
 import platform.UIKit.UITextFieldDelegateProtocol
 import platform.UIKit.UITextSpellCheckingType
 import platform.UIKit.UIView
+import platform.UIKit.reloadInputViews
 import platform.UIKit.setIsAccessibilityElement
 import platform.darwin.DISPATCH_TIME_NOW
 import platform.darwin.NSObject
@@ -41,7 +44,7 @@ import kotlin.native.ref.WeakReference
  * [onStateChange] with the new state, which the component renders immediately. [onComplete]
  * fires once per incomplete-to-complete transition. [accessibility] and [doneButtonTitle] must be
  * localized by the host. With a [mask] other than [OtpMask.None] the field is a secure text field
- * and VoiceOver gets the label and progress only, never the digits.
+ * and VoiceOver gets the label and progress only, never the code.
  *
  * The field uses the one-time-code content type, so the system can offer codes from messages.
  * An autofilled code is applied as one input, so a code whose length differs from the field is
@@ -50,10 +53,16 @@ import kotlin.native.ref.WeakReference
  * turn, from a hardware keyboard or Voice Control) are always applied one by one.
  * Setting [state] to an error state announces [OtpFieldAccessibility.errorMessage] once without moving
  * focus, and vibrates once when [hapticFeedbackOnError] is true. [alignment] only positions the
- * cells and error text; digits inside the row always read left to right. No animation is used, so
+ * cells and error text; characters inside the row always read left to right. No animation is used, so
  * Reduce Motion needs no special handling.
  *
- * The number pad has no Return key, so the text field has a transparent input accessory holding a Done
+ * The keyboard follows [OtpState.charset], and changes when a state with another charset is assigned.
+ * For [OtpCharset.NUMERIC] it is the number pad; for [OtpCharset.ALPHANUMERIC] it is the ASCII
+ * keyboard with all-caps autocapitalization, whose Return key (labeled Done) dismisses the keyboard,
+ * and there is no input accessory. Autocorrection and spell checking are off for both; letters
+ * are shown in uppercase whatever the user types.
+ *
+ * The number pad has no Return key, so its text field has a transparent input accessory holding a Done
  * button (titled [doneButtonTitle]) that calls [blur]. The button is a system prominent button shaped
  * like a number pad key and placed above the "3" key; the area around it passes touches through, so
  * it does not cover the one-time-code suggestion. The fill is the system tint (dark mode and Increase
@@ -84,7 +93,9 @@ class OtpField(
         set(value) {
             if (field == value) return
             val wasError = field.isError
+            val charsetChanged = field.charset != value.charset
             field = value
+            if (charsetChanged) applyCharset(value.charset)
             // A new host state ends the transient rejection message.
             rejectionMessage = null
             rejectionGeneration++
@@ -96,7 +107,7 @@ class OtpField(
             }
         }
 
-    /** Title of the Done button above the number pad. Localized by the host; may change at runtime. Must not be blank. */
+    /** Title of the Done button above the number pad (unused for [OtpCharset.ALPHANUMERIC]). Localized by the host; may change at runtime. Must not be blank. */
     var doneButtonTitle: String = doneButtonTitle
         set(value) {
             require(value.isNotBlank()) { "doneButtonTitle must not be blank" }
@@ -147,9 +158,9 @@ class OtpField(
     var onComplete: ((String) -> Unit)? = null
 
     /**
-     * Called once per rejected multi-digit input (paste, autofill, keyboard suggestion) whose digit
+     * Called once per rejected multi-character input (paste, autofill, keyboard suggestion) whose character
      * count differs from the field length. The state is unchanged. The counts usually mean the
-     * configured [OtpLength] differs from the host's backend. The digits are never passed.
+     * configured [OtpLength] differs from the host's backend. The code is never passed.
      */
     var onInputRejected: ((OtpInputRejection) -> Unit)? = null
 
@@ -157,6 +168,7 @@ class OtpField(
     private var isPinningCaret = false
     private val handler = Handler()
     private var doneAccessory: OtpDoneAccessory? = null
+    private var appliedCharset: OtpCharset? = null
     private var errorGeneration = 0
 
     // Resolved host text of the rejection being shown; null when none (or the host text was blank).
@@ -210,17 +222,15 @@ class OtpField(
     init {
         val textField = container.textField
         textField.delegate = handler
-        textField.keyboardType = UIKeyboardTypeNumberPad
         textField.textContentType = UITextContentTypeOneTimeCode
         textField.autocorrectionType = UITextAutocorrectionType.UITextAutocorrectionTypeNo
-        textField.autocapitalizationType = UITextAutocapitalizationType.UITextAutocapitalizationTypeNone
         textField.spellCheckingType = UITextSpellCheckingType.UITextSpellCheckingTypeNo
         // The text is drawn by the cells; keep the real input invisible but fully laid out.
         textField.textColor = platform.UIKit.UIColor.clearColor
         textField.tintColor = platform.UIKit.UIColor.clearColor
         textField.backgroundColor = platform.UIKit.UIColor.clearColor
         textField.setIsAccessibilityElement(true)
-        textField.inputAccessoryView = doneAccessory()
+        applyCharset(state.charset)
 
         val weakSelf = WeakReference(this)
         container.onTraitsChanged = { weakSelf.get()?.render() }
@@ -295,8 +305,8 @@ class OtpField(
     /**
      * Applies text the user typed, pasted, or autofilled at the end of the field. Because the
      * caret is pinned to the end, a non-empty [replacement] is appended and an empty one deletes the
-     * last digit. The rules of [OtpState.withInput] apply: a multi-digit insertion is accepted only
-     * with exactly the field's digit count (it then replaces the input); otherwise the state stays
+     * last digit. The rules of [OtpState.withInput] apply: a multi-character insertion is accepted only
+     * with exactly the field's length (it then replaces the input); otherwise the state stays
      * unchanged, [onInputRejected] is called, and the rejection message is shown, announced once, and added to the accessibility value until the next
      * input or state change (it replaces the error text while the field is in error).
      * Unsupported characters leave the state unchanged.
@@ -399,11 +409,36 @@ class OtpField(
     private fun doneAccessory(): OtpDoneAccessory =
         OtpDoneAccessory(handler, "donePressed", doneButtonTitle).also { doneAccessory = it }
 
+    // Applied on creation and only when the charset changes: reloadInputViews is expensive.
+    private fun applyCharset(charset: OtpCharset) {
+        if (appliedCharset == charset) return
+        appliedCharset = charset
+        val textField = container.textField
+        when (charset) {
+            OtpCharset.NUMERIC -> {
+                textField.keyboardType = UIKeyboardTypeNumberPad
+                textField.autocapitalizationType = NO_CAPITALIZATION
+                textField.returnKeyType = UIReturnKeyType.UIReturnKeyDefault
+                textField.inputAccessoryView = doneAccessory ?: doneAccessory()
+            }
+
+            OtpCharset.ALPHANUMERIC -> {
+                textField.keyboardType = UIKeyboardTypeASCIICapable
+                textField.autocapitalizationType = ALL_CAPITALIZATION
+                textField.returnKeyType = UIReturnKeyType.UIReturnKeyDone
+                textField.inputAccessoryView = null
+            }
+        }
+        if (textField.isFirstResponder()) textField.reloadInputViews()
+    }
+
     private fun applyDoneTitle() {
         doneAccessory?.title = doneButtonTitle
     }
 
     private companion object {
         const val ANNOUNCEMENT_DELAY_NANOS = 300_000_000L
+        val NO_CAPITALIZATION = UITextAutocapitalizationType.UITextAutocapitalizationTypeNone
+        val ALL_CAPITALIZATION = UITextAutocapitalizationType.UITextAutocapitalizationTypeAllCharacters
     }
 }

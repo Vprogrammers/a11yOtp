@@ -1,5 +1,6 @@
 package me.vprogrammers.a11yotp.smsretriever
 
+import me.vprogrammers.a11yotp.OtpCharset
 import me.vprogrammers.a11yotp.OtpLength
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -129,5 +130,62 @@ class SmsCodeExtractionTest {
         val failure = assertIs<SmsResult.Failure>(mismatch("Code 1234\n$hash", OtpLength.SIX))
         assertEquals("CODE_LENGTH_MISMATCH", failure.reason.name)
         assertEquals(false, failure.toString().contains("1234"))
+    }
+
+    private val alnum = OtpCharset.ALPHANUMERIC
+
+    @Test
+    fun alphanumericFindsCodeAndIgnoresRealHash() {
+        assertEquals("K7Q2MX", extractSmsCode("Your code is K7Q2MX\n\nwlhIal9KIdf", OtpLength.SIX, alnum))
+    }
+
+    @Test
+    fun alphanumericStripsHashEvenWhenItLooksLikeACode() {
+        assertNull(extractSmsCode("Welcome\nAB12CD34EF5", OtpLength.SIX, alnum))
+        assertEquals("K7Q2MX", extractSmsCode("Code K7Q2MX\nAB12CD34EF5", OtpLength.SIX, alnum))
+    }
+
+    @Test
+    fun alphanumericIgnoresWordsWithoutDigitsOrWithLowercase() {
+        assertEquals("K7Q2MX", extractSmsCode("Please verify: K7Q2MX", OtpLength.SIX, alnum))
+        assertNull(extractSmsCode("VERIFY", OtpLength.SIX, alnum))
+        assertNull(extractSmsCode("Example code VERIFY now", OtpLength.SIX, alnum))
+        assertNull(extractSmsCode("Your code is k7q2mx", OtpLength.SIX, alnum))
+        assertNull(extractSmsCode("Your code is K7q2MX", OtpLength.SIX, alnum))
+    }
+
+    @Test
+    fun alphanumericTwoDifferentCodesAreAmbiguous() {
+        assertNull(extractSmsCode("Codes K7Q2MX or B8R3NY", OtpLength.SIX, alnum))
+        assertEquals("K7Q2MX", extractSmsCode("Codes K7Q2MX or K7Q2MX", OtpLength.SIX, alnum))
+    }
+
+    @Test
+    fun alphanumericAcceptsPureDigitCode() {
+        assertEquals("482913", extractSmsCode("Code 482913\n$hash", OtpLength.SIX, alnum))
+    }
+
+    @Test
+    fun alphanumericRespectsBoundaries() {
+        assertNull(extractSmsCode("see /K7Q2MX ok", OtpLength.SIX, alnum))
+        assertNull(extractSmsCode("ref K7Q2MXZ ok", OtpLength.SIX, alnum))
+    }
+
+    @Test
+    fun alphanumericLengthMismatch() {
+        val failure =
+            assertIs<SmsResult.Failure>(resolveSmsResult(STATUS_SUCCESS, "Code K7Q2\n$hash", OtpLength.SIX, alnum))
+        assertEquals("CODE_LENGTH_MISMATCH", failure.reason.name)
+        assertEquals(false, failure.toString().contains("K7Q2"))
+        assertNull(resolveSmsResult(STATUS_SUCCESS, "Please VERIFY\n$hash", OtpLength.SIX, alnum))
+        assertNull(resolveSmsResult(STATUS_SUCCESS, "Codes K7Q2MX or B8R3NY", OtpLength.SIX, alnum))
+    }
+
+    @Test
+    fun numericIsUnchangedByAlphanumericSupport() {
+        assertNull(extractSmsCode("Your code is K7Q2MX", OtpLength.SIX))
+        assertNull(extractSmsCode("Your code is K7Q2MX", OtpLength.SIX, OtpCharset.NUMERIC))
+        assertEquals("482913", extractSmsCode("Code 482913", OtpLength.SIX, OtpCharset.NUMERIC))
+        assertNull(resolveSmsResult(STATUS_SUCCESS, "Code K7Q2\n$hash", OtpLength.SIX))
     }
 }

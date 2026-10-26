@@ -33,6 +33,7 @@ SmsRetrieverEffect(
 - **Listening:** the retriever listens for one message for up to 5 minutes. Change `restartKey` to listen again, for example when the user requests a new code.
 - **Ignored messages:** a message with no code, or with two different codes of the field's length, is ignored.
 - **Wrong length:** the message may have no standalone run of the field's digit count, but have one of another plausible length (4 to 8 digits). Then `onFailure` reports `CODE_LENGTH_MISMATCH` right away, instead of waiting for `TIMEOUT`. No code is delivered, and the digits are never passed or logged. It means the field length differs from your backend's.
+- **Alphanumeric codes:** pass the field's charset, `SmsRetrieverEffect(length = otp.length, charset = otp.charset, …)`. A code is then a standalone token of exactly the field's length made of uppercase letters `A`–`Z` and digits, with at least one digit, such as `K7Q2MX`. Words in the message (`Your`, `Please`, or uppercase `VERIFY` without a digit) are never taken for the code. Send the code in uppercase; a code of letters only is not recognised. The same ambiguity and `CODE_LENGTH_MISMATCH` rules apply, counted in characters. Without `charset`, only digits are read.
 - **Without Google Play services**, `onFailure` reports `UNAVAILABLE`. The field still works with autofill, typing and paste.
 
 ## Accessibility
@@ -49,7 +50,7 @@ Your Example code is 123456
 FA+9qCX9VSu
 ```
 
-Keep the code the only number in the message; the hash is never mistaken for the code.
+Keep the code the only code-like token in the message; the hash is never mistaken for the code. For alphanumeric codes and the full rules, see [The OTP message](otp-message.md).
 
 ## The app hash
 

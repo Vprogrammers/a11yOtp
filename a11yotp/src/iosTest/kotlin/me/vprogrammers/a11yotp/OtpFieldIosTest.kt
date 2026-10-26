@@ -9,6 +9,12 @@ import platform.Foundation.NSArray
 import platform.Foundation.NSSelectorFromString
 import platform.UIKit.UIKeyCommand
 import platform.UIKit.UIKeyInputEscape
+import platform.UIKit.UIKeyboardTypeASCIICapable
+import platform.UIKit.UIKeyboardTypeNumberPad
+import platform.UIKit.UIReturnKeyType
+import platform.UIKit.UITextAutocapitalizationType
+import platform.UIKit.UITextAutocorrectionType
+import platform.UIKit.UITextContentTypeOneTimeCode
 import platform.UIKit.accessibilityLabel
 import platform.UIKit.accessibilityValue
 import platform.UIKit.isAccessibilityElement
@@ -180,6 +186,57 @@ class OtpFieldIosTest {
         field.mask = OtpMask.None
         assertFalse(textFieldOf(field).secureTextEntry)
         assertEquals("1 2 3, 3 of 6 digits entered", valueOf(field))
+    }
+
+    @Test
+    fun numericFieldUsesNumberPadWithDoneAccessory() {
+        val textField = textFieldOf(newField())
+
+        assertEquals(UIKeyboardTypeNumberPad, textField.keyboardType)
+        assertEquals(UITextAutocapitalizationType.UITextAutocapitalizationTypeNone, textField.autocapitalizationType)
+        assertNotNull(textField.inputAccessoryView)
+    }
+
+    @Test
+    fun alphanumericFieldUsesAsciiKeyboardWithAllCapsAndNoAccessory() {
+        val field = OtpField(OtpState(OtpLength.SIX, OtpCharset.ALPHANUMERIC), fieldAccessibility(), "Done")
+        val textField = textFieldOf(field)
+
+        assertEquals(UIKeyboardTypeASCIICapable, textField.keyboardType)
+        assertEquals(
+            UITextAutocapitalizationType.UITextAutocapitalizationTypeAllCharacters,
+            textField.autocapitalizationType,
+        )
+        assertEquals(UIReturnKeyType.UIReturnKeyDone, textField.returnKeyType)
+        assertNull(textField.inputAccessoryView)
+        assertEquals(UITextAutocorrectionType.UITextAutocorrectionTypeNo, textField.autocorrectionType)
+        assertEquals(UITextContentTypeOneTimeCode, textField.textContentType)
+    }
+
+    @Test
+    fun changingTheCharsetAtRuntimeReappliesTheKeyboardAndKeepsTheAccessory() {
+        val field = newField()
+        val textField = textFieldOf(field)
+        val accessory = textField.inputAccessoryView
+
+        field.state = OtpState(OtpLength.SIX, OtpCharset.ALPHANUMERIC)
+        assertEquals(UIKeyboardTypeASCIICapable, textField.keyboardType)
+        assertNull(textField.inputAccessoryView)
+
+        field.state = OtpState(OtpLength.SIX, OtpCharset.NUMERIC)
+        assertEquals(UIKeyboardTypeNumberPad, textField.keyboardType)
+        assertTrue(textField.inputAccessoryView === accessory)
+    }
+
+    @Test
+    fun alphanumericValueSpellsLettersAndMaskedValueHasProgressOnly() {
+        val field = OtpField(OtpState(OtpLength.SIX, OtpCharset.ALPHANUMERIC), fieldAccessibility(), "Done")
+        "a7b".forEach { field.handleReplacement(it.toString()) }
+
+        assertEquals("A 7 B, 3 of 6 digits entered", valueOf(field))
+
+        field.mask = OtpMask.FilledCell
+        assertEquals("3 of 6 digits entered", valueOf(field))
     }
 
     @Test

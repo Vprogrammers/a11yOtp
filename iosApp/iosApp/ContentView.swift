@@ -18,20 +18,27 @@ struct ContentView: View {
     private static let buttonStyle = OtpButtonDefaults.shared.style()
     private static let glassButtonStyle = buttonStyle.withGlass(glass: true)
 
-    private static let fieldAccessibility = OtpFieldAccessibility(
-        label: "Verification code",
-        errorMessage: "Incorrect code. Try again.",
-        progressDescription: { "\($0.entered) of \($0.total) digits entered" },
-        inputRejectedMessage: {
-            let received = digits(Int($0.receivedDigitCount))
-            let expected = digits(Int($0.expectedDigitCount))
-            return "The code has \(received), but \(expected) are expected."
-        }
-    )
+    private static let fieldAccessibility = makeFieldAccessibility(unit: "digit")
+    /// Letters count too, so progress and rejection say "characters" rather than "digits".
+    private static let alphanumericFieldAccessibility = makeFieldAccessibility(unit: "character")
+
+    private static func makeFieldAccessibility(unit: String) -> OtpFieldAccessibility {
+        OtpFieldAccessibility(
+            label: "Verification code",
+            errorMessage: "Incorrect code. Try again.",
+            progressDescription: { "\($0.entered) of \($0.total) \(unit)s entered" },
+            inputRejectedMessage: {
+                let received = counted(Int($0.receivedDigitCount), unit: unit)
+                let expected = counted(Int($0.expectedDigitCount), unit: unit)
+                return "The code has \(received), but \(expected) are expected."
+            }
+        )
+    }
 
     /// "1 digit" or "4 digits" through automatic grammar agreement.
-    private static func digits(_ count: Int) -> String {
-        String(AttributedString(localized: "^[\(count) digit](inflect: true)").characters)
+    private static func counted(_ count: Int, unit: String) -> String {
+        // Both units are inflected by the same rule; "character" is a regular English noun.
+        String(AttributedString(localized: "^[\(count) \(unit)](inflect: true)").characters)
     }
 
     private static let verifyAccessibility = OtpVerifyAccessibility(label: "Verify")
@@ -57,19 +64,19 @@ struct ContentView: View {
 
     init(options: SampleOptions = SampleOptions()) {
         _options = State(initialValue: options)
-        _otp = State(initialValue: OtpState(length: options.length))
+        _otp = State(initialValue: OtpState(length: options.length, charset: options.charset))
     }
 
     var body: some View {
         ScrollView {
             VStack(spacing: 24) {
-                Text("Enter the \(otp.length.digitCount)-digit code we sent you")
+                Text("Enter the \(otp.length.digitCount)-\(codeUnit) code we sent you")
                     .font(.title2.bold())
                     .multilineTextAlignment(.center)
                     .accessibilityAddTraits(.isHeader)
                 OtpFieldView(
                     state: $otp,
-                    accessibility: Self.fieldAccessibility,
+                    accessibility: options.alphanumeric ? Self.alphanumericFieldAccessibility : Self.fieldAccessibility,
                     style: fieldStyle,
                     mask: options.mask,
                     focusOnAppear: !options.isDisabled,
@@ -102,7 +109,11 @@ struct ContentView: View {
             if !isComplete { isVerified = false }
         }
         .onChange(of: options.length) { _, length in
-            otp = OtpState(length: length)
+            otp = OtpState(length: length, charset: options.charset)
+            isVerified = false
+        }
+        .onChange(of: options.alphanumeric) { _, _ in
+            otp = OtpState(length: options.length, charset: options.charset)
             isVerified = false
         }
         .task(id: countdownRun) {
@@ -113,6 +124,8 @@ struct ContentView: View {
             }
         }
     }
+
+    private var codeUnit: String { options.alphanumeric ? "character" : "digit" }
 
     private var fieldStyle: OtpFieldStyle {
         switch (options.roundCells, options.glassField) {

@@ -31,11 +31,17 @@ import androidx.compose.ui.unit.sp
 /** Demo options below the sample flow, the same as in the iOS sample. */
 data class SampleOptions(
     val length: OtpLength = OtpLength.SIX,
+    val charset: OtpCharset = OtpCharset.NUMERIC,
     val mask: OtpMask = OtpMask.None,
     val roundCells: Boolean = false,
     val isDisabled: Boolean = false,
 )
 
+private val charsets =
+    listOf(
+        "Digits" to OtpCharset.NUMERIC,
+        "Letters and digits" to OtpCharset.ALPHANUMERIC,
+    )
 private val masks =
     listOf(
         "None" to OtpMask.None,
@@ -69,6 +75,7 @@ fun SampleOptionsPanel(
         Segmented("Code length", OtpLength.entries.map { "${it.digitCount}" to it }, options.length) {
             onChange(options.copy(length = it))
         }
+        Segmented("Characters", charsets, options.charset) { onChange(options.copy(charset = it)) }
         Segmented("Masking", masks, options.mask) { onChange(options.copy(mask = it)) }
         Checkbox("Round cells", options.roundCells) { onChange(options.copy(roundCells = it)) }
         Checkbox("Disable field", options.isDisabled) { onChange(options.copy(isDisabled = it)) }

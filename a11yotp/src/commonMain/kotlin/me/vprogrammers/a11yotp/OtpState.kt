@@ -3,7 +3,9 @@ package me.vprogrammers.a11yotp
 /**
  * Immutable state of one OTP field.
  *
- * [code] contains only ASCII digits `0`-`9` and is never longer than [length].
+ * [code] contains only characters of [charset] (ASCII digits `0`-`9` by default) and is never
+ * longer than [length]. Counts such as [enteredDigitCount] and [OtpLength.digitCount] count
+ * characters, letters included.
  * The host app is responsible for verifying the code with its server and for
  * clearing the state when the screen is left or the code expires. After a failed
  * verification, call [cleared] or let the user edit the code, so that the next
@@ -11,11 +13,16 @@ package me.vprogrammers.a11yotp
  */
 class OtpState private constructor(
     val length: OtpLength,
+    /** Which characters [code] may contain. */
+    val charset: OtpCharset,
     val code: String,
     val isError: Boolean,
 ) {
-    /** Creates an empty state without an error. */
-    constructor(length: OtpLength) : this(length, "", false)
+    /** Creates an empty numeric state without an error. */
+    constructor(length: OtpLength) : this(length, OtpCharset.NUMERIC, "", false)
+
+    /** Creates an empty state for [charset] without an error. */
+    constructor(length: OtpLength, charset: OtpCharset) : this(length, charset, "", false)
 
     val enteredDigitCount: Int get() = code.length
 
@@ -26,7 +33,8 @@ class OtpState private constructor(
      *
      * Typing, deletion, replacement, and paste all arrive as the new field text.
      * Whitespace, dashes, dots, soft hyphens, and invisible direction marks are ignored,
-     * and Unicode decimal digits in the Basic Multilingual Plane are converted to ASCII.
+     * and Unicode decimal digits in the Basic Multilingual Plane are converted to ASCII. With
+     * [OtpCharset.ALPHANUMERIC], ASCII and fullwidth Latin letters are converted to uppercase ASCII.
      * Text containing any other character is ignored and the state is unchanged. A change to
      * [code] clears the error.
      *
@@ -50,7 +58,7 @@ class OtpState private constructor(
      * visible text and the screen-reader value stay the same.
      */
     fun withInput(text: String): OtpInputResult {
-        val digits = normalizeOtpDigits(text) ?: return OtpInputResult(this, didComplete = false)
+        val digits = normalizeOtpInput(text, charset) ?: return OtpInputResult(this, didComplete = false)
         val expected = length.digitCount
         val inserted = insertedDigits(code, digits)
         val newCode =
@@ -68,32 +76,38 @@ class OtpState private constructor(
                 )
             }
         if (newCode == code) return OtpInputResult(this, didComplete = false)
-        val newState = OtpState(length, newCode, isError = false)
+        val newState = OtpState(length, charset, newCode, isError = false)
         // A whole code that replaces a different complete code is a new completion.
         val replacedWholeCode = inserted.length > 1
         return OtpInputResult(newState, didComplete = newState.isComplete && (!isComplete || replacedWholeCode))
     }
 
-    /** Returns an empty state with the same length and no error. */
-    fun cleared(): OtpState = OtpState(length)
+    /** Returns an empty state with the same length and charset and no error. */
+    fun cleared(): OtpState = OtpState(length, charset)
 
     /** Marks the current code as rejected, for example after failed server verification. */
-    fun withError(): OtpState = if (isError) this else OtpState(length, code, isError = true)
+    fun withError(): OtpState = if (isError) this else OtpState(length, charset, code, isError = true)
 
     /** Removes the error mark and keeps the current code. */
-    fun withoutError(): OtpState = if (isError) OtpState(length, code, isError = false) else this
+    fun withoutError(): OtpState = if (isError) OtpState(length, charset, code, isError = false) else this
 
     override fun equals(other: Any?): Boolean =
-        other is OtpState && other.length == length && other.code == code && other.isError == isError
+        other is OtpState &&
+            other.length == length &&
+            other.charset == charset &&
+            other.code == code &&
+            other.isError == isError
 
-    override fun hashCode(): Int = (length.hashCode() * 31 + code.hashCode()) * 31 + isError.hashCode()
+    override fun hashCode(): Int =
+        ((length.hashCode() * 31 + charset.hashCode()) * 31 + code.hashCode()) * 31 + isError.hashCode()
 
     // Omits the digits so the code does not end up in logs or crash reports.
-    override fun toString(): String = "OtpState(length=$length, enteredDigitCount=$enteredDigitCount, isError=$isError)"
+    override fun toString(): String =
+        "OtpState(length=$length, enteredDigitCount=$enteredDigitCount, charset=$charset, isError=$isError)"
 
     companion object {
         /**
-         * Rebuilds a state from values saved earlier from [length], [code] and [isError], for example
+         * Rebuilds a numeric state from values saved earlier from [length], [code] and [isError], for example
          * across Android configuration changes or process death, or iOS scene restoration.
          *
          * Returns null unless [code] holds only the ASCII digits `0`-`9` and is no longer than
@@ -108,9 +122,21 @@ class OtpState private constructor(
             length: OtpLength,
             code: String,
             isError: Boolean,
+        ): OtpState? = restore(length, OtpCharset.NUMERIC, code, isError)
+
+        /**
+         * Rebuilds a state from values saved earlier from [length], [charset], [code] and [isError], like
+         * the numeric overload. Returns null unless [code] holds only characters of [charset] (uppercase
+         * letters for [OtpCharset.ALPHANUMERIC]) and is no longer than [length].
+         */
+        fun restore(
+            length: OtpLength,
+            charset: OtpCharset,
+            code: String,
+            isError: Boolean,
         ): OtpState? {
-            if (code.length > length.digitCount || !code.all { it in '0'..'9' }) return null
-            return OtpState(length, code, isError)
+            if (code.length > length.digitCount || !code.all { it.isOtpChar(charset) }) return null
+            return OtpState(length, charset, code, isError)
         }
     }
 }
@@ -178,15 +204,33 @@ private const val IGNORED_CHARACTERS =
         "\u2060\u2066\u2067\u2068\u2069\uFEFF"
 
 /** Returns the ASCII digits in [text], or null if [text] contains an unsupported character. */
-internal fun normalizeOtpDigits(text: String): String? {
-    val digits = StringBuilder(text.length)
+internal fun normalizeOtpDigits(text: String): String? = normalizeOtpInput(text, OtpCharset.NUMERIC)
+
+/**
+ * Returns the characters of [charset] in [text], with letters in uppercase ASCII, or null if [text]
+ * contains an unsupported character. Letters are matched by explicit ranges, not by Unicode case
+ * mapping, which would turn characters such as `ı` or `ſ` into ASCII letters.
+ */
+internal fun normalizeOtpInput(
+    text: String,
+    charset: OtpCharset,
+): String? {
+    val letters = charset == OtpCharset.ALPHANUMERIC
+    val result = StringBuilder(text.length)
     for (char in text) {
         val digit = char.digitToIntOrNull()
         when {
-            digit != null -> digits.append('0' + digit)
+            digit != null -> result.append('0' + digit)
+            letters && char in 'A'..'Z' -> result.append(char)
+            letters && char in 'a'..'z' -> result.append('A' + (char - 'a'))
+            letters && char in '\uFF21'..'\uFF3A' -> result.append('A' + (char - '\uFF21'))
+            letters && char in '\uFF41'..'\uFF5A' -> result.append('A' + (char - '\uFF41'))
             char.isWhitespace() || char in IGNORED_CHARACTERS -> Unit
             else -> return null
         }
     }
-    return digits.toString()
+    return result.toString()
 }
+
+private fun Char.isOtpChar(charset: OtpCharset): Boolean =
+    this in '0'..'9' || (charset == OtpCharset.ALPHANUMERIC && this in 'A'..'Z')

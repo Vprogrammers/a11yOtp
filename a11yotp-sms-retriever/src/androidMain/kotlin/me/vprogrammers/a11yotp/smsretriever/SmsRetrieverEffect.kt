@@ -13,6 +13,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.os.BundleCompat
 import com.google.android.gms.auth.api.phone.SmsRetriever
 import com.google.android.gms.common.api.Status
+import me.vprogrammers.a11yotp.OtpCharset
 import me.vprogrammers.a11yotp.OtpLength
 
 /** Why the SMS Retriever did not deliver a code. */
@@ -24,8 +25,9 @@ enum class SmsRetrieverFailure {
     UNAVAILABLE,
 
     /**
-     * A message arrived with no standalone digit run of the field's length, but with one of another
-     * plausible code length (4 to 8 digits). The configured [OtpLength] probably differs from the
+     * A message arrived with no standalone code of the field's length, but with one of another
+     * plausible code length (4 to 8 characters; digits for [OtpCharset.NUMERIC], uppercase letters and
+     * digits with at least one digit for [OtpCharset.ALPHANUMERIC]). The configured [OtpLength] probably differs from the
      * backend's code length. No code is delivered, and the digits are never passed or logged.
      */
     CODE_LENGTH_MISMATCH,
@@ -46,6 +48,8 @@ enum class SmsRetrieverFailure {
  * user had already typed a full code. This effect never logs the message or the code and makes no
  * accessibility announcement; announce the fill or the verification result in the host UI.
  *
+ * This overload accepts numeric codes only. Use the overload with a `charset` for alphanumeric codes.
+ *
  * @param length expected code length; only a standalone digit run of this length is accepted.
  * @param onCode called with the digits of the code.
  * @param enabled stops listening while false.
@@ -61,11 +65,41 @@ fun SmsRetrieverEffect(
     restartKey: Any? = null,
     onFailure: (SmsRetrieverFailure) -> Unit = {},
 ) {
+    SmsRetrieverEffect(length, OtpCharset.NUMERIC, onCode, enabled, restartKey, onFailure)
+}
+
+/**
+ * Like the numeric overload, with a [charset] that decides which codes are recognised.
+ *
+ * [OtpCharset.NUMERIC] accepts a standalone run of exactly [OtpLength.digitCount] digits.
+ * [OtpCharset.ALPHANUMERIC] accepts a standalone token of exactly that many uppercase letters
+ * (A-Z) and digits that contains at least one digit, so `K7Q2MX` and `482913` match, while
+ * lowercase or mixed-case words and letter-only words such as `VERIFY` never do. Limitation:
+ * letter-only codes are not recognised. A token counts as standalone when it is not adjacent to
+ * letters, digits, `+` or `/`. Two different matching codes are ambiguous and deliver nothing.
+ * The code is delivered unchanged; pass it to `state.cleared().withInput(code)`.
+ *
+ * @param length expected code length.
+ * @param charset characters the code may contain; use the field's [OtpCharset].
+ * @param onCode called with the code.
+ * @param enabled stops listening while false.
+ * @param restartKey a change restarts the listener.
+ * @param onFailure called with the [SmsRetrieverFailure] reason.
+ */
+@Composable
+fun SmsRetrieverEffect(
+    length: OtpLength,
+    charset: OtpCharset,
+    onCode: (code: String) -> Unit,
+    enabled: Boolean = true,
+    restartKey: Any? = null,
+    onFailure: (SmsRetrieverFailure) -> Unit = {},
+) {
     val appContext = LocalContext.current.applicationContext
     val currentOnCode by rememberUpdatedState(onCode)
     val currentOnFailure by rememberUpdatedState(onFailure)
 
-    DisposableEffect(enabled, length, restartKey) {
+    DisposableEffect(enabled, length, charset, restartKey) {
         if (!enabled) return@DisposableEffect onDispose {}
 
         var registered = false
@@ -95,7 +129,7 @@ fun SmsRetrieverEffect(
                         BundleCompat.getParcelable(extras, SmsRetriever.EXTRA_STATUS, Status::class.java) ?: return
                     val message = extras.getString(SmsRetriever.EXTRA_SMS_MESSAGE)
                     unregister(appContext, this)
-                    when (val result = resolveSmsResult(status.statusCode, message, length)) {
+                    when (val result = resolveSmsResult(status.statusCode, message, length, charset)) {
                         is SmsResult.Code -> currentOnCode(result.code)
                         is SmsResult.Failure -> currentOnFailure(result.reason)
                         null -> Unit

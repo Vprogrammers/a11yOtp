@@ -18,6 +18,17 @@ final enum class me.vprogrammers.a11yotp/OtpAlignment : kotlin/Enum<me.vprogramm
     final fun values(): kotlin/Array<me.vprogrammers.a11yotp/OtpAlignment> // me.vprogrammers.a11yotp/OtpAlignment.values|values#static(){}[0]
 }
 
+final enum class me.vprogrammers.a11yotp/OtpCharset : kotlin/Enum<me.vprogrammers.a11yotp/OtpCharset> { // me.vprogrammers.a11yotp/OtpCharset|null[0]
+    enum entry ALPHANUMERIC // me.vprogrammers.a11yotp/OtpCharset.ALPHANUMERIC|null[0]
+    enum entry NUMERIC // me.vprogrammers.a11yotp/OtpCharset.NUMERIC|null[0]
+
+    final val entries // me.vprogrammers.a11yotp/OtpCharset.entries|#static{}entries[0]
+        final fun <get-entries>(): kotlin.enums/EnumEntries<me.vprogrammers.a11yotp/OtpCharset> // me.vprogrammers.a11yotp/OtpCharset.entries.<get-entries>|<get-entries>#static(){}[0]
+
+    final fun valueOf(kotlin/String): me.vprogrammers.a11yotp/OtpCharset // me.vprogrammers.a11yotp/OtpCharset.valueOf|valueOf#static(kotlin.String){}[0]
+    final fun values(): kotlin/Array<me.vprogrammers.a11yotp/OtpCharset> // me.vprogrammers.a11yotp/OtpCharset.values|values#static(){}[0]
+}
+
 final enum class me.vprogrammers.a11yotp/OtpContrastRequirement : kotlin/Enum<me.vprogrammers.a11yotp/OtpContrastRequirement> { // me.vprogrammers.a11yotp/OtpContrastRequirement|null[0]
     enum entry FOCUS_INDICATOR // me.vprogrammers.a11yotp/OtpContrastRequirement.FOCUS_INDICATOR|null[0]
     enum entry NON_TEXT // me.vprogrammers.a11yotp/OtpContrastRequirement.NON_TEXT|null[0]
@@ -316,7 +327,10 @@ final class me.vprogrammers.a11yotp/OtpResendButton { // me.vprogrammers.a11yotp
 
 final class me.vprogrammers.a11yotp/OtpState { // me.vprogrammers.a11yotp/OtpState|null[0]
     constructor <init>(me.vprogrammers.a11yotp/OtpLength) // me.vprogrammers.a11yotp/OtpState.<init>|<init>(me.vprogrammers.a11yotp.OtpLength){}[0]
+    constructor <init>(me.vprogrammers.a11yotp/OtpLength, me.vprogrammers.a11yotp/OtpCharset) // me.vprogrammers.a11yotp/OtpState.<init>|<init>(me.vprogrammers.a11yotp.OtpLength;me.vprogrammers.a11yotp.OtpCharset){}[0]
 
+    final val charset // me.vprogrammers.a11yotp/OtpState.charset|{}charset[0]
+        final fun <get-charset>(): me.vprogrammers.a11yotp/OtpCharset // me.vprogrammers.a11yotp/OtpState.charset.<get-charset>|<get-charset>(){}[0]
     final val code // me.vprogrammers.a11yotp/OtpState.code|{}code[0]
         final fun <get-code>(): kotlin/String // me.vprogrammers.a11yotp/OtpState.code.<get-code>|<get-code>(){}[0]
     final val enteredDigitCount // me.vprogrammers.a11yotp/OtpState.enteredDigitCount|{}enteredDigitCount[0]
@@ -338,6 +352,7 @@ final class me.vprogrammers.a11yotp/OtpState { // me.vprogrammers.a11yotp/OtpSta
 
     final object Companion { // me.vprogrammers.a11yotp/OtpState.Companion|null[0]
         final fun restore(me.vprogrammers.a11yotp/OtpLength, kotlin/String, kotlin/Boolean): me.vprogrammers.a11yotp/OtpState? // me.vprogrammers.a11yotp/OtpState.Companion.restore|restore(me.vprogrammers.a11yotp.OtpLength;kotlin.String;kotlin.Boolean){}[0]
+        final fun restore(me.vprogrammers.a11yotp/OtpLength, me.vprogrammers.a11yotp/OtpCharset, kotlin/String, kotlin/Boolean): me.vprogrammers.a11yotp/OtpState? // me.vprogrammers.a11yotp/OtpState.Companion.restore|restore(me.vprogrammers.a11yotp.OtpLength;me.vprogrammers.a11yotp.OtpCharset;kotlin.String;kotlin.Boolean){}[0]
     }
 }
 

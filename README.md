@@ -115,6 +115,7 @@ When verification fails, set `otp = otp.withError()` (Android) or `field.state =
 | [Input rules](docs/input-rules.md) | What the field accepts: typing, paste, autofill, normalization, lengths, rejection, completion |
 | [Customization](docs/customization.md) | Styles, colors, dark mode, masks, alignment, grouping, the iOS Done key |
 | [Accessibility](docs/accessibility.md) | What screen readers announce, WCAG coverage, what is verified, a checklist for your app |
+| [The OTP message](docs/otp-message.md) | How to write the SMS so iOS and Android offer the code, for numeric and alphanumeric codes |
 | [SMS Retriever](docs/sms-retriever.md) | Optional automatic SMS delivery on Android, the app hash and the message format |
 | [Contributing](CONTRIBUTING.md) | Building, local checks, CI, the public API baseline, releasing |
 | [Changelog](CHANGELOG.md) | Changes per version |
@@ -127,7 +128,7 @@ The `androidApp` and `iosApp` sample apps (with `sample/shared` as their shared 
 - No resend timer: the resend button shows the seconds you pass in
 - No SMS reading in the core library and no SMS permissions
 - No rate limiting: your server must limit attempts
-- Numeric codes only (4, 6 or 8 digits)
+- Codes of 4, 6 or 8 characters: digits, or digits and the letters A–Z (autofill suggestions for codes with letters depend on the platform and keyboard)
 
 ## Roadmap
 
@@ -139,7 +140,7 @@ The `androidApp` and `iosApp` sample apps (with `sample/shared` as their shared 
 - [x] Real-device verification with TalkBack and VoiceOver
 - [x] Maven Central publication (0.1.0)
 - [ ] Real-device verification with Voice Control, Switch Access and Switch Control
-- [ ] Alphanumeric codes
+- [x] Alphanumeric codes
 - [ ] Optional Compose Multiplatform UI module
 - [ ] Optional SMS User Consent support for Android
 

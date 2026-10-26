@@ -21,17 +21,18 @@ Add `a11yotp` to your KMP shared module as shown in the [README](../README.md#in
 
 ```kotlin
 val empty = OtpState(OtpLength.SIX)  // FOUR, SIX or EIGHT; must match your backend
+val letters = OtpState(OtpLength.SIX, OtpCharset.ALPHANUMERIC)  // codes such as K7Q2MX
 ```
 
 | Member | Meaning |
 |---|---|
-| `length`, `code`, `isError` | The configured length, the entered ASCII digits, the error flag |
-| `enteredDigitCount`, `isComplete` | Progress; `isComplete` is true when `code` has `length` digits |
+| `length`, `charset`, `code`, `isError` | The configured length, `NUMERIC` (default) or `ALPHANUMERIC` (see [Input rules](input-rules.md#alphanumeric-codes)), the entered ASCII digits and uppercase letters, the error flag |
+| `enteredDigitCount`, `isComplete` | Progress in characters; `isComplete` is true when `code` has `length` characters |
 | `withInput(text)` | Applies text as if the user had entered it; returns `OtpInputResult(state, didComplete, rejection)` |
 | `withError()` | The same code, marked as rejected by your server |
 | `withoutError()` | The same code, without the error |
-| `cleared()` | An empty state of the same length, without an error |
-| `OtpState.restore(length, code, isError)` | Rebuilds a saved state; null for values a state cannot hold (see [Saving the state](#saving-the-state)) |
+| `cleared()` | An empty state of the same length and charset, without an error |
+| `OtpState.restore(length, code, isError)`, `OtpState.restore(length, charset, code, isError)` | Rebuilds a saved state; null for values a state cannot hold (see [Saving the state](#saving-the-state)) |
 
 The field calls `withInput` for you. Call it yourself only when code comes from somewhere else, such as the [SMS Retriever](sms-retriever.md).
 
@@ -155,20 +156,27 @@ Save the state, so that a partly entered code is not lost when Android recreates
 
 How restoring works:
 
-- **Only valid values:** `restore` returns null for a value a state cannot hold, such as a code longer than the field or with anything but the ASCII digits `0`–`9`. `OtpStateSaver` then falls back to the initial value.
+- **Only valid values:** `restore` returns null for a value a state cannot hold, such as a code longer than the field, or with anything but the ASCII digits `0`–`9` (and, for `ALPHANUMERIC`, the uppercase letters `A`–`Z`). Save `charset` too for an alphanumeric field and pass it to `restore`; the overload without it restores a numeric state. `OtpStateSaver` then falls back to the initial value.
 - **Not input:** no callback fires and completion is not reported again, so a restored complete code is not submitted twice.
 - **Disk:** the platform can write saved state to disk, code included. If the code must not outlive the screen, do not save it, or clear the state when the user leaves the screen.
 
 ## 7. Recommended message text
 
-So that autofill offers the right number:
+So that autofill offers the right code:
 
-- Keep the code the only number in the message. A brand name with digits, a phone number or an amount can be suggested instead.
+```text
+Your Example code is 482913. Do not share it with anyone.
+```
+
+- Send the code as one unbroken token of exactly the field's length, and keep it the only code-like token in the message.
 - Send it from a registered SMS provider (application-to-person). Carriers can drop code-like messages from personal numbers.
 - On Android, the [SMS Retriever](sms-retriever.md) can fill the code without a tap if the message ends with your app's hash.
+
+[The OTP message](otp-message.md) has the templates for numeric and alphanumeric codes and all the rules.
 
 ## Next
 
 - [Input rules](input-rules.md): exactly what is accepted, rejected and normalized.
+- [The OTP message](otp-message.md): how to write the SMS so the code is offered or filled.
 - [Customization](customization.md): styles, dark mode, masks.
 - [Accessibility](accessibility.md): what users hear, and what to check before you ship.
