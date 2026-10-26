@@ -4,6 +4,8 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [0.3.0]
+
 ### Added
 
 - **API reference** ([#36](https://github.com/Vprogrammers/a11yOtp/issues/36)): Dokka generates it for both modules (shared, Android and iOS), [published on GitHub Pages](https://vprogrammers.github.io/a11yOtp/) for every release. The javadoc jars on Maven Central now contain it instead of being empty.
@@ -51,6 +53,7 @@ First release.
 - **Saving the state:** `OtpState.restore(length, code, isError)` (shared) and `OtpStateSaver` for Compose `rememberSaveable`, so a partly entered code survives Android configuration changes and process death.
 - **`a11yotp-sms-retriever`**: optional Android module for Google's SMS Retriever, with `CODE_LENGTH_MISMATCH` reporting.
 
-[Unreleased]: https://github.com/Vprogrammers/a11yOtp/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/Vprogrammers/a11yOtp/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/Vprogrammers/a11yOtp/releases/tag/v0.3.0
 [0.2.0]: https://github.com/Vprogrammers/a11yOtp/releases/tag/v0.2.0
 [0.1.0]: https://github.com/Vprogrammers/a11yOtp/releases/tag/v0.1.0

@@ -15,7 +15,7 @@ Both are in the same optional module, and both need Google Play services. Use on
 ```kotlin
 // shared/build.gradle.kts
 sourceSets.androidMain.dependencies {
-    implementation("me.vprogrammers:a11yotp-sms-retriever:<version>")
+    implementation("me.vprogrammers:a11yotp-sms-retriever:0.3.0")
 }
 ```
 

@@ -51,6 +51,7 @@ The field vibrates once when it enters the error state (`hapticFeedbackOnError`)
   - alphanumeric codes: the letters are read as characters, and masked codes are not read;
   - the iOS Done key and the two-finger scrub work.
 - SMS autofill on both platforms, including codes of the wrong length.
+- SMS User Consent on Android: the prompt, Allow and Deny, rotation while the prompt is open, and TalkBack reading the prompt.
 - Voice Control (iOS) and Voice Access (Android): "Tap Done" and "Tap Verify", dictating a code into the field, and visible labels that match the names.
 - Switch Control (iOS) and Switch Access (Android): the field, Done, Verify and Resend are single reachable targets in a predictable scan order.
 - Hardware keyboards:
