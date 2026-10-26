@@ -188,6 +188,10 @@ internal class OtpFieldContainer : UIView(frame = CGRectMake(0.0, 0.0, 0.0, 0.0)
         addSubview(errorIcon)
         addSubview(errorLabel)
         addSubview(textField)
+        // Fonts follow Dynamic Type and Bold Text; colors and cell placement follow the appearance traits.
+        observeTraits(listOf(contentSizeTrait(), legibilityWeightTrait()) + appearanceTraits()) {
+            it.onTraitsChanged?.invoke()
+        }
     }
 
     fun render(model: OtpFieldModel) {
@@ -508,11 +512,6 @@ internal class OtpFieldContainer : UIView(frame = CGRectMake(0.0, 0.0, 0.0, 0.0)
             }
             errorLabel.setFrame(CGRectMake(x + iconWidth + gap, y, labelWidth, height))
         }
-    }
-
-    override fun traitCollectionDidChange(previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-        onTraitsChanged?.invoke()
     }
 }
 

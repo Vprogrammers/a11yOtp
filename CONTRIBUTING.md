@@ -125,7 +125,7 @@ and set `ENABLE_USER_SCRIPT_SANDBOXING = NO`, or Xcode can prevent the script fr
 
 `.github/workflows/publish.yml` releases the `VERSION_NAME` from `gradle.properties` to Maven Central. Nothing is ever published automatically.
 
-1. Raise `VERSION_NAME`, add the version to [CHANGELOG.md](CHANGELOG.md), and merge the pull request.
+1. Between releases `main` carries the next `-SNAPSHOT` version (the publish workflow refuses it). For a release, set `VERSION_NAME` to the release version, move the `[Unreleased]` entries in [CHANGELOG.md](CHANGELOG.md) under it, and merge the pull request. After the release, raise `VERSION_NAME` to the next `-SNAPSHOT`.
 2. Start Actions → Publish → Run workflow on `main`. Other branches are refused.
 3. The full validation runs, including the Android device tests on an emulator.
 4. The publish job waits for approval in the protected `release` environment. Then it:

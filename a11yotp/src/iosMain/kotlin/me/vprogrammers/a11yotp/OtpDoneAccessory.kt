@@ -79,6 +79,8 @@ internal class OtpDoneAccessory(
         button.addTarget(target, NSSelectorFromString(action), UIControlEventTouchUpInside)
         addSubview(button)
         applyTitle()
+        // The title font follows Dynamic Type and Bold Text; the fill follows dark mode and Increase Contrast.
+        observeTraits(listOf(contentSizeTrait(), legibilityWeightTrait()) + appearanceTraits()) { it.onTraitsChanged() }
     }
 
     private fun buildConfiguration(): UIButtonConfiguration =
@@ -172,8 +174,7 @@ internal class OtpDoneAccessory(
         return if (hit === this) null else hit
     }
 
-    override fun traitCollectionDidChange(previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
+    internal fun onTraitsChanged() {
         applyTitle()
         val width = currentWidth()
         setFrame(CGRectMake(0.0, 0.0, width, accessoryHeight(width)))
