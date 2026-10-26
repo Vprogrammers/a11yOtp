@@ -45,3 +45,7 @@ FA+9qCX9VSu
 - **Android with the retriever:** the code is filled without a tap. Pass the field's `charset` to `SmsRetrieverEffect` for alphanumeric codes; see [SMS Retriever](sms-retriever.md).
 
 Typing and paste always work, whatever the message looks like.
+
+## Testing from a personal phone
+
+Carriers treat a message that looks like a service template (`Your code is 123456`) sent from a private number as abuse and can drop it silently, so it never reaches the device. A shorter text such as `Code is 123456` usually gets through. If a message seems lost on an iPhone, check the Messages filters first (Unknown Senders, Transactions, Junk). Test the real template from your SMS provider before release.
