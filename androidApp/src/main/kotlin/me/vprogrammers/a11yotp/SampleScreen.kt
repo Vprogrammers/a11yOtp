@@ -113,6 +113,7 @@ fun SampleScreen(initialOptions: SampleOptions = SampleOptions()) {
     // still goes through withInput, which reports completion once.
     SmsRetrieverEffect(
         length = state.length,
+        charset = state.charset,
         restartKey = resendCount,
         enabled = !verified && !options.isDisabled,
         onFailure = { smsLengthMismatch = it == SmsRetrieverFailure.CODE_LENGTH_MISMATCH },

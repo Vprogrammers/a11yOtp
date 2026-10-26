@@ -39,7 +39,8 @@ Create the state with `OtpState(OtpLength.SIX, OtpCharset.ALPHANUMERIC)` for cod
 - **Accessibility text:** say "characters" rather than "digits" in `progressDescription` and `inputRejectedMessage`.
 - **Autofill:** whether the keyboard or the system suggests a code with letters depends on the platform, the keyboard and the message format, and is not verified yet. Typing and paste always work.
 - **Dictation and Voice Control:** a dictated chunk such as `K7Q` is several characters at once, so it is rejected unless it is the whole code. Dictate the whole code in one go, or one character at a time (for example with Voice Control's spelling mode).
-- **SMS Retriever:** the `a11yotp-sms-retriever` module reads numeric codes only.
+- **SMS Retriever:** pass `charset` to `SmsRetrieverEffect` to read codes such as `K7Q2MX` from the message: uppercase letters and digits with at least one digit (see [SMS Retriever](sms-retriever.md)).
+- **iOS:** apps cannot read SMS; the system offers the code above the keyboard, and the field accepts it like a paste, also in lowercase.
 
 ## Typing and deleting
 
