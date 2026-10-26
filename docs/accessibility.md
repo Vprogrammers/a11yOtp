@@ -48,6 +48,7 @@ The field vibrates once when it enters the error state (`hapticFeedbackOnError`)
   - the field is one element with its label and progress;
   - errors and rejections are announced;
   - in masked mode the digits are not read;
+  - alphanumeric codes: the letters are read as characters, and masked codes are not read;
   - the iOS Done key and the two-finger scrub work.
 - SMS autofill on both platforms, including codes of the wrong length.
 

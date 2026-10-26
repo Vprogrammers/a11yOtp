@@ -4,6 +4,8 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [0.2.0]
+
 ### Added
 
 - **Alphanumeric codes** ([#41](https://github.com/Vprogrammers/a11yOtp/issues/41)): `OtpCharset` (`NUMERIC`, `ALPHANUMERIC`), `OtpState(length, charset)`, `OtpState.charset` and `OtpState.restore(length, charset, code, isError)`.
@@ -12,6 +14,11 @@ All notable changes to this project are documented here. The format follows [Kee
   - `OtpStateSaver` saves the charset; numeric states keep the 0.1.0 format.
   - `a11yotp-sms-retriever`: `SmsRetrieverEffect(length, charset, …)` reads codes of uppercase letters and digits with at least one digit.
   - Existing APIs are unchanged and default to numeric.
+- **[The OTP message](docs/otp-message.md):** how to write the SMS so iOS and Android offer the code.
+
+### Changed
+
+- **iOS:** the components register for the traits they read (`registerForTraitChanges`) instead of the deprecated `traitCollectionDidChange`, and re-render on every trait that affects color appearance, including the interface level ([#38](https://github.com/Vprogrammers/a11yOtp/issues/38)).
 
 ## [0.1.0]
 
@@ -38,5 +45,6 @@ First release.
 - **Saving the state:** `OtpState.restore(length, code, isError)` (shared) and `OtpStateSaver` for Compose `rememberSaveable`, so a partly entered code survives Android configuration changes and process death.
 - **`a11yotp-sms-retriever`**: optional Android module for Google's SMS Retriever, with `CODE_LENGTH_MISMATCH` reporting.
 
-[Unreleased]: https://github.com/Vprogrammers/a11yOtp/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/Vprogrammers/a11yOtp/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/Vprogrammers/a11yOtp/releases/tag/v0.2.0
 [0.1.0]: https://github.com/Vprogrammers/a11yOtp/releases/tag/v0.1.0
