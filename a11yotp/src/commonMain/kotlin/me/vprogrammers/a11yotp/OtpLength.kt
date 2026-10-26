@@ -13,4 +13,10 @@ enum class OtpLength(
     FOUR(4),
     SIX(6),
     EIGHT(8),
+    ;
+
+    companion object {
+        /** The length whose [name] is [name], or null, for restoring a saved name (also from Swift). */
+        fun fromName(name: String): OtpLength? = entries.firstOrNull { it.name == name }
+    }
 }

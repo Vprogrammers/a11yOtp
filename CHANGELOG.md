@@ -4,6 +4,10 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+### Added
+
+- **Restoring from saved values** ([#37](https://github.com/Vprogrammers/a11yOtp/issues/37)): `OtpLength.fromName` and `OtpCharset.fromName`, also usable from Swift. The iOS sample restores the field with `@SceneStorage`.
+
 ## [0.2.0]
 
 ### Added

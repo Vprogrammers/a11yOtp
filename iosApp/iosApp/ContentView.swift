@@ -52,6 +52,13 @@ struct ContentView: View {
     @State private var isVerified = false
     @State private var secondsRemaining = Self.resendSeconds
     @State private var countdownRun = 0
+    @State private var didRestore = false
+    // Scene restoration: the Kotlin enum names ("SIX", "ALPHANUMERIC"), not the Swift case names.
+    // The code is sensitive and is written to disk here; real apps may choose not to persist it.
+    @SceneStorage("otp.length") private var savedLength = ""
+    @SceneStorage("otp.charset") private var savedCharset = ""
+    @SceneStorage("otp.code") private var savedCode = ""
+    @SceneStorage("otp.isError") private var savedIsError = false
 
     /// UI tests pass `-resendSeconds <n>` to shorten the countdown; it is 30 seconds otherwise.
     private static var resendSeconds: Int {
@@ -61,6 +68,9 @@ struct ContentView: View {
 
     /// UI tests pass `-manualVerify YES` so completion does not verify and the Verify button can be tested.
     private static var manualVerify: Bool { UserDefaults.standard.bool(forKey: "manualVerify") }
+
+    /// UI tests pass `-skipRestore YES` so every launch starts empty, whatever the scene saved.
+    private static var skipRestore: Bool { UserDefaults.standard.bool(forKey: "skipRestore") }
 
     init(options: SampleOptions = SampleOptions()) {
         _options = State(initialValue: options)
@@ -105,17 +115,25 @@ struct ContentView: View {
             .padding()
         }
         .scrollDismissesKeyboard(.interactively)
+        .onAppear(perform: restoreIfSaved)
         .onChange(of: otp.isComplete) { _, isComplete in
             if !isComplete { isVerified = false }
         }
         .onChange(of: options.length) { _, length in
+            // Restoring sets the options to match the restored state; keep that state.
+            guard otp.length != length else { return }
             otp = OtpState(length: length, charset: options.charset)
             isVerified = false
         }
         .onChange(of: options.alphanumeric) { _, _ in
+            guard otp.charset != options.charset else { return }
             otp = OtpState(length: options.length, charset: options.charset)
             isVerified = false
         }
+        .onChange(of: otp.code) { _, _ in save() }
+        .onChange(of: otp.isError) { _, _ in save() }
+        .onChange(of: otp.length) { _, _ in save() }
+        .onChange(of: otp.charset) { _, _ in save() }
         .task(id: countdownRun) {
             while secondsRemaining > 0 {
                 try? await Task.sleep(for: .seconds(1))
@@ -123,6 +141,28 @@ struct ContentView: View {
                 secondsRemaining -= 1
             }
         }
+    }
+
+    private func save() {
+        savedLength = otp.length.name
+        savedCharset = otp.charset.name
+        savedCode = otp.code
+        savedIsError = otp.isError
+    }
+
+    /// Rebuilds the saved state once; anything missing or invalid keeps the fresh state.
+    private func restoreIfSaved() {
+        guard !didRestore, !Self.skipRestore else { return }
+        didRestore = true
+        guard let length = OtpLength.companion.fromName(name: savedLength),
+              let charset = OtpCharset.companion.fromName(name: savedCharset),
+              let restored = OtpState.companion.restore(
+                  length: length, charset: charset, code: savedCode, isError: savedIsError
+              )
+        else { return }
+        options.length = length
+        options.alphanumeric = charset == .alphanumeric
+        otp = restored
     }
 
     private var codeUnit: String { options.alphanumeric ? "character" : "digit" }

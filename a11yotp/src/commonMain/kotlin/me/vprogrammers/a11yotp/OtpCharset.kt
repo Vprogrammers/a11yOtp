@@ -16,4 +16,10 @@ enum class OtpCharset {
      * uppercase. Look-alike characters such as `O` and `0`, or `I` and `1`, are never merged.
      */
     ALPHANUMERIC,
+    ;
+
+    companion object {
+        /** The charset whose [name] is [name], or null, for restoring a saved name (also from Swift). */
+        fun fromName(name: String): OtpCharset? = entries.firstOrNull { it.name == name }
+    }
 }

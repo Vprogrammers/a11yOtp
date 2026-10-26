@@ -51,8 +51,16 @@ The field vibrates once when it enters the error state (`hapticFeedbackOnError`)
   - alphanumeric codes: the letters are read as characters, and masked codes are not read;
   - the iOS Done key and the two-finger scrub work.
 - SMS autofill on both platforms, including codes of the wrong length.
+- Voice Control (iOS) and Voice Access (Android): "Tap Done" and "Tap Verify", dictating a code into the field, and visible labels that match the names.
+- Switch Control (iOS) and Switch Access (Android): the field, Done, Verify and Resend are single reachable targets in a predictable scan order.
+- Hardware keyboards:
+  - iOS: Return and Escape dismiss the keyboard, fast typing is neither merged nor rejected, and Tab reaches Done under Full Keyboard Access;
+  - Android: typing, Backspace and Enter (Done).
+- Right-to-left locales (Arabic, Hebrew): the code stays left to right, `START` and `END` alignment mirror, and Arabic-Indic digits are converted.
+- The iOS Done key over the 3 key in iPhone landscape with a notch, on iPad (docked, floating and split keyboard), and on iOS 18.
+- The largest text sizes (AX5 on iOS, 200% on Android) with rotation: nothing is clipped.
 
-**Not verified on devices yet:** Voice Control, Switch Access and Switch Control, a hardware keyboard on iOS (Escape cannot be automated), right-to-left locales, and iPad keyboard variants. Please report what you find.
+These device checks were done for [#39](https://github.com/Vprogrammers/a11yOtp/issues/39). If you find a difference on your devices, please open an issue.
 
 ## Your part
 

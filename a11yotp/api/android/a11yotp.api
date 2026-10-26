@@ -51,10 +51,15 @@ public final class me/vprogrammers/a11yotp/OtpButtonStyle {
 
 public final class me/vprogrammers/a11yotp/OtpCharset : java/lang/Enum {
 	public static final field ALPHANUMERIC Lme/vprogrammers/a11yotp/OtpCharset;
+	public static final field Companion Lme/vprogrammers/a11yotp/OtpCharset$Companion;
 	public static final field NUMERIC Lme/vprogrammers/a11yotp/OtpCharset;
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lme/vprogrammers/a11yotp/OtpCharset;
 	public static fun values ()[Lme/vprogrammers/a11yotp/OtpCharset;
+}
+
+public final class me/vprogrammers/a11yotp/OtpCharset$Companion {
+	public final fun fromName (Ljava/lang/String;)Lme/vprogrammers/a11yotp/OtpCharset;
 }
 
 public final class me/vprogrammers/a11yotp/OtpContrast {
@@ -163,6 +168,7 @@ public final class me/vprogrammers/a11yotp/OtpInputResult {
 }
 
 public final class me/vprogrammers/a11yotp/OtpLength : java/lang/Enum {
+	public static final field Companion Lme/vprogrammers/a11yotp/OtpLength$Companion;
 	public static final field EIGHT Lme/vprogrammers/a11yotp/OtpLength;
 	public static final field FOUR Lme/vprogrammers/a11yotp/OtpLength;
 	public static final field SIX Lme/vprogrammers/a11yotp/OtpLength;
@@ -170,6 +176,10 @@ public final class me/vprogrammers/a11yotp/OtpLength : java/lang/Enum {
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lme/vprogrammers/a11yotp/OtpLength;
 	public static fun values ()[Lme/vprogrammers/a11yotp/OtpLength;
+}
+
+public final class me/vprogrammers/a11yotp/OtpLength$Companion {
+	public final fun fromName (Ljava/lang/String;)Lme/vprogrammers/a11yotp/OtpLength;
 }
 
 public abstract interface class me/vprogrammers/a11yotp/OtpMask {

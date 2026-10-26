@@ -142,17 +142,39 @@ After a wrong code, the next complete code reports completion again, whether the
 Save the state, so that a partly entered code is not lost when Android recreates the screen. That happens on rotation, on a theme or language change, and when the system ends the app in the background, for example while the user looks for the code in Messages.
 
 - **Compose:** `rememberSaveable(stateSaver = OtpStateSaver)`, as in the example above.
-- **A ViewModel with `SavedStateHandle`:** save the three values and rebuild with `restore`:
+- **A ViewModel with `SavedStateHandle`:** save the four values and rebuild with `restore`. `OtpLength.fromName` and `OtpCharset.fromName` turn the saved names back into values:
 
   ```kotlin
-  handle["otpLength"] = otp.length.name; handle["otpCode"] = otp.code; handle["otpError"] = otp.isError
+  handle["otpLength"] = otp.length.name; handle["otpCharset"] = otp.charset.name
+  handle["otpCode"] = otp.code; handle["otpError"] = otp.isError
 
-  val restored = OtpLength.entries.firstOrNull { it.name == handle.get<String>("otpLength") }
-      ?.let { OtpState.restore(it, handle["otpCode"] ?: "", handle["otpError"] ?: false) }
+  val length = handle.get<String>("otpLength")?.let(OtpLength::fromName)
+  val charset = handle.get<String>("otpCharset")?.let(OtpCharset::fromName) ?: OtpCharset.NUMERIC
+  val restored = length?.let { OtpState.restore(it, charset, handle["otpCode"] ?: "", handle["otpError"] ?: false) }
       ?: OtpState(OtpLength.SIX)
   ```
 
-- **iOS:** UIKit does not recreate the screen on rotation, so the state you hold survives. To restore a scene after the app was ended, save the same values (for example with `@SceneStorage`) and call `OtpState.companion.restore(length: .six, code: savedCode, isError: savedError)`.
+- **iOS:** UIKit does not recreate the screen on rotation, so the state you hold survives. To restore a scene after the system ended the app, save the same four values, for example with `@SceneStorage`, and rebuild the state when the view appears. The saved names are the Kotlin names (`"SIX"`, `"ALPHANUMERIC"`), not the Swift case names (`.six`):
+
+  ```swift
+  @SceneStorage("otp.length") private var savedLength = ""
+  @SceneStorage("otp.charset") private var savedCharset = ""
+  @SceneStorage("otp.code") private var savedCode = ""
+  @SceneStorage("otp.isError") private var savedIsError = false
+
+  // Save on every change of otp:
+  savedLength = otp.length.name; savedCharset = otp.charset.name
+  savedCode = otp.code; savedIsError = otp.isError
+
+  // Restore once, for example in .onAppear:
+  if let length = OtpLength.companion.fromName(name: savedLength),
+     let charset = OtpCharset.companion.fromName(name: savedCharset),
+     let restored = OtpState.companion.restore(length: length, charset: charset, code: savedCode, isError: savedIsError) {
+      otp = restored
+  }
+  ```
+
+  The iOS sample (`iosApp/iosApp/ContentView.swift`) does this.
 
 How restoring works:
 

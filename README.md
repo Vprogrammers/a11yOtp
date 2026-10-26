@@ -139,7 +139,7 @@ The `androidApp` and `iosApp` sample apps (with `sample/shared` as their shared 
 - [x] Optional SMS Retriever module for Android
 - [x] Real-device verification with TalkBack and VoiceOver
 - [x] Maven Central publication (0.1.0, 0.2.0)
-- [ ] Real-device verification with Voice Control, Switch Access and Switch Control
+- [x] Real-device verification with Voice Control, Switch Access, Switch Control, hardware keyboards, RTL and iPad
 - [x] Alphanumeric codes
 - [ ] Optional Compose Multiplatform UI module
 - [ ] Optional SMS User Consent support for Android
