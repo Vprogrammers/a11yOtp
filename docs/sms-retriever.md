@@ -9,7 +9,7 @@ It is a separate, Android-only module, so apps that do not use it never get Goog
 ```kotlin
 // shared/build.gradle.kts
 sourceSets.androidMain.dependencies {
-    implementation("me.vprogrammers:a11yotp-sms-retriever:0.1.0")
+    implementation("me.vprogrammers:a11yotp-sms-retriever:0.2.0")
 }
 ```
 

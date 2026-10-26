@@ -13,7 +13,7 @@ Treat accessibility behavior as part of the public component contract.
 - Keep decorative cells out of the accessibility tree.
 - Give the logical field a localized label, expected code length, current progress, and error state.
 - Codes are numeric or, with `OtpCharset.ALPHANUMERIC`, digits and uppercase letters `A`-`Z`; "digits" below means the code's characters.
-- When the visual code is unmasked, let screen-reader users review the entered digits. Letters must be spelled, not read as words (a lone "A" is not the article); verify on devices. When masking is enabled, expose masked progress instead of the digits. Keep visual and assistive-technology privacy behavior consistent.
+- When the visual code is unmasked, let screen-reader users review the entered digits. Letters must be spelled, not read as words (a lone "A" is not the article); verified with TalkBack and VoiceOver for 0.2.0. When masking is enabled, expose masked progress instead of the digits. Keep visual and assistive-technology privacy behavior consistent.
 - Keep accessibility focus stable while input changes.
 - Expose ordinary progress through the field value or state description, such as “3 of 6 digits entered”. Do not force an announcement after every keystroke.
 - Use forced announcements only for state transitions that require attention, primarily errors and optionally completion.
